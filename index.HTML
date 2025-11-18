@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ITC Safety Course</title>
+    
+    <!-- 1. Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- 2. Babel for translating JSX in the browser -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- 3. Import Map to tell browser where to find libraries -->
+    <script type="importmap">
+    {
+        "imports": {
+            "react": "https://esm.sh/react@18.2.0",
+            "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+            "lucide-react": "https://esm.sh/lucide-react@0.263.1"
+        }
+    }
+    </script>
+
+    <style>
+        /* Custom animations */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
+        .safe-area-pb { padding-bottom: env(safe-area-inset-bottom); }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900 font-sans">
+    <div id="root"></div>
+
+    <!-- 4. The React Application Logic -->
+    <script type="text/babel" data-type="module">
+        import React, { useState, useEffect, useRef } from 'react';
+        import ReactDOM from 'react-dom/client';
+        import { 
+            Shield, AlertTriangle, HardHat, Flame, Truck, 
+            Target, Construction, Lock, Zap, Box, 
+            Train, Car, CheckCircle, XCircle, ChevronRight, 
+            ChevronLeft, Menu, BookOpen, Info, Volume2, StopCircle,
+            Sparkles, MessageSquare, Loader2, FileText, Lock as LockIcon
+        } from 'lucide-react';
+
+        // --- API Configuration ---
+        const apiKey = ""; // API Key would go here if running locally with a key
+
+        // --- Helper: Gemini API Call with Backoff ---
+        const callGemini = async (prompt) => {
+            if (!apiKey) {
+                console.warn("No API key provided.");
+                return "To use the AI features, you would need a valid API key in the code. For this demo, I cannot generate a live response.";
+            }
+
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            const payload = { contents: [{ parts: [{ text: prompt }] }] };
+            const delays = [1000, 2000, 4000, 8000, 16000];
+
+            for (let i = 0; i <= delays.length; i++) {
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    
+                    if (!response.ok) {
+                        if (response.status >= 400 && response.status < 500 && response.status !== 429) {
+                            throw new Error("Client Error"); 
+                        }
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    return data.candidates?.[0]?.content?.parts?.[0]?.text || "No response generated.";
+                } catch (error) {
+                    if (i === delays.length || error.message === "Client Error") {
+                        console.error("Gemini API failed:", error);
+                        return "I'm having trouble connecting to the safety database right now. Please try again later.";
+                    }
+                    await new Promise(resolve => setTimeout(resolve, delays[i]));
+                }
+            }
+        };
+
+        // --- Data Source ---
+        const standardsData = [
+            {
+                id: 1,
+                title: "Working at Heights",
+                icon: <Construction size={32} />,
+                color: "bg-blue-600",
+                rule: "I will apply 100% tie-off when in a fall risk situation and secure tools.",
+                controls: [
+                    "Obtain a WAH permit and rescue plan.",
+                    "Set up exclusion zones and signage.",
+                    "Use fall restraint/arrest within 2m of an unprotected edge.",
+                    "Tether all tools to prevent dropped objects.",
+                    "Never walk under suspended loads."
+                ]
+            },
+            {
+                id: 2,
+                title: "SIMOPS (Simultaneous Operations)",
+                icon: <div className="flex gap-1"><Truck size={16}/><Construction size={16}/></div>,
+                color: "bg-orange-500",
+                rule: "I will stop work when operations conflict and ensure risk assessment is conducted.",
+                controls: [
+                    "Communicate permit requirements to all affected.",
+                    "Identify SIMOPS risks before starting.",
+                    "One single authority leads the Permit to Work.",
+                    "Hold interface meetings/toolbox talks.",
+                    "Use permit boards and barricades."
+                ]
+            },
+            {
+                id: 3,
+                title: "Hazardous Chemicals",
+                icon: <AlertTriangle size={32} />,
+                color: "bg-yellow-500",
+                rule: "I will always wear the required PPE & RPE.",
+                controls: [
+                    "Complete risk assessment for all chemical activities.",
+                    "Ensure training in safe handling.",
+                    "Fit testing for tight-fitting RPE within last 12 months.",
+                    "Clean shaven where mask seals."
+                ]
+            },
+            {
+                id: 4,
+                title: "Hot Works",
+                icon: <Flame size={32} />,
+                color: "bg-red-600",
+                rule: "I will confirm that all flammable materials have been removed or isolated.",
+                controls: [
+                    "Hot work permit signed by all.",
+                    "Battery operated grinders are first choice.",
+                    "Dead man switch on grinders >5 inch.",
+                    "Double eye protection for grinding.",
+                    "Always use two hands on grinders."
+                ]
+            },
+            {
+                id: 5,
+                title: "Traffic & People",
+                icon: <div className="relative"><Truck size={32}/><div className="absolute bottom-0 right-0 bg-white rounded-full"><AlertTriangle size={12}/></div></div>,
+                color: "bg-indigo-600",
+                rule: "I will always stay clear of mobile plant and stay out of exclusion zones.",
+                controls: [
+                    "Follow signage and pathways.",
+                    "Speed limit is 15km/h.",
+                    "Set up exclusion zones for loading/unloading.",
+                    "Park only in authorised areas.",
+                    "Identify overhead services."
+                ]
+            },
+            {
+                id: 6,
+                title: "Line of Fire",
+                icon: <Target size={32} />,
+                color: "bg-purple-600",
+                rule: "I will position myself to avoid moving objects, vehicles, and pressure releases.",
+                controls: [
+                    "Continually monitor surroundings.",
+                    "Respect barriers and exclusion zones.",
+                    "Stay at least 5m away from operating mobile plant.",
+                    "Spotters must be out of line of fire."
+                ]
+            },
+            {
+                id: 7,
+                title: "Mobile Plant & Cranes",
+                icon: <Truck size={32} />,
+                color: "bg-green-600",
+                rule: "I will never lift loads in an unsafe manner (e.g., over employees).",
+                controls: [
+                    "Plant risk assessment available.",
+                    "Pre-start checks conducted.",
+                    "Operators must be licenced.",
+                    "Safety devices (beepers, lights) functional.",
+                    "Plant halted before people enter operating zone."
+                ]
+            },
+            {
+                id: 8,
+                title: "Hazardous Energy",
+                icon: <Lock size={32} />,
+                color: "bg-gray-700",
+                rule: "I will confirm that hazardous energy sources have been isolated, locked, and tagged out.",
+                controls: [
+                    "Energy Isolation permit required.",
+                    "Identify all energy sources (electrical, mechanical, pressure).",
+                    "Apply LOTO (Lock Out Tag Out).",
+                    "Test isolation to confirm effectiveness."
+                ]
+            },
+            {
+                id: 9,
+                title: "Electricity",
+                icon: <Zap size={32} />,
+                color: "bg-yellow-400",
+                rule: "I will only work on equipment that has been isolated and tested for dead.",
+                controls: [
+                    "Authorised electricians only.",
+                    "Isolate, prove dead, lock and tag.",
+                    "Use physical barricades.",
+                    "Inspect leads and ensure current test tags.",
+                    "Tag out defective equipment immediately."
+                ]
+            },
+            {
+                id: 10,
+                title: "Confined Spaces",
+                icon: <Box size={32} />,
+                color: "bg-slate-600",
+                rule: "I will never enter a confined space without authorisation.",
+                controls: [
+                    "Confined Space Entry permit required.",
+                    "Isolate energy sources.",
+                    "Atmosphere testing verified safe.",
+                    "Competent stand-by person at entry.",
+                    "Emergency rescue plan in place."
+                ]
+            },
+            {
+                id: 11,
+                title: "Rail Safety",
+                icon: <Train size={32} />,
+                color: "bg-blue-800",
+                rule: "I will ensure my competencies are current and come to work unimpaired.",
+                controls: [
+                    "0.00% Blood Alcohol Concentration (BAC).",
+                    "Fit for work (fatigue/drug managed).",
+                    "Hold valid Rail Safety Worker (RSW) competencies.",
+                    "Attend daily rail pre-start.",
+                    "Use agreed positive communication methods."
+                ]
+            },
+            {
+                id: 12,
+                title: "Driving & Fatigue",
+                icon: <Car size={32} />,
+                color: "bg-teal-600",
+                rule: "I will always wear a seat belt and be fit, rested, and alert.",
+                controls: [
+                    "Park fundamentally stable (brakes on).",
+                    "Reverse park when safe.",
+                    "No handheld mobile phones.",
+                    "Fit for work (no drugs/alcohol/fatigue).",
+                    "Pre-operational vehicle checks."
+                ]
+            }
+        ];
+
+        const quizQuestions = [
+            {
+                question: "What is the maximum speed limit on ITC terminals?",
+                options: ["10 km/h", "15 km/h", "20 km/h", "25 km/h"],
+                correct: 1
+            },
+            {
+                question: "When working at heights, fall restraint or arrest is required within what distance of an unprotected edge?",
+                options: ["1 meter", "1.5 meters", "2 meters", "3 meters"],
+                correct: 2
+            },
+            {
+                question: "What is the required Blood Alcohol Concentration (BAC) for Rail Safety Workers?",
+                options: ["0.00%", "0.02%", "0.05%", "Under 0.05%"],
+                correct: 0
+            },
+            {
+                question: "What is the minimum exclusion distance you must maintain from operating mobile plant?",
+                options: ["2 meters", "3 meters", "5 meters", "10 meters"],
+                correct: 2
+            },
+            {
+                question: "Who has the authority to 'Stop for Safety' if they see an unsafe situation?",
+                options: ["Only Managers", "Only Safety Officers", "Only Supervisors", "Everyone"],
+                correct: 3
+            },
+            {
+                question: "When performing Hot Works (grinding), what is the preferred tool choice?",
+                options: ["Mains power grinder", "Petrol driven grinder", "Battery operated handheld grinder", "Pneumatic grinder"],
+                correct: 2
+            },
+            {
+                question: "Before entering a Confined Space, which of the following is MANDATORY?",
+                options: ["A flashlight", "A permit, atmosphere test, and stand-by person", "A mobile phone", "Only a supervisor's verbal permission"],
+                correct: 1
+            },
+            {
+                question: "What does SIMOPS stand for?",
+                options: ["Simple Operations", "Simultaneous Operations", "Safe Implementation of Procedures", "Site Inspection and Monitoring"],
+                correct: 1
+            },
+            {
+                question: "For electrical work, who is authorised to work on electrical equipment?",
+                options: ["Any experienced worker", "Only trained, competent, and licenced electricians", "Anyone with a permit", "Supervisors only"],
+                correct: 1
+            },
+            {
+                question: "What is the 'I Will' behavior for Line of Fire?",
+                options: ["I will run quickly through hazardous areas", "I will wear extra PPE", "I will position myself to avoid moving objects and pressure releases", "I will rely on others to warn me"],
+                correct: 2
+            }
+        ];
+
+        // --- Components ---
+
+        const TextToSpeechButton = ({ text, label = "Read Aloud" }) => {
+            const [isSpeaking, setIsSpeaking] = useState(false);
+            const [preferredVoice, setPreferredVoice] = useState(null);
+
+            useEffect(() => {
+                const selectBestVoice = () => {
+                    const voices = window.speechSynthesis.getVoices();
+                    const bestVoice = 
+                        voices.find(v => v.lang === "en-AU" && v.name.includes("Google")) || 
+                        voices.find(v => v.name.includes("Karen")) ||           
+                        voices.find(v => v.name.includes("Daniel")) ||          
+                        voices.find(v => v.name.includes("Microsoft Catherine")) || 
+                        voices.find(v => v.name.includes("Microsoft James")) ||     
+                        voices.find(v => v.lang === "en-AU") ||                 
+                        voices.find(v => v.name.includes("Google UK English")) || 
+                        voices.find(v => v.name.includes("Google US English")) || 
+                        voices.find(v => v.name.includes("Samantha")) ||          
+                        voices.find(v => v.lang.startsWith("en"));                
+
+                    if (bestVoice) {
+                        setPreferredVoice(bestVoice);
+                    }
+                };
+
+                if (window.speechSynthesis.onvoiceschanged !== undefined) {
+                    window.speechSynthesis.onvoiceschanged = selectBestVoice;
+                }
+                selectBestVoice();
+
+                return () => window.speechSynthesis.cancel();
+            }, []);
+
+            const handleSpeak = (e) => {
+                e.stopPropagation(); 
+                if (isSpeaking) {
+                    window.speechSynthesis.cancel();
+                    setIsSpeaking(false);
+                } else {
+                    window.speechSynthesis.cancel();
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    if (preferredVoice) utterance.voice = preferredVoice;
+                    utterance.rate = 1.05; 
+                    utterance.pitch = 1.0;
+                    utterance.onend = () => setIsSpeaking(false);
+                    window.speechSynthesis.speak(utterance);
+                    setIsSpeaking(true);
+                }
+            };
+
+            return (
+                <button 
+                    onClick={handleSpeak} 
+                    className={`flex items-center gap-2 px-4 py-3 md:py-2 rounded-full text-sm font-semibold transition-all active:scale-95 ${isSpeaking ? 'bg-red-100 text-red-600 hover:bg-red-200' : 'bg-blue-100 text-blue-600 hover:bg-blue-200'}`}
+                    title={isSpeaking ? "Stop Speaking" : "Read Text"}
+                >
+                    {isSpeaking ? <StopCircle size={20} /> : <Volume2 size={20} />} 
+                    {isSpeaking ? "Stop" : label}
+                </button>
+            );
+        };
+
+        const WelcomeScreen = ({ onStart }) => {
+            const welcomeText = "Welcome to the ITC Life Saving Minimum Standards Course, Module 5. Safety isn't just an option; it's at the heart of everything we do. In this course, you will learn the 12 Life Saving Standards that are our first line of defence against critical risks.";
+
+            return (
+                <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-blue-900 to-slate-800 text-white p-6 text-center pb-20">
+                    <div className="bg-white p-4 rounded-full mb-6 shadow-lg animate-bounce">
+                        <Shield className="text-green-500" size={64} />
+                    </div>
+                    <h1 className="text-3xl md:text-4xl font-bold mb-4 tracking-tight">Life Saving Minimum Standards</h1>
+                    <h2 className="text-lg md:text-xl text-gray-300 mb-8">Module 5 - Intermodal Terminal Company</h2>
+                    
+                    <div className="max-w-lg w-full bg-white/10 backdrop-blur-sm rounded-xl p-6 mb-8 text-left border border-white/20">
+                        <h3 className="font-bold text-lg mb-2 flex items-center gap-2"><Info size={20}/> Course Objectives:</h3>
+                        <ul className="list-disc list-inside space-y-3 text-sm md:text-base text-gray-200 mb-6">
+                            <li>Understand the 12 Life Saving Standards.</li>
+                            <li>Commit to the "I Will" Behaviours.</li>
+                            <li>Recognise Critical Controls.</li>
+                            <li>Pass the final assessment (80% pass mark).</li>
+                        </ul>
+                        <div className="flex justify-center">
+                            <TextToSpeechButton text={welcomeText} label="Listen to Intro" />
+                        </div>
+                    </div>
+
+                    <button 
+                        onClick={onStart}
+                        className="w-full max-w-xs md:w-auto bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-12 rounded-full transition-transform transform active:scale-95 shadow-xl flex items-center justify-center gap-2 text-lg"
+                    >
+                        Start Course <ChevronRight />
+                    </button>
+                </div>
+            );
+        };
+
+        const IntroModule = ({ onNext }) => {
+            const introText = "Why Safety First? It’s not an option. It’s not an afterthought. It’s at the heart of everything we do. In the last 10 years, 376 people might still be alive if Life-Saving Minimum Standards had been followed in our industry. These standards are our first line of defence. You must know the standards, speak up and stop work if it is unsafe, and always be mindful of risks.";
+
+            return (
+                <div className="max-w-4xl mx-auto p-4 md:p-6 animate-fade-in pb-28">
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 border-b pb-4 gap-4">
+                        <h2 className="text-2xl md:text-3xl font-bold text-gray-800">Why Safety First?</h2>
+                        <TextToSpeechButton text={introText} />
+                    </div>
+                    
+                    <div className="grid md:grid-cols-2 gap-6 md:gap-8 items-center">
+                        <div className="space-y-4 text-gray-700 leading-relaxed text-base md:text-lg">
+                            <p className="font-semibold text-blue-800">
+                                It’s not an option. It’s not an afterthought. It’s at the heart of everything we do.
+                            </p>
+                            <p>
+                                At Intermodal Terminal Company, we expect everyone to be safety leaders.
+                            </p>
+                            <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded">
+                                <p className="font-bold text-red-700">Sobering Statistic</p>
+                                <p>In the last 10 years, 376 people might still be alive if Life-Saving Minimum Standards had been followed in our industry.</p>
+                            </div>
+                            <p>
+                                These standards are our first line of defence against risks that could lead to significant harm.
+                            </p>
+                        </div>
+                        <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
+                            <h3 className="font-bold text-lg mb-4 text-center">Your Responsibilities</h3>
+                            <ul className="space-y-4">
+                                <li className="flex items-start gap-3">
+                                    <CheckCircle className="text-green-500 shrink-0 mt-1" size={24} />
+                                    <span className="text-gray-800">Know the Life Saving Minimum Standards.</span>
+                                </li>
+                                <li className="flex items-start gap-3">
+                                    <CheckCircle className="text-green-500 shrink-0 mt-1" size={24} />
+                                    <span className="text-gray-800">Speak up and stop work if unsafe.</span>
+                                </li>
+                                <li className="flex items-start gap-3">
+                                    <CheckCircle className="text-green-500 shrink-0 mt-1" size={24} />
+                                    <span className="text-gray-800">Be mindful of risks and hazards.</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-4 flex justify-end items-center shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-20">
+                        <button onClick={onNext} className="bg-blue-600 text-white px-8 py-3 rounded-full font-semibold hover:bg-blue-700 transition-transform active:scale-95 flex items-center gap-2 shadow-lg">
+                            Explore The Standards <ChevronRight />
+                        </button>
+                    </div>
+                </div>
+            );
+        };
+
+        const StandardsExplorer = ({ onNext, onPrev }) => {
+            const [selectedStandard, setSelectedStandard] = useState(null);
+            const [aiExplanation, setAiExplanation] = useState(null);
+            const [loadingAi, setLoadingAi] = useState(false);
+            
+            const [viewedStandards, setViewedStandards] = useState(new Set());
+
+            const handleCardClick = (std) => {
+                setSelectedStandard(std);
+                setAiExplanation(null);
+                
+                setViewedStandards(prev => {
+                    const newSet = new Set(prev);
+                    newSet.add(std.id);
+                    return newSet;
+                });
+            };
+
+            const handleExplainWithAI = async (e) => {
+                e.stopPropagation();
+                if (!selectedStandard) return;
+                
+                setLoadingAi(true);
+                setAiExplanation(null);
+                
+                const prompt = `You are an expert Safety Training Facilitator at Intermodal Terminal Company (ITC). 
+                The user is learning about the Life Saving Standard: "${selectedStandard.title}".
+                The rule is: "${selectedStandard.rule}".
+                
+                Please provide a BRIEF (max 3 sentences) but impactful real-world workplace scenario where this rule saves a life, 
+                and one example of what happens if it is ignored. Keep it professional but engaging.`;
+
+                const response = await callGemini(prompt);
+                setAiExplanation(response);
+                setLoadingAi(false);
+            };
+            
+            const allViewed = viewedStandards.size === standardsData.length;
+
+            return (
+                <div className="max-w-6xl mx-auto p-4 md:p-6 h-full flex flex-col pb-32">
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-2">
+                        <h2 className="text-2xl md:text-3xl font-bold text-gray-800">The 12 Life Saving Standards</h2>
+                        <div className="flex flex-col items-end">
+                             <div className="text-sm text-gray-500 flex items-center gap-1">
+                                <Info size={16}/> Tap a card to view details
+                            </div>
+                            <div className="text-sm font-medium text-blue-600 mt-1">
+                                Viewed: {viewedStandards.size} / {standardsData.length}
+                            </div>
+                        </div>
+                    </div>
+
+                    {selectedStandard ? (
+                        <div className="bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-200 flex-grow animate-fade-in">
+                            <div className={`${selectedStandard.color} p-4 md:p-6 text-white flex flex-col md:flex-row justify-between items-start md:items-center gap-4`}>
+                                <div className="flex items-center gap-4">
+                                    <div className="p-3 bg-white/20 rounded-full backdrop-blur-sm">
+                                        {selectedStandard.icon}
+                                    </div>
+                                    <h3 className="text-xl md:text-2xl font-bold leading-tight">{selectedStandard.title}</h3>
+                                </div>
+                                <div className="flex items-center gap-2 w-full md:w-auto justify-between md:justify-end">
+                                    <TextToSpeechButton 
+                                        label="Listen" 
+                                        text={`${selectedStandard.title}. I Will Behaviour: ${selectedStandard.rule}. Critical Controls include: ${selectedStandard.controls.join('. ')}`} 
+                                    />
+                                    <button 
+                                        onClick={() => { setSelectedStandard(null); setAiExplanation(null); }} 
+                                        className="bg-white/20 hover:bg-white/30 p-2 rounded-full transition active:scale-90"
+                                        aria-label="Close detail view"
+                                    >
+                                        <XCircle size={32} />
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="p-6 md:p-8 grid md:grid-cols-2 gap-8">
+                                <div className="space-y-6">
+                                    <div>
+                                        <h4 className="text-blue-900 font-bold text-lg mb-3 flex items-center gap-2">
+                                            <Shield className="text-blue-600"/> I Will Behaviour (Rule)
+                                        </h4>
+                                        <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 text-blue-900 font-medium text-lg leading-relaxed">
+                                            "{selectedStandard.rule}"
+                                        </div>
+                                    </div>
+                                    
+                                    {/* AI Explain Feature */}
+                                    <div className="bg-purple-50 rounded-xl p-4 border border-purple-100">
+                                        <div className="flex justify-between items-center mb-2">
+                                            <h4 className="text-purple-900 font-bold flex items-center gap-2">
+                                                <Sparkles size={18} className="text-purple-600"/> AI Insight
+                                            </h4>
+                                            {!aiExplanation && !loadingAi && (
+                                                <button 
+                                                    onClick={handleExplainWithAI}
+                                                    className="text-xs bg-purple-600 text-white px-3 py-1 rounded-full hover:bg-purple-700 transition flex items-center gap-1"
+                                                >
+                                                    <Sparkles size={12}/> Give Example
+                                                </button>
+                                            )}
+                                        </div>
+                                        {loadingAi && (
+                                            <div className="flex items-center gap-2 text-purple-700 text-sm animate-pulse">
+                                                <Loader2 size={16} className="animate-spin"/> Generating scenario...
+                                            </div>
+                                        )}
+                                        {aiExplanation && (
+                                            <div className="text-purple-800 text-sm leading-relaxed animate-fade-in">
+                                                {aiExplanation}
+                                            </div>
+                                        )}
+                                        {!aiExplanation && !loadingAi && (
+                                            <p className="text-purple-400 text-xs italic">Tap 'Give Example' to see a real-world scenario generated by AI.</p>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h4 className="text-gray-800 font-bold text-lg mb-3 flex items-center gap-2">
+                                        <LockIcon className="text-gray-600"/> Critical Controls
+                                    </h4>
+                                    <ul className="space-y-3">
+                                        {selectedStandard.controls.map((control, idx) => (
+                                            <li key={idx} className="flex items-start gap-3 text-gray-700 text-base">
+                                                <div className="mt-1.5 w-2 h-2 bg-green-500 rounded-full shrink-0"></div>
+                                                <span>{control}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                            {standardsData.map((std) => {
+                                const isViewed = viewedStandards.has(std.id);
+                                return (
+                                    <button
+                                        key={std.id}
+                                        onClick={() => handleCardClick(std)}
+                                        className={`relative bg-white p-4 rounded-xl shadow-sm hover:shadow-md border transition-all duration-200 active:scale-98 flex flex-col items-center text-center group min-h-[160px] justify-center ${isViewed ? 'border-green-400 bg-green-50' : 'border-gray-100'}`}
+                                    >
+                                        {isViewed && (
+                                            <div className="absolute top-3 right-3 bg-green-100 rounded-full p-1 animate-fade-in">
+                                                <CheckCircle size={20} className="text-green-600" />
+                                            </div>
+                                        )}
+                                        <div className={`w-14 h-14 ${std.color} rounded-full flex items-center justify-center text-white mb-3 shadow-lg`}>
+                                            {std.icon}
+                                        </div>
+                                        <h3 className="font-bold text-gray-800 text-lg leading-snug">{std.title}</h3>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    )}
+
+                    {/* Fixed Footer Nav */}
+                    <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-4 flex justify-between items-center shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-20 safe-area-pb">
+                        {selectedStandard ? (
+                             <button onClick={() => setSelectedStandard(null)} className="text-gray-600 hover:text-gray-900 font-medium flex items-center gap-1 px-4 py-2 rounded-lg active:bg-gray-100">
+                                <ChevronLeft /> Back to Grid
+                             </button>
+                        ) : (
+                            <button onClick={onPrev} className="text-gray-600 hover:text-gray-900 font-medium flex items-center gap-1 px-4 py-2 rounded-lg active:bg-gray-100">
+                                <ChevronLeft /> Back
+                            </button>
+                        )}
+                        
+                        {!selectedStandard && (
+                            <button 
+                                onClick={onNext} 
+                                disabled={!allViewed}
+                                className={`px-6 py-3 rounded-full font-bold transition-transform active:scale-95 flex items-center gap-2 shadow-md text-sm md:text-base ${allViewed ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
+                            >
+                                {allViewed ? "Next: Implementation" : `View All (${viewedStandards.size}/12)`} <ChevronRight size={20} />
+                            </button>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        const SafetyAssistantModule = ({ onNext, onPrev }) => {
+            const [userQuery, setUserQuery] = useState("");
+            const [response, setResponse] = useState(null);
+            const [loading, setLoading] = useState(false);
+
+            const handleAnalyze = async () => {
+                if (!userQuery.trim()) return;
+                setLoading(true);
+                setResponse(null);
+
+                const prompt = `
+                    You are a Senior Safety Manager at Intermodal Terminal Company (ITC). 
+                    Reference these Life Saving Standards: ${JSON.stringify(standardsData.map(s => ({ title: s.title, rule: s.rule })))}.
+                    
+                    The user is planning the following task: "${userQuery}".
+                    
+                    1. Identify the most critical Life Saving Standards that apply to this specific task.
+                    2. List the specific hazards.
+                    3. Provide a concise list of critical controls (checks) they must perform before starting.
+                    
+                    Format your response with clear headings and bullet points. Be encouraging but firm on safety.
+                `;
+
+                const result = await callGemini(prompt);
+                setResponse(result);
+                setLoading(false);
+            };
+
+            return (
+                <div className="max-w-4xl mx-auto p-4 md:p-6 pb-32">
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                        <h2 className="text-2xl md:text-3xl font-bold text-gray-800 flex items-center gap-2">
+                            <Sparkles className="text-purple-600" /> AI Safety Assistant
+                        </h2>
+                        <TextToSpeechButton text="Use this assistant to plan your work safely. Describe your task, and our AI will help you identify the relevant standards and hazards." />
+                    </div>
+
+                    <div className="bg-white rounded-xl shadow-lg border border-purple-100 overflow-hidden">
+                        <div className="bg-purple-600 p-4 text-white">
+                            <p className="font-medium">Describe your task (e.g., "I need to fix a light in the warehouse ceiling")</p>
+                        </div>
+                        <div className="p-6">
+                            <textarea
+                                value={userQuery}
+                                onChange={(e) => setUserQuery(e.target.value)}
+                                placeholder="Type your work plan here..."
+                                className="w-full h-32 p-4 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent mb-4 text-gray-700"
+                            />
+                            <button 
+                                onClick={handleAnalyze}
+                                disabled={loading || !userQuery}
+                                className={`w-full py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-all ${loading || !userQuery ? 'bg-gray-300 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-700 text-white shadow-md active:scale-95'}`}
+                            >
+                                {loading ? <Loader2 className="animate-spin" /> : <Sparkles />} 
+                                {loading ? "Analyzing Risks..." : "✨ Analyze Hazards"}
+                            </button>
+                        </div>
+                    </div>
+
+                    {response && (
+                        <div className="mt-6 bg-white rounded-xl shadow-lg border-l-4 border-purple-500 p-6 animate-fade-in">
+                            <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                                <FileText className="text-purple-600"/> Safety Plan
+                            </h3>
+                            <div className="prose text-gray-700 whitespace-pre-line leading-relaxed">
+                                {response}
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-4 flex justify-between items-center shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-20 safe-area-pb">
+                        <button onClick={onPrev} className="text-gray-600 font-medium flex items-center gap-1 px-4 py-3 rounded-lg active:bg-gray-100">
+                            <ChevronLeft /> Back
+                        </button>
+                        <button onClick={onNext} className="bg-blue-600 text-white px-6 py-3 rounded-full font-bold hover:bg-blue-700 transition-transform active:scale-95 shadow-lg flex items-center gap-2">
+                            Next: Stop For Safety <ChevronRight />
+                        </button>
+                    </div>
+                </div>
+            );
+        };
+
+        const ImplementationModule = ({ onNext, onPrev }) => (
+            <div className="max-w-4xl mx-auto p-4 md:p-6 pb-32">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                    <h2 className="text-2xl md:text-3xl font-bold text-gray-800">Stop For Safety & Implementation</h2>
+                    <TextToSpeechButton text="Stop For Safety. Everyone has the responsibility and authority to stop work when an unsafe situation arises." />
+                </div>
+                
+                <div className="bg-red-600 text-white rounded-xl p-6 md:p-8 shadow-xl mb-8 text-center">
+                    <div className="flex justify-center mb-4">
+                        <div className="bg-white text-red-600 p-3 rounded-full font-black text-2xl w-16 h-16 flex items-center justify-center border-4 border-red-200 shadow-inner">
+                            STOP
+                        </div>
+                    </div>
+                    <h3 className="text-2xl font-bold mb-2">Stop For Safety</h3>
+                    <p className="text-red-100 mb-4 text-lg">Everyone has the responsibility and authority to stop work when an unsafe situation arises.</p>
+                    <p className="font-semibold bg-red-700 inline-block px-4 py-2 rounded-lg shadow-sm">No threat of reprisal.</p>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6 mb-8">
+                    <div className="bg-white p-6 rounded-lg shadow border-l-4 border-blue-500">
+                        <h4 className="font-bold text-lg mb-3 text-blue-800">When to use Standards?</h4>
+                        <ul className="space-y-3 text-gray-700">
+                            <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div> Toolbox Talks & Safety Meetings</li>
+                            <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div> Pre-job Planning (JSEA/SWMS)</li>
+                            <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div> "Take 5" assessments</li>
+                            <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div> Post-job reviews</li>
+                        </ul>
+                    </div>
+                    <div className="bg-white p-6 rounded-lg shadow border-l-4 border-green-500">
+                        <h4 className="font-bold text-lg mb-3 text-green-800">Intervention Guidance</h4>
+                        <ol className="list-decimal list-inside space-y-3 text-gray-700">
+                            <li className="pl-1">See something unsafe? Intervene positively.</li>
+                            <li className="pl-1">Work with manager to resolve.</li>
+                            <li className="pl-1">Agree when it is safe to resume.</li>
+                            <li className="pl-1">Escalate if necessary.</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-4 flex justify-between items-center shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-20 safe-area-pb">
+                    <button onClick={onPrev} className="text-gray-600 font-medium flex items-center gap-1 px-4 py-3 rounded-lg active:bg-gray-100">
+                        <ChevronLeft /> Back
+                    </button>
+                    <button onClick={onNext} className="bg-green-600 text-white px-6 py-3 rounded-full font-bold hover:bg-green-700 transition-transform active:scale-95 shadow-lg flex items-center gap-2 animate-pulse">
+                        Take Assessment <ChevronRight />
+                    </button>
+                </div>
+            </div>
+        );
+
+        const QuizModule = ({ onFinish }) => {
+            const [currentQuestion, setCurrentQuestion] = useState(0);
+            const [score, setScore] = useState(0);
+            const [showResult, setShowResult] = useState(false);
+            const [selectedOption, setSelectedOption] = useState(null);
+            const [isAnswered, setIsAnswered] = useState(false);
+
+            const handleAnswer = (index) => {
+                if (isAnswered) return;
+                setSelectedOption(index);
+                setIsAnswered(true);
+                if (index === quizQuestions[currentQuestion].correct) {
+                    setScore(score + 1);
+                }
+            };
+
+            const nextQuestion = () => {
+                if (currentQuestion < quizQuestions.length - 1) {
+                    setCurrentQuestion(currentQuestion + 1);
+                    setSelectedOption(null);
+                    setIsAnswered(false);
+                } else {
+                    setShowResult(true);
+                }
+            };
+
+            if (showResult) {
+                const percentage = (score / quizQuestions.length) * 100;
+                const passed = percentage >= 80;
+
+                return (
+                    <div className="flex flex-col items-center justify-center min-h-screen p-6 text-center bg-gray-50">
+                        <div className={`p-8 rounded-2xl shadow-xl max-w-md w-full ${passed ? 'bg-white border-2 border-green-500' : 'bg-white border-2 border-red-500'}`}>
+                            {passed ? <CheckCircle className="text-green-500 mx-auto mb-4" size={64}/> : <XCircle className="text-red-500 mx-auto mb-4" size={64}/>}
+                            <h2 className="text-3xl font-bold mb-2">{passed ? "Congratulations!" : "Not Quite"}</h2>
+                            <p className="text-gray-600 mb-6">You scored {percentage}% ({score}/{quizQuestions.length})</p>
+                            
+                            {passed ? (
+                                <div>
+                                    <p className="mb-6 text-green-700 font-medium">You have successfully completed Module 5: Life Saving Minimum Standards.</p>
+                                    <div className="bg-gray-100 p-4 rounded text-sm text-gray-500 mb-6">
+                                        ITC Training Verification Code: <span className="font-mono font-bold text-black">LSMS-2025-PASS</span>
+                                    </div>
+                                    <button onClick={() => window.location.reload()} className="bg-blue-600 text-white px-8 py-3 rounded-full hover:bg-blue-700 transition active:scale-95 font-bold shadow-lg">
+                                        Return to Home
+                                    </button>
+                                </div>
+                            ) : (
+                                <div>
+                                    <p className="mb-6 text-red-600">You need 80% to pass. Please review the standards and try again.</p>
+                                    <button onClick={() => window.location.reload()} className="bg-gray-800 text-white px-8 py-3 rounded-full hover:bg-gray-900 transition active:scale-95 font-bold shadow-lg">
+                                        Restart Course
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                );
+            }
+
+            const q = quizQuestions[currentQuestion];
+
+            return (
+                <div className="max-w-2xl mx-auto p-4 md:p-6 flex flex-col justify-center min-h-screen pb-24">
+                    <div className="mb-8">
+                        <div className="flex justify-between text-sm text-gray-500 mb-2 font-medium">
+                            <span>Question {currentQuestion + 1} of {quizQuestions.length}</span>
+                            <span>Score: {score}</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-3">
+                            <div className="bg-blue-600 h-3 rounded-full transition-all duration-300" style={{ width: `${((currentQuestion + 1) / quizQuestions.length) * 100}%` }}></div>
+                        </div>
+                    </div>
+
+                    <h3 className="text-xl md:text-2xl font-bold text-gray-800 mb-6 leading-snug">{q.question}</h3>
+
+                    <div className="space-y-3 mb-8">
+                        {q.options.map((opt, idx) => {
+                            let baseClass = "w-full p-4 md:p-5 text-left rounded-xl border-2 transition-all duration-200 flex justify-between items-center text-base md:text-lg active:scale-[0.98] ";
+                            if (!isAnswered) {
+                                baseClass += "bg-white hover:bg-blue-50 border-gray-200 hover:border-blue-300 cursor-pointer shadow-sm";
+                            } else {
+                                if (idx === q.correct) baseClass += "bg-green-50 border-green-500 text-green-800 font-medium shadow-inner";
+                                else if (idx === selectedOption && idx !== q.correct) baseClass += "bg-red-50 border-red-500 text-red-800 shadow-inner";
+                                else baseClass += "bg-gray-50 border-gray-200 opacity-50";
+                            }
+
+                            return (
+                                <button key={idx} onClick={() => handleAnswer(idx)} className={baseClass} disabled={isAnswered}>
+                                    {opt}
+                                    {isAnswered && idx === q.correct && <CheckCircle size={24} className="text-green-600"/>}
+                                    {isAnswered && idx === selectedOption && idx !== q.correct && <XCircle size={24} className="text-red-600"/>}
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    {isAnswered && (
+                        <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-4 flex justify-end items-center shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-20">
+                            <button onClick={nextQuestion} className="bg-blue-600 text-white px-8 py-3 rounded-full font-bold hover:bg-blue-700 transition-transform active:scale-95 shadow-lg text-lg">
+                                {currentQuestion < quizQuestions.length - 1 ? "Next Question" : "See Results"}
+                            </button>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const App = () => {
+            const [view, setView] = useState('welcome'); // welcome, intro, standards, implementation, quiz
+
+            useEffect(() => {
+                window.scrollTo(0, 0);
+            }, [view]);
+
+            return (
+                <div className="min-h-screen bg-gray-50 text-gray-900 font-sans">
+                    {view !== 'welcome' && (
+                        <nav className="bg-white border-b shadow-sm px-4 py-3 flex justify-between items-center sticky top-0 z-50">
+                            <div className="flex items-center gap-2 font-bold text-blue-900 text-lg">
+                                <Shield className="text-green-500" /> <span className="hidden xs:inline">ITC</span> Safety Training
+                            </div>
+                            <div className="text-xs md:text-sm text-gray-500">Module 5: LSMS</div>
+                        </nav>
+                    )}
+
+                    <main>
+                        {view === 'welcome' && <WelcomeScreen onStart={() => setView('intro')} />}
+                        {view === 'intro' && <IntroModule onNext={() => setView('standards')} />}
+                        {view === 'standards' && <StandardsExplorer onNext={() => setView('implementation')} onPrev={() => setView('intro')} />}
+                        {view === 'implementation' && <ImplementationModule onNext={() => setView('quiz')} onPrev={() => setView('standards')} />}
+                        {view === 'quiz' && <QuizModule />}
+                    </main>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
