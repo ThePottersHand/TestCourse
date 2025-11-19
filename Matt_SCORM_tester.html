@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Standalone Browser SCORM Player</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- JSZip -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="bg-slate-100 font-sans text-slate-800 h-screen flex flex-col overflow-hidden">
+
+    <!-- Header -->
+    <header class="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between shrink-0 z-10 shadow-sm">
+        <div class="flex items-center gap-3">
+            <div class="bg-blue-600 p-2 rounded-lg text-white">
+                <i data-lucide="folder" width="20" height="20"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-lg leading-tight">Browser SCORM Player</h1>
+                <p class="text-xs text-slate-500">Standalone HTML • No Server Required</p>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-4">
+            <div class="flex items-center gap-2 text-sm bg-slate-100 px-3 py-1.5 rounded-full border border-slate-200">
+                <i data-lucide="settings" width="14" height="14" class="text-slate-500"></i>
+                <span class="text-slate-600 font-medium">API Mode:</span>
+                <select id="scorm-version" class="bg-transparent border-none outline-none font-bold text-blue-600 cursor-pointer text-sm">
+                    <option value="1.2">SCORM 1.2</option>
+                    <option value="2004">SCORM 2004</option>
+                </select>
+            </div>
+
+            <label class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md cursor-pointer transition-colors shadow-sm active:translate-y-0.5">
+                <i data-lucide="upload" width="16" height="16"></i>
+                <span class="text-sm font-medium">Upload ZIP</span>
+                <input type="file" id="file-upload" accept=".zip" class="hidden" />
+            </label>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="flex flex-1 overflow-hidden relative">
+        
+        <!-- Sidebar -->
+        <div class="w-80 bg-white border-r border-slate-200 flex flex-col shrink-0 z-0">
+            <div class="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+                <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Course Content</h2>
+                <span id="item-count" class="text-[10px] bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded-full hidden">0</span>
+            </div>
+            
+            <div id="sidebar-content" class="flex-1 overflow-y-auto p-2 space-y-1">
+                <div class="h-full flex flex-col items-center justify-center text-center p-6 text-slate-400">
+                    <i data-lucide="upload" width="48" height="48" class="mb-4 opacity-20"></i>
+                    <p class="text-sm">Upload a SCORM .zip file to view structure</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Player Area -->
+        <div class="flex-1 flex flex-col bg-slate-200 relative">
+            <!-- Placeholder -->
+            <div id="placeholder-view" class="flex-1 flex flex-col items-center justify-center text-slate-400">
+                <div class="text-center max-w-md p-8 border-2 border-dashed border-slate-300 rounded-xl bg-slate-100/50">
+                    <i data-lucide="terminal" width="48" height="48" class="mx-auto mb-4 opacity-20"></i>
+                    <h3 class="text-lg font-semibold text-slate-600 mb-2">Ready to Launch</h3>
+                    <p class="text-sm">Select a module from the sidebar to load the content.</p>
+                </div>
+            </div>
+            
+            <!-- Loader -->
+            <div id="loader" class="hidden absolute inset-0 bg-white/80 z-50 flex flex-col items-center justify-center backdrop-blur-sm">
+                <i data-lucide="refresh-cw" width="40" height="40" class="animate-spin text-blue-600 mb-3"></i>
+                <p id="loader-text" class="text-slate-600 font-medium animate-pulse">Processing Files...</p>
+            </div>
+
+            <!-- Iframe -->
+            <iframe id="content-frame" class="w-full h-full border-none bg-white hidden" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"></iframe>
+        </div>
+    </div>
+
+    <!-- Debug Console -->
+    <div class="h-64 bg-slate-900 text-slate-200 flex flex-col shrink-0 border-t border-slate-700 z-20">
+        <div class="flex items-center justify-between px-4 py-2 bg-slate-800 border-b border-slate-700">
+            <div class="flex items-center gap-2">
+                <i data-lucide="terminal" width="14" height="14" class="text-green-400"></i>
+                <span class="text-xs font-mono font-bold tracking-wider">LMS DEBUG CONSOLE</span>
+            </div>
+            <button id="clear-logs" class="text-xs hover:text-white text-slate-400 flex items-center gap-1 transition-colors">
+                <i data-lucide="x" width="12" height="12"></i> Clear Log
+            </button>
+        </div>
+        <div id="log-container" class="flex-1 overflow-y-auto p-4 font-mono text-xs space-y-1.5 scroll-smooth">
+            <span class="text-slate-600 italic">Waiting for API calls...</span>
+        </div>
+    </div>
+
+    <!-- Logic -->
+    <script>
+        // --- GLOBALS ---
+        let zipEntries = null;
+        let scormVersion = '1.2';
+        let activeResource = null;
+        
+        // --- DOM ELEMENTS ---
+        const dom = {
+            fileInput: document.getElementById('file-upload'),
+            versionSelect: document.getElementById('scorm-version'),
+            sidebar: document.getElementById('sidebar-content'),
+            placeholder: document.getElementById('placeholder-view'),
+            iframe: document.getElementById('content-frame'),
+            loader: document.getElementById('loader'),
+            loaderText: document.getElementById('loader-text'),
+            logs: document.getElementById('log-container'),
+            clearLogsBtn: document.getElementById('clear-logs'),
+            itemCount: document.getElementById('item-count')
+        };
+
+        // --- HELPERS ---
+        function initIcons() { if (typeof lucide !== 'undefined') lucide.createIcons(); }
+        
+        function addLog(method, message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const colors = { 'success': 'text-green-400', 'warning': 'text-yellow-400', 'error': 'text-red-400', 'info': 'text-blue-300', 'system': 'text-slate-400' };
+            const row = document.createElement('div');
+            row.className = "flex gap-3 border-b border-slate-800/50 pb-1 mb-1 last:border-0 animate-in fade-in slide-in-from-left-2 duration-200";
+            row.innerHTML = `<span class="text-slate-500 w-20 shrink-0">${timestamp}</span><span class="w-32 shrink-0 font-bold ${colors[type] || colors.info}">${method}</span><span class="${type === 'error' ? 'text-red-300' : 'text-slate-300'} break-all flex-1">${message}</span>`;
+            if(dom.logs.querySelector('span.italic')) dom.logs.innerHTML = '';
+            dom.logs.insertBefore(row, dom.logs.firstChild);
+        }
+
+        // Handle ../ and ./ logic for paths
+        function resolvePath(baseFile, targetPath) {
+            const basePath = baseFile.includes('/') ? baseFile.substring(0, baseFile.lastIndexOf('/')) : '';
+            const parts = (basePath + '/' + targetPath).split('/');
+            const stack = [];
+            for (let part of parts) {
+                if (part === '' || part === '.') continue;
+                if (part === '..') { if (stack.length > 0) stack.pop(); }
+                else stack.push(part);
+            }
+            return stack.join('/');
+        }
+
+        function findFileInZip(path) {
+            if (!zipEntries) return null;
+            // 1. Exact
+            if (zipEntries.file(path)) return zipEntries.file(path);
+            // 2. Cleaned
+            const clean = path.replace(/^\.\//, '');
+            if (zipEntries.file(clean)) return zipEntries.file(clean);
+            // 3. Fuzzy
+            const lower = clean.toLowerCase();
+            const match = Object.keys(zipEntries.files).find(k => k.toLowerCase() === lower);
+            return match ? zipEntries.file(match) : null;
+        }
+
+        // --- SCORM API ---
+        class ScormAPI {
+            constructor(version = '1.2') {
+                this.version = version;
+                this.data = {
+                    'cmi.core.student_id': 'student_1', 'cmi.core.student_name': 'Doe, Jane',
+                    'cmi.core.lesson_status': 'not attempted', 'cmi.suspend_data': '',
+                    'cmi.core.score.raw': '', 'cmi.completion_status': 'unknown', 'cmi.success_status': 'unknown', 'cmi.entry': 'ab-initio'
+                };
+            }
+            log(m, msg, t='info') { addLog(m, msg, t); }
+            LMSInitialize(p) { this.log('LMSInitialize', `Param: "${p}"`, 'success'); return "true"; }
+            LMSFinish(p) { this.log('LMSFinish', `Param: "${p}"`, 'success'); return "true"; }
+            LMSGetValue(e) { const v = this.data[e]||""; this.log('LMSGetValue', `Get: ${e} -> "${v}"`); return v; }
+            LMSSetValue(e, v) { this.data[e]=v; this.log('LMSSetValue', `Set: ${e} = "${v}"`, 'warning'); return "true"; }
+            LMSCommit(p) { this.log('LMSCommit', `Data committed`, 'success'); return "true"; }
+            LMSGetLastError() { return "0"; } LMSGetErrorString(c) { return "No error"; } LMSGetDiagnostic(c) { return "No diagnostic"; }
+            Initialize(p) { return this.LMSInitialize(p); } Terminate(p) { return this.LMSFinish(p); }
+            GetValue(e) { return this.LMSGetValue(e); } SetValue(e, v) { return this.LMSSetValue(e, v); }
+            Commit(p) { return this.LMSCommit(p); } GetLastError() { return this.LMSGetLastError(); }
+            GetErrorString(c) { return this.LMSGetErrorString(c); } GetDiagnostic(c) { return this.LMSGetDiagnostic(c); }
+        }
+
+        // --- API INIT FUNCTION (Restored) ---
+        function initializeAPI() {
+            const api = new ScormAPI(scormVersion);
+            window.API = api;           // SCORM 1.2
+            window.API_1484_11 = api;   // SCORM 2004
+            addLog('System', `API Attached (${scormVersion})`, 'system');
+        }
+
+        // --- CONTENT LOGIC ---
+        async function handleFileUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            if (typeof JSZip === 'undefined') return alert("JSZip not loaded.");
+
+            dom.loader.classList.remove('hidden');
+            dom.loaderText.textContent = "Reading ZIP file...";
+            dom.logs.innerHTML = ''; 
+            
+            setTimeout(async () => {
+                try {
+                    addLog('System', 'Reading ZIP...', 'system');
+                    const zip = new JSZip();
+                    zipEntries = await zip.loadAsync(file);
+                    addLog('System', 'ZIP Loaded.', 'success');
+
+                    const manifestKey = Object.keys(zipEntries.files).find(n => n.toLowerCase().endsWith('imsmanifest.xml'));
+                    if (manifestKey) {
+                        const txt = await zipEntries.file(manifestKey).async("text");
+                        parseManifest(txt);
+                    } else {
+                        addLog('Error', 'imsmanifest.xml not found', 'error');
+                        renderStructure([]);
+                    }
+                } catch (err) {
+                    addLog('Error', 'Unzip failed: ' + err.message, 'error');
+                } finally {
+                    dom.loader.classList.add('hidden');
+                }
+            }, 50);
+        }
+
+        function parseManifest(xmlText) {
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+            const resources = {};
+            Array.from(xmlDoc.getElementsByTagName('resource')).forEach(res => {
+                resources[res.getAttribute('identifier')] = { href: res.getAttribute('href'), type: res.getAttribute('type') };
+            });
+            const items = Array.from(xmlDoc.getElementsByTagName('item')).map(item => {
+                const title = item.getElementsByTagName('title')[0]?.textContent || "Untitled";
+                const ref = item.getAttribute('identifierref');
+                return { identifier: item.getAttribute('identifier'), title, href: resources[ref]?.href };
+            }).filter(i => i.href);
+            renderStructure(items);
+        }
+
+        function renderStructure(items) {
+            dom.sidebar.innerHTML = '';
+            dom.itemCount.textContent = items.length;
+            dom.itemCount.classList.remove('hidden');
+            if (items.length === 0) dom.sidebar.innerHTML = '<div class="p-4 text-sm text-slate-500 text-center">No items found.</div>';
+            
+            items.forEach((item) => {
+                const btn = document.createElement('button');
+                const active = activeResource === item.title;
+                btn.className = `w-full text-left px-3 py-3 rounded-lg flex items-start gap-3 transition-all group ${active ? 'bg-blue-50 text-blue-700 border border-blue-100 shadow-sm' : 'hover:bg-slate-50 text-slate-600'}`;
+                btn.innerHTML = `
+                    <div class="icon-wrapper mt-0.5 ${active ? 'text-blue-600' : 'text-slate-400'}">
+                        ${active ? '<i data-lucide="play" width="16" height="16"></i>' : '<i data-lucide="file-text" width="16" height="16"></i>'}
+                    </div>
+                    <div><p class="text-sm font-medium leading-snug">${item.title}</p><p class="text-[10px] opacity-60 mt-1 truncate font-mono">${item.identifier}</p></div>
+                `;
+                btn.onclick = () => launchItem(item);
+                dom.sidebar.appendChild(btn);
+            });
+            initIcons();
+        }
+
+        // --- DEEP REWRITING LOGIC ---
+
+        async function processCSS(cssContent, cssPath) {
+            // Regex to find url('...')
+            const urlRegex = /url\s*\(\s*['"]?([^'"]+)['"]?\s*\)/gi;
+            let match;
+            const replacements = [];
+            
+            while ((match = urlRegex.exec(cssContent)) !== null) {
+                const originalUrl = match[1];
+                if (!originalUrl.startsWith('data:') && !originalUrl.startsWith('http')) {
+                    const absolutePath = resolvePath(cssPath, originalUrl);
+                    const fileEntry = findFileInZip(absolutePath);
+                    if (fileEntry) {
+                        const blob = await fileEntry.async("blob");
+                        // Detect Image Type from extension
+                        let mime = 'application/octet-stream';
+                        if(absolutePath.match(/\.png$/i)) mime = 'image/png';
+                        else if(absolutePath.match(/\.jpg$/i)) mime = 'image/jpeg';
+                        else if(absolutePath.match(/\.gif$/i)) mime = 'image/gif';
+                        else if(absolutePath.match(/\.svg$/i)) mime = 'image/svg+xml';
+                        else if(absolutePath.match(/\.woff2$/i)) mime = 'font/woff2';
+                        
+                        const blobUrl = URL.createObjectURL(blob.slice(0, blob.size, mime));
+                        // Store replacement range and new value
+                        replacements.push({ start: match.index, end: match.index + match[0].length, newVal: `url('${blobUrl}')` });
+                    }
+                }
+            }
+            
+            // Apply replacements in reverse to preserve indices
+            let newCss = cssContent;
+            for (let i = replacements.length - 1; i >= 0; i--) {
+                const r = replacements[i];
+                newCss = newCss.substring(0, r.start) + r.newVal + newCss.substring(r.end);
+            }
+            return newCss;
+        }
+
+        async function launchItem(item) {
+            activeResource = item.title;
+            // Update UI...
+            Array.from(dom.sidebar.querySelectorAll('button')).forEach(b => {
+                const t = b.querySelector('p').textContent;
+                const w = b.querySelector('.icon-wrapper');
+                if (t === item.title) { 
+                    b.className = b.className.replace('hover:bg-slate-50 text-slate-600', 'bg-blue-50 text-blue-700 border border-blue-100 shadow-sm');
+                    w.innerHTML = '<i data-lucide="play" width="16" height="16"></i>'; w.className = 'icon-wrapper mt-0.5 text-blue-600';
+                } else {
+                    b.className = 'w-full text-left px-3 py-3 rounded-lg flex items-start gap-3 transition-all group hover:bg-slate-50 text-slate-600';
+                    w.innerHTML = '<i data-lucide="file-text" width="16" height="16"></i>'; w.className = 'icon-wrapper mt-0.5 text-slate-400';
+                }
+            });
+            initIcons();
+
+            dom.loader.classList.remove('hidden');
+            dom.iframe.classList.add('hidden');
+            dom.placeholder.classList.add('hidden');
+
+            setTimeout(async () => {
+                try {
+                    const fileEntry = findFileInZip(item.href);
+                    if (!fileEntry) throw new Error(`Entry file ${item.href} not found`);
+                    
+                    const htmlContent = await fileEntry.async("string");
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(htmlContent, "text/html");
+
+                    const processElements = async (tagName, attr) => {
+                        const els = Array.from(doc.getElementsByTagName(tagName));
+                        for (const el of els) {
+                            const val = el.getAttribute(attr);
+                            if (val && !val.startsWith('http') && !val.startsWith('//') && !val.startsWith('data:') && !val.startsWith('#') && !val.startsWith('javascript:') && !val.startsWith('mailto:')) {
+                                const absPath = resolvePath(item.href, val);
+                                const entry = findFileInZip(absPath);
+                                if (entry) {
+                                    // SPECIAL HANDLING FOR CSS FILES
+                                    if (val.toLowerCase().endsWith('.css') || (tagName === 'link' && el.getAttribute('rel') === 'stylesheet')) {
+                                        const cssText = await entry.async("string");
+                                        const newCss = await processCSS(cssText, absPath);
+                                        const blob = new Blob([newCss], { type: 'text/css' });
+                                        el.setAttribute(attr, URL.createObjectURL(blob));
+                                    } else {
+                                        // Standard Blob
+                                        const blob = await entry.async("blob");
+                                        // Simple mime map
+                                        let mime = 'application/octet-stream';
+                                        if(absPath.endsWith('.js')) mime = 'application/javascript';
+                                        else if(absPath.endsWith('.html')) mime = 'text/html';
+                                        const blobUrl = URL.createObjectURL(blob.slice(0, blob.size, mime));
+                                        el.setAttribute(attr, blobUrl);
+                                    }
+                                }
+                            }
+                        }
+                    };
+
+                    await processElements('link', 'href');
+                    await processElements('script', 'src');
+                    await processElements('img', 'src');
+                    await processElements('iframe', 'src');
+                    await processElements('frame', 'src'); // SCORM 1.2 Frameset support
+
+                    const finalHtml = doc.documentElement.outerHTML;
+                    const mainBlob = new Blob([finalHtml], { type: 'text/html' });
+                    dom.iframe.src = URL.createObjectURL(mainBlob);
+                    dom.iframe.classList.remove('hidden');
+                    addLog('System', `Launched: ${item.title}`, 'info');
+
+                } catch (e) {
+                    addLog('Error', e.message, 'error');
+                } finally {
+                    dom.loader.classList.add('hidden');
+                }
+            }, 50);
+        }
+
+        // --- INIT ---
+        window.onload = () => { initializeAPI(); initIcons(); };
+        dom.fileInput.addEventListener('change', handleFileUpload);
+        dom.versionSelect.addEventListener('change', (e) => { scormVersion = e.target.value; initializeAPI(); });
+        dom.clearLogsBtn.addEventListener('click', () => dom.logs.innerHTML = '<span class="text-slate-600 italic">Waiting...</span>');
+    </script>
+</body>
+</html>
