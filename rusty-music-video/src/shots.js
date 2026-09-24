@@ -11,10 +11,11 @@
 
   // ------------------------------------------------------------ helpers
   const cam = (ctx, c) => RV.camera(ctx, c);
-  const sing = (t, g) => RV.singOpen(t, g);
-  const talkMouth = (t, g = 1) => { const o = sing(t, g); return { mouth: o > 0.05 ? 'talk' : 'smile', open: o }; };
-  const rustyTalk = (t, g = 1) => { const o = sing(t, g); return { mouth: o > 0.05 ? 'talk' : 'closed', open: o }; };
-  const kidsSing = (t) => talkMouth(t, 0.9);
+  // Lip-sync, only while that character is delivering one of their own lines of dialogue
+  // (RV.DIALOGUE in captions.js). Otherwise these return {} and the shot's own expression stays.
+  const talkMouth = (t, g = 1, id = 'big') => { const o = RV.talkOpen(t, id, g); return o == null ? {} : { mouth: o > 0.05 ? 'talk' : 'smile', open: o }; };
+  const rustyTalk = (t, g = 1) => { const o = RV.talkOpen(t, 'rusty', g); return o == null ? {} : { mouth: o > 0.05 ? 'talk' : 'closed', open: o }; };
+  const kidsTalk = (t, id = 'kids') => talkMouth(t, 0.9, id);
   const lineWord = (t) => RV.wordAt(t);
   const wordTime = (lineIdx, wi) => RV.LYRICS[lineIdx].w[wi][0];
   const kick = (t, k) => RV.kick(t, k);
@@ -221,7 +222,7 @@
     const poster = popAt(t, gasp + 0.3, 0.45);
     if (poster > 0) missingPoster(ctx, 1080, 420, poster * 0.85, t);
     const jump = shocked ? Math.max(0, Math.sin(clamp((t - gasp) / 0.4) * Math.PI)) * 40 : 0;
-    const face = shocked ? { eyes: 'wide', mouth: 'o', open: 0.8, brow: 1 } : kidsSing(t);
+    const face = shocked ? { eyes: 'wide', mouth: 'o', open: 0.8, brow: 1 } : kidsTalk(t);
     RV.drawKids(ctx, t, [[480, 1000, 1.1], [1320, 1010, 1.05], [1560, 1000, 1.05]], (id, i) => Object.assign(
       RV.move('idle', t, i),
       { turn: i === 0 ? 0.5 : -0.5, look: [i === 0 ? 0.7 : -0.7, 0.4], jump },
@@ -268,7 +269,7 @@
       const mv = walking ? RV.move('walk', t * 1.4, i) : RV.move('idle', t, i);
       RV.shadow(ctx, x, 985, 66);
       RV.drawKid(ctx, id, Object.assign(mv, { x, y: 985, s: 0.92, t, turn: 0.7, look: [1, -0.2] },
-        surprised ? { eyes: 'wide', mouth: 'o', open: 0.7, brow: 1, jump: Math.max(0, Math.sin(clamp((t - rustyT) / 0.35) * Math.PI)) * 30 } : kidsSing(t),
+        surprised ? { eyes: 'wide', mouth: 'o', open: 0.7, brow: 1, jump: Math.max(0, Math.sin(clamp((t - rustyT) / 0.35) * Math.PI)) * 30 } : kidsTalk(t),
         { armR: undefined, handR: [70, -200], holdR: (c, hp) => RV.torch(c, hp, -0.25, 0.8, 600) }));
     });
     ctx.restore();
@@ -306,14 +307,14 @@
     RV.drawBox(ctx, 960, 930, {
       s: 1.25, t, door: 1, glow: 0.6, inDoor: (c, x, y) => {
         RV.drawRusty(c, Object.assign({ x, y: y - 6, s: 0.62, t, headTilt: -0.22 + Math.sin(t * 1.5) * 0.05, earFlip: 'R', eyes: 'open', blink: RV.blink(t, 4),
-          wag: wagging ? 2.4 : 0.5, wagSpeed: wagging ? 26 : 12 }, t > wagT + 1.2 ? rustyTalk(t) : { mouth: 'tongue' }));
+          wag: wagging ? 2.4 : 0.5, wagSpeed: wagging ? 26 : 12, mouth: 'tongue' }, rustyTalk(t)));
       },
     });
     if (wagging && t < wagT + 1.4) RV.bigText(ctx, 'WAG WAG!', 1260, 380 + Math.sin(t * 20) * 6, 60, { fill: '#ffd23f', rot: 0.1 });
     // kids in the foreground, looking at Rusty
-    RV.drawKid(ctx, 'big', Object.assign(RV.move('idle', t, 0), { x: 300, y: 1180, s: 1.35, t, turn: 0.8, look: [1, -0.3], armR: [1.4, -0.3] }, t < wagT ? kidsSing(t) : { mouth: 'grin' }));
-    RV.drawKid(ctx, 'little', Object.assign(RV.move('idle', t, 2), { x: 1640, y: 1160, s: 1.3, t, turn: -0.8, look: [-1, -0.3] }, t < wagT ? kidsSing(t) : { mouth: 'grin', eyes: 'happy' }));
-    RV.drawKid(ctx, 'boy', Object.assign(RV.move('idle', t, 1), { x: 1870, y: 1200, s: 1.3, t, turn: -0.9, look: [-1, -0.3] }, t < wagT ? kidsSing(t) : { mouth: 'grin' }));
+    RV.drawKid(ctx, 'big', Object.assign(RV.move('idle', t, 0), { x: 300, y: 1180, s: 1.35, t, turn: 0.8, look: [1, -0.3], armR: [1.4, -0.3] }, t < wagT ? kidsTalk(t) : { mouth: 'grin' }));
+    RV.drawKid(ctx, 'little', Object.assign(RV.move('idle', t, 2), { x: 1640, y: 1160, s: 1.3, t, turn: -0.8, look: [-1, -0.3] }, t < wagT ? kidsTalk(t) : { mouth: 'grin', eyes: 'happy' }));
+    RV.drawKid(ctx, 'boy', Object.assign(RV.move('idle', t, 1), { x: 1870, y: 1200, s: 1.3, t, turn: -0.9, look: [-1, -0.3] }, t < wagT ? kidsTalk(t) : { mouth: 'grin' }));
     ctx.restore();
   }, { type: 'cut' });
 
@@ -385,7 +386,7 @@
     RV.drawBox(ctx, 1900, 900, { s: 1.0, t, glow: 0.9, door: 1 });
     if (t < runT + 0.2) {
       RV.confetti(ctx, t, { t0: 45.35, x: 700, y: 700, n: 90 });
-      stageKidsRow(ctx, t, 700, 990, 1.1, 'cheer', (id, i) => (t < 48.8 ? talkMouth(t, 0.9) : {}));
+      stageKidsRow(ctx, t, 700, 990, 1.1, 'cheer');
       RV.slam(ctx, 'YES!!', 700, 300, 150, t - 46.2, { gradient: ['#caffbf', '#06d6a0', '#118ab2'], dur: 1.6 });
     } else {
       RV.KID_IDS.forEach((id, i) => {
@@ -425,7 +426,7 @@
     kids.filter((k) => k.enter <= 0).forEach((k) => {
       RV.shadow(ctx, k.x, 990, 64);
       RV.drawKid(ctx, k.id, Object.assign(RV.move(k.walk > 0 && k.walk < 1 ? 'walk' : 'bounce', t * 1.3, k.i),
-        { x: k.x, y: 990, s: 0.95, t, turn: 0.6, look: [0.8, -0.3] }, kidsSing(t)));
+        { x: k.x, y: 990, s: 0.95, t, turn: 0.6, look: [0.8, -0.3] }, kidsTalk(t)));
     });
     kids.filter((k) => k.enter > 0 && k.enter < 1).forEach((k) => RV.sparkleField(ctx, t, { n: 5, x0: 880, x1: 1040, y0: 550, y1: 800, seed: k.i }));
     if (t > closeT + 0.2) RV.bigText(ctx, 'CLUNK!', 1300, 420, 72, { fill: '#ffffff', rot: 0.12 });
@@ -455,25 +456,18 @@
     ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -80); ctx.lineWidth = 14; ctx.strokeStyle = OUT; ctx.stroke(); ctx.lineWidth = 8; ctx.strokeStyle = '#ddd'; ctx.stroke();
     circle(ctx, 0, -86, 18); fs(ctx, '#ff4d6d', 4);
     ctx.restore();
-    interiorCast(ctx, t, {
+    const eyes = RV.collectEyes(() => interiorCast(ctx, t, {
       rusty: Object.assign({ x: 960, handR: L > 0 ? [175, -330] : [175, -440], armR: undefined }, rustyTalk(t)),
       kids: () => (L > 0.5 ? { eyes: 'wide', mouth: 'grin' } : { eyes: 'open', look: [0, -0.5] }),
-    });
+    }));
     RV.console(ctx, 960, 1160, t, { lights: L });
-    // darkness overlay with glowing eyes
+    // darkness overlay; everyone's eyes shine through it, right on top of their real eyes
     if (L < 1) {
       ctx.save();
       ctx.fillStyle = `rgba(4,6,20,${0.93 * (1 - L)})`;
       ctx.fillRect(-100, -100, W + 200, H + 200);
-      if (L < 0.5) {
-        const eyes = [[395, 704], [445, 704], [1440, 750], [1482, 750], [1662, 772], [1700, 772], [936, 562], [986, 562]];
-        eyes.forEach(([x, y], i) => {
-          const bl = RV.blink(t, i >> 1);
-          ellipse(ctx, x, y, 11, 13 * (1 - bl)); ctx.fillStyle = '#ffffff'; ctx.fill();
-          circle(ctx, x + 2, y + 2, 5); ctx.fillStyle = '#1b0f0a'; ctx.fill();
-        });
-      }
       ctx.restore();
+      RV.drawDarkEyes(ctx, eyes, 1 - clamp(L * 2));
     }
     ctx.restore();
     if (L > 0) RV.flash(ctx, (1 - clamp((t - onT) / 0.4)) * 0.8, '#fff6d6');
@@ -657,5 +651,5 @@
 
   // ------------------------------------------------------------ (more sections appended in shots2.js)
   RV._shotList = SH;
-  RV._shotHelpers = { cam, sing, talkMouth, rustyTalk, kidsSing, lineWord, wordTime, kick, popAt, rustyInPorthole, stageKidsRow, dogBed, chorusSlam, interiorCast, spaceParty, shot };
+  RV._shotHelpers = { cam, talkMouth, rustyTalk, kidsTalk, lineWord, wordTime, kick, popAt, rustyInPorthole, stageKidsRow, dogBed, chorusSlam, interiorCast, spaceParty, shot };
 })(globalThis.RV);

@@ -4,7 +4,7 @@
   const { TAU, clamp, lerp, ease, circle, ellipse, fs, rrect, hash, glow } = RV;
   const W = RV.W, H = RV.H;
   const OUT = RV.OUT;
-  const { cam, talkMouth, rustyTalk, kidsSing, kick, chorusSlam, shot } = RV._shotHelpers;
+  const { cam, talkMouth, rustyTalk, kidsTalk, kick, chorusSlam, shot } = RV._shotHelpers;
   const LN = (prefix) => RV.LYRICS.findIndex((L) => L.text.startsWith(prefix));
   const wt = (prefix, wi) => RV.LYRICS[LN(prefix)].w[wi][0];
   const DANCERS = ['disco1', 'disco2', 'disco3', 'disco4'];
@@ -433,7 +433,7 @@
     const { t, lt } = S;
     RV.radialBg(ctx, '#ffe066', '#f3722c');
     ctx.save(); ctx.globalAlpha = 0.3; RV.sunburst(ctx, W / 2, 700, t, { colors: ['#ffffff', 'rgba(255,255,255,0)'], n: 20, speed: 0.5 }); ctx.restore();
-    RV.drawKids(ctx, t, [[420, 1060, 1.2], [1500, 1060, 1.15], [1740, 1060, 1.15]], (id, i) => Object.assign(RV.move('cheer', t, i * 0.3), kidsSing(t), { mouth: 'grin' }));
+    RV.drawKids(ctx, t, [[420, 1060, 1.2], [1500, 1060, 1.15], [1740, 1060, 1.15]], (id, i) => Object.assign(RV.move('cheer', t, i * 0.3), kidsTalk(t, id)));
     RV.drawRusty(ctx, Object.assign({ x: 960, y: 1060, s: 1.3, t }, RV.rustyMove('cheer', t)));
     RV.confetti(ctx, t, { t0: 316.8, x: W / 2, y: 700, n: 120, spread: 3.2 });
     RV.slam(ctx, 'YEAH!', W / 2, 200, 170, lt - 0.1, { gradient: ['#ffffff', '#06d6a0', '#118ab2'], dur: 3 });

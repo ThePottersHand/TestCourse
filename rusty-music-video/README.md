@@ -37,7 +37,8 @@ every "Rusty the dog!" lands as a big title slam.
    then picked out the start and end time of every sung word, and those times were matched
    against the lyric sheet (`tools/analysis/`). The drums were measured as a very steady
    176 BPM beat grid, so dances, camera bumps and cuts land on the beat. The loudness of the
-   vocal drives the mouth movements, so whoever is singing lip-syncs.
+   vocal drives the mouth movements. Characters only lip-sync their own dialogue (the quoted
+   lines of the lyrics, listed with who says them in `src/captions.js`), not the narration.
 2. **Drawing.** Every frame is a pure function of time (`renderFrame(ctx, t)`), so any frame
    can be drawn in any order. The ~95 shots live in `src/shots*.js`. Characters are rigged
    in `src/characters.js`: bendable limbs, facial expressions and dance moves.

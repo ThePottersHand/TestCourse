@@ -4,9 +4,48 @@
   const { clamp, rrect } = RV;
   const W = RV.W, H = RV.H;
 
+  // ------------------------------------------------------------ dialogue
+  // Who says each quoted line of the lyric sheet: [first line, last line, speaker]. 'we' is the three
+  // kids together; 'i' is the big sister, who tells the story. In the first line of each speech the
+  // dialogue starts at the opening quote ("We said 'Rusty what's this?'"). Everything else is
+  // narration, and nobody lip-syncs to it.
+  RV.DIALOGUE = [
+    [4, 4, 'we'],       // We said 'Rusty what's this?'
+    [6, 8, 'rusty'],    // 'It's a spacetime machine ... Would you like to come with me?'
+    [12, 15, 'rusty'],  // He said 'If you look to your left ... You will see space'
+    [16, 16, 'i'],      // I said 'Rusty how is this possible?'
+    [17, 17, 'rusty'],  // He said 'I don't know but this is ace'
+    [26, 29, 'rusty'],  // Rusty the dog then said 'Hold on tight ... But you'll have to make do'
+    [36, 36, 'rusty'],  // 'I wonder where we're going'
+    [39, 39, 'rusty'],  // Rusty said 'I've got good news and bad news'
+    [40, 40, 'we'],     // We said 'Give us the good news first'
+    [41, 42, 'rusty'],  // He said 'The good news is we're in 1972 ... we are not in space'
+    [43, 43, 'we'],     // We said 'Where are we then?'
+    [44, 44, 'rusty'],  // He said 'Look outside'
+    [45, 45, 'we'],     // We said 'There's nothing there'
+    [46, 46, 'rusty'],  // He said 'It's 'cause we're underground'
+    [56, 56, 'we'],     // Well we said 'Rusty get us out of here'
+    [57, 59, 'rusty'],  // He said 'I'm trying my best ... I aimed for the west'
+    [61, 64, 'i'],      // 'Rusty, this is not what we signed up for ... a bit of a blast'
+    [65, 68, 'rusty'],  // He said 'Don't worry, I've got a plan ... some lost treasure around'
+    [85, 85, 'rusty'],  // then Rusty yelled 'Time!'
+    [93, 93, 'rusty'],  // And he said 'Wasn't that just the best?'
+    [95, 95, 'we'],     // 'Yeah Rusty, forget all the rest'
+  ];
+  const SPEECH = []; // one span per line of dialogue: { t0, t1, who }
+  const WHO = RV.LYRICS.map((L) => L.w.map(() => null)); // speaker of each word (null: narration)
+  RV.DIALOGUE.forEach(([a, b, who]) => {
+    for (let li = a; li <= b; li++) {
+      const w = RV.LYRICS[li].w;
+      const from = li === a ? Math.max(0, w.findIndex((x) => /^['‘]/.test(x[2]))) : 0;
+      for (let i = from; i < w.length; i++) WHO[li][i] = who;
+      SPEECH.push({ t0: w[from][0], t1: w[w.length - 1][1], who });
+    }
+  });
+
   // flat word list for lookups
   const WORDS = [];
-  RV.LYRICS.forEach((L, li) => L.w.forEach((w) => WORDS.push({ t0: w[0], t1: w[1], text: w[2], line: li })));
+  RV.LYRICS.forEach((L, li) => L.w.forEach((w, wi) => WORDS.push({ t0: w[0], t1: w[1], text: w[2], line: li, who: WHO[li][wi] })));
   WORDS.sort((a, b) => a.t0 - b.t0);
   RV.WORDS = WORDS;
 
@@ -24,14 +63,21 @@
 
   const syllables = (s) => Math.max(1, (s.toLowerCase().replace(/[^a-z]/g, '').match(/[aeiouy]+/g) || []).length);
 
-  // mouth openness for whoever is "singing" right now (0..1)
-  RV.singOpen = function (t, gain = 1) {
-    const w = wordAt(t);
-    if (!w) return 0;
+  // mouth openness while singing word w at time t (0..1)
+  function mouthOpen(w, t, gain) {
     const n = syllables(w.text);
     const p = clamp((t - w.t0) / Math.max(0.08, w.t1 - w.t0));
     const v = clamp(RV.vocal(t) * 1.25);
     return clamp(gain * v * (0.3 + 0.7 * Math.abs(Math.sin(Math.PI * p * n))));
+  }
+  // does this character ('rusty', a kid id, or 'kids' for all three) deliver lines spoken by `who`?
+  const delivers = (id, who) => (who === 'rusty' ? id === 'rusty' : who === 'we' ? id !== 'rusty' : who === 'i' && id === 'big');
+  // Lip-sync for dialogue only. null unless the character is part-way through one of their own
+  // lines of dialogue; then how open their mouth is (0 between words).
+  RV.talkOpen = function (t, id, gain = 1) {
+    if (!SPEECH.some((s) => t >= s.t0 - 0.05 && t <= s.t1 + 0.1 && delivers(id, s.who))) return null;
+    const w = wordAt(t);
+    return w && w.who && delivers(id, w.who) ? mouthOpen(w, t, gain) : 0;
   };
   // true while a line from the given section list is being sung
   RV.lineAt = function (t, lead = 0.25) {

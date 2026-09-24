@@ -4,7 +4,7 @@
   const { TAU, clamp, lerp, ease, circle, ellipse, fs, rrect, hash, glow } = RV;
   const W = RV.W, H = RV.H;
   const OUT = RV.OUT;
-  const { cam, talkMouth, rustyTalk, kidsSing, kick, popAt, chorusSlam, shot } = RV._shotHelpers;
+  const { cam, talkMouth, rustyTalk, kidsTalk, kick, popAt, chorusSlam, shot } = RV._shotHelpers;
 
   // word time by line prefix + word index (robust to line numbering)
   const LN = (prefix) => RV.LYRICS.findIndex((L) => L.text.startsWith(prefix));
@@ -61,7 +61,7 @@
       eyes: t > clickT && t < panT ? 'happy' : 'open' }, t > clickT ? { mouth: 'grin' } : rustyTalk(t)));
     // kids with no seats, shrugging
     RV.drawKids(ctx, t, [[1700, 1060, 1.1], [1960, 1060, 1.05], [2200, 1060, 1.05]], (id, i) =>
-      Object.assign(RV.move('idle', t, i), { turn: -0.4, armL: [1.35, -0.75], armR: [1.35, -0.75], brow: 1, browAng: 0.6, mouth: i === 1 ? 'o' : 'flat', headTilt: (i - 1) * 0.12 }, t > panT ? kidsSing(t) : {}));
+      Object.assign(RV.move('idle', t, i), { turn: -0.4, armL: [1.35, -0.75], armR: [1.35, -0.75], brow: 1, browAng: 0.6, mouth: i === 1 ? 'o' : 'flat', headTilt: (i - 1) * 0.12 }));
     ctx.restore();
     if (t > clickT) RV.slam(ctx, 'CLICK!', 1450 - pan * 900, 380, 84, t - clickT, { gradient: ['#ffffff', '#4cc9f0'], dur: 1.4 });
   }, { type: 'cut' });
@@ -79,7 +79,7 @@
       const grip = clamp((t - gripT - i * 0.12) / 0.3);
       const hx = i === 0 ? 560 : 1360;
       const pose = Object.assign({ x, y: 1000, s: 1.0, t, bob: (RV.KIDS[id].thigh + RV.KIDS[id].shin) * 0.62, eyes: 'wide', mouth: 'o', open: 0.5, brow: 1, browAng: 0.6,
-        footL: [-30, 0], footR: [30, 0], blink: RV.blink(t, i) }, kidsSing(t));
+        footL: [-30, 0], footR: [30, 0], blink: RV.blink(t, i) }, kidsTalk(t));
       if (grip > 0) {
         const s = 1.0;
         pose.handL = [lerp(-60, (hx - x) / s - 40, grip), lerp(-160, (600 - 1000) / s, grip)];
@@ -273,7 +273,7 @@
     RV.KID_IDS.forEach((id, i) => {
       const x = 440 + i * 520, y = 1350 - lean * 60;
       RV.drawKid(ctx, id, Object.assign({ x, y, s: 1.9 + lean * 0.2, t, lean: (1 - i) * -0.05, eyes: 'wide', look: [0, -0.2], brow: 1,
-        armL: [0.8, -1.7], armR: [0.8, -1.7], blink: RV.blink(t, i + 2) }, kidsSing(t)));
+        armL: [0.8, -1.7], armR: [0.8, -1.7], blink: RV.blink(t, i + 2) }, kidsTalk(t)));
     });
     RV.sparkleField(ctx, t, { n: 16, y1: 500, size: 30 });
     if (lt > 3.6) RV.bigText(ctx, 'DRUMROLL...', W / 2, 150 + Math.sin(t * 30) * 4, 90, { fill: '#ffffff' });
@@ -293,7 +293,7 @@
     }
     // Rusty in flower power
     const dance = t > stop1;
-    const pose = dance ? RV.rustyMove('disco', t) : { pose: 'stand', armL: [0.5, 0.2], armR: [2.2, 0.3], mouth: 'grin', eyes: 'happy' };
+    const pose = dance ? RV.rustyMove('disco', t) : Object.assign({ pose: 'stand', armL: [0.5, 0.2], armR: [2.2, 0.3], mouth: 'grin', eyes: 'happy' }, rustyTalk(t));
     ctx.save();
     cam(ctx, { zoom: 1 + (dance ? kick(t, 6) * 0.03 : 0) });
     RV.drawRusty(ctx, Object.assign({ x: 960, y: 1060, s: 1.25, t: tt, hat: (c) => { for (let k = 0; k < 7; k++) RV.daisy(c, -60 + k * 20, -62 - Math.abs(3 - k) * -4, 16, k % 2 ? '#ff4d6d' : '#ffd23f'); } }, pose));
@@ -341,8 +341,8 @@
     // sad faces
     const sad = t > wt('The bad news', 1);
     RV.drawKids(ctx, t, [[300, 1150, 1.3], [1580, 1150, 1.25], [1790, 1160, 1.2]], (id, i) =>
-      Object.assign({ turn: i ? -0.3 : 0.3, blink: RV.blink(t, i) }, sad ? { mouth: 'frown', brow: -0.2, browAng: 0.8, look: [0, 0.6] } : kidsSing(t)));
-    RV.drawRusty(ctx, Object.assign({ x: 1180, y: 1010, s: 1.0, t, earL: 0.5, earR: 0.5, headTilt: 0.2, brow: 1, wag: 0.1, goggles: 1 }, t > xT ? { mouth: 'frown', eyes: 'puppy' } : rustyTalk(t)));
+      Object.assign({ turn: i ? -0.3 : 0.3, blink: RV.blink(t, i) }, sad ? { mouth: 'frown', brow: -0.2, browAng: 0.8, look: [0, 0.6] } : kidsTalk(t)));
+    RV.drawRusty(ctx, Object.assign({ x: 1180, y: 1010, s: 1.0, t, earL: 0.5, earR: 0.5, headTilt: 0.2, brow: 1, wag: 0.1, goggles: 1 }, t > xT ? { mouth: 'frown', eyes: 'puppy' } : {}, rustyTalk(t)));
     // tiny rain cloud over Rusty
     if (t > xT) {
       RV.cloud(ctx, 1180, 560 + Math.sin(t * 2) * 6, 0.9, '#6c757d');
@@ -361,7 +361,7 @@
     cam(ctx, { x: lerp(0, -760, push), y: lerp(0, -110, push), zoom: 1 + push * 1.9 });
     interior(ctx, t, { leftWin: (c, x, y, r) => { c.fillStyle = '#020104'; c.fillRect(x - r, y - r, r * 2, r * 2); } });
     RV.drawKids(ctx, t, [[520, 990, 1.0], [1420, 990, 1.0], [1640, 990, 1.0]], (id, i) =>
-      Object.assign(RV.move('idle', t, i), { turn: t > lookT ? -0.9 : 0.4, look: [t > lookT ? -1 : 0.6, -0.2] }, t < lookT ? kidsSing(t) : { mouth: 'o', open: 0.4 }));
+      Object.assign(RV.move('idle', t, i), { turn: t > lookT ? -0.9 : 0.4, look: [t > lookT ? -1 : 0.6, -0.2] }, t < lookT ? kidsTalk(t) : { mouth: 'o', open: 0.4 }));
     RV.drawRusty(ctx, Object.assign({ x: 980, y: 960, s: 1.0, t, pose: 'stand', goggles: 1, armL: t > lookT - 0.3 ? [1.75, 0.15] : [0.4, 0.2], armR: [0.4, 0.2], headTurn: -0.6 }, t > lookT - 0.4 ? rustyTalk(t) : { mouth: 'closed' }));
     ctx.restore();
   }, { type: 'cut' });
@@ -375,9 +375,9 @@
     ctx.save(); circle(ctx, cx, cy, r); ctx.clip();
     const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r); g.addColorStop(0, '#fff3c4'); g.addColorStop(1, '#f4a261');
     ctx.fillStyle = g; ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
-    RV.drawKid(ctx, 'big', { x: cx - 180, y: cy + 520, s: 1.5, t, turn: 0.3, look: [0.2, 0], eyes: 'open', mouth: 'flat', squash: 0.95, blink: RV.blink(t, 1) });
-    RV.drawKid(ctx, 'boy', { x: cx + 40, y: cy + 470, s: 1.5, t, look: [0, 0], eyes: 'open', mouth: 'o', open: 0.2, blink: RV.blink(t, 2) });
-    RV.drawKid(ctx, 'little', { x: cx + 230, y: cy + 480, s: 1.45, t, turn: -0.3, look: [-0.2, 0], eyes: 'open', mouth: 'flat', blink: RV.blink(t, 3) });
+    RV.drawKid(ctx, 'big', Object.assign({ x: cx - 180, y: cy + 520, s: 1.5, t, turn: 0.3, look: [0.2, 0], eyes: 'open', mouth: 'flat', squash: 0.95, blink: RV.blink(t, 1) }, kidsTalk(t, 'big')));
+    RV.drawKid(ctx, 'boy', Object.assign({ x: cx + 40, y: cy + 470, s: 1.5, t, look: [0, 0], eyes: 'open', mouth: 'o', open: 0.2, blink: RV.blink(t, 2) }, kidsTalk(t, 'boy')));
+    RV.drawKid(ctx, 'little', Object.assign({ x: cx + 230, y: cy + 480, s: 1.45, t, turn: -0.3, look: [-0.2, 0], eyes: 'open', mouth: 'flat', blink: RV.blink(t, 3) }, kidsTalk(t, 'little')));
     ctx.fillStyle = 'rgba(255,255,255,0.12)'; ctx.beginPath(); ctx.ellipse(cx - 120, cy - 150, 160, 60, -0.6, 0, TAU); ctx.fill();
     ctx.restore();
     circle(ctx, cx, cy, r); ctx.lineWidth = 8; ctx.strokeStyle = OUT; ctx.stroke();
@@ -536,7 +536,7 @@
     interior(ctx, t, { dirt: true });
     RV.drawRusty(ctx, Object.assign({ x: 1400, y: 960, s: 0.95, t, pose: 'stand', goggles: 1, headTurn: -0.5, look: [-0.8, 0], brow: 1 }, RV.rustyMove('idle', t)));
     RV.drawKids(ctx, t, [[420, 1030, 1.2], [700, 1030, 1.15], [960, 1030, 1.15]], (id, i) =>
-      Object.assign(RV.move('idle', t, i), { turn: 0.7, look: [1, -0.2], armL: [0.9, -1.8], armR: [0.9, -1.8], brow: 1, browAng: 0.7, eyes: 'wide', blink: RV.blink(t, i) }, kidsSing(t)));
+      Object.assign(RV.move('idle', t, i), { turn: 0.7, look: [1, -0.2], armL: [0.9, -1.8], armR: [0.9, -1.8], brow: 1, browAng: 0.7, eyes: 'wide', blink: RV.blink(t, i) }, kidsTalk(t)));
     ctx.restore();
     if (lt > 1.8) RV.bigText(ctx, 'PLEASE!', 700, 200, 90 * RV.pop(lt - 1.8), { fill: '#ffd23f', rot: -0.08 });
   }, { type: 'black', dur: 0.4 });
@@ -789,7 +789,7 @@
     RV.radialBg(ctx, '#ffd6ff', '#7209b7');
     ctx.save(); ctx.globalAlpha = 0.3; RV.sunburst(ctx, W / 2, 600, t, { colors: ['#ffffff', 'rgba(255,255,255,0)'], n: 18 }); ctx.restore();
     RV.drawKids(ctx, t, [[480, 1090, 1.35], [960, 1090, 1.3], [1440, 1090, 1.3]], (id, i) =>
-      Object.assign(RV.move('bounce', t, i), { eyes: 'happy', mouth: 'grin', headTilt: Math.sin(t * 9 + i) * 0.12, armL: [0.9, -1.8], armR: [0.9, -1.8] }));
+      Object.assign(RV.move('bounce', t, i), { eyes: 'happy', mouth: 'grin', headTilt: Math.sin(t * 9 + i) * 0.12, armL: [0.9, -1.8], armR: [0.9, -1.8] }, kidsTalk(t, id)));
     const bT = wt("This adventure's", 6);
     RV.confetti(ctx, t, { t0: bT, x: W / 2, y: 600, n: 120, spread: 3.4 });
     if (t > bT) RV.slam(ctx, 'BLAST!', W / 2, 220, 150, t - bT, { gradient: ['#fff3b0', '#ff4fa3', '#7209b7'], dur: 2 });
@@ -866,7 +866,7 @@
       RV.drawKid(ctx, id, Object.assign(RV.move('walk', t * 1.2, i), { x, y, s: 0.9, t, turn: 0.7, look: [1, 0], mouth: 'o', open: 0.3,
         handR: [70, -200], holdR: (c, hp) => RV.torch(c, hp, -0.1 + Math.sin(t * 1.6 + i) * 0.25, 1.2, 900) }));
     });
-    RV.drawRustySide(ctx, Object.assign({ x: 1100, y: 940, s: 0.85, t, gait: t * 1.3, run: 0.1, goggles: 1 }, { mouth: 'closed' }));
+    RV.drawRustySide(ctx, Object.assign({ x: 1100, y: 940, s: 0.85, t, gait: t * 1.3, run: 0.1, goggles: 1, mouth: 'closed' }, rustyTalk(t)));
     RV.bigText(ctx, "'72", 1700, 200, 110, { font: RV.FONT.groovy, fill: '#ee9b00' });
   }, { type: 'black', dur: 0.4 });
 
@@ -975,7 +975,7 @@
     RV.KID_IDS.forEach((id, i) => {
       const x = 380 + i * 250;
       RV.drawKid(ctx, id, Object.assign({ x, y: 960, s: 1.0, t, turn: 0.8, look: [1, 0], handR: [60, -240], holdR: (c, hp) => RV.shovel(c, hp, 0.4, 0.85) },
-        t > hitT ? { eyes: 'wide', mouth: 'o', open: 0.9, brow: 1, jump: 20 * Math.max(0, Math.sin((t - hitT) * 10)) } : Object.assign(RV.move('idle', t, i), kidsSing(t))));
+        t > hitT ? { eyes: 'wide', mouth: 'o', open: 0.9, brow: 1, jump: 20 * Math.max(0, Math.sin((t - hitT) * 10)) } : Object.assign(RV.move('idle', t, i), kidsTalk(t))));
     });
     RV.drawRustySide(ctx, { x: 1180, y: 960, s: 0.9, t, dig: t < hitT ? 1 : 0, mouth: t > hitT ? 'open' : 'tongue' });
     if (t > hitT) RV.slam(ctx, 'CRASH!', 1500, 260, 130, t - hitT, { gradient: ['#ffffff', '#ffd23f', '#ff4fa3'], dur: 1.5 });

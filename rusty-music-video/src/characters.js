@@ -7,6 +7,39 @@
   const OUT = RV.OUT;
 
   // ================================================================ shared face bits
+  // Eyes shining in the dark have to sit exactly on the characters' real eyes, so every open eye
+  // reports where it was drawn while RV.collectEyes is running: the transform at its centre, its
+  // size, blink, and the pupil's offset (local units).
+  let eyeProbe = null;
+  function probeEye(ctx, rx, ry, blink, px, py, pr) {
+    if (!eyeProbe) return;
+    const m = ctx.getTransform();
+    eyeProbe.push({ m: [m.a, m.b, m.c, m.d, m.e, m.f], rx, ry, blink, px, py, pr });
+  }
+  RV.collectEyes = function (draw) {
+    const prev = eyeProbe;
+    eyeProbe = [];
+    try { draw(); return eyeProbe; } finally { eyeProbe = prev; }
+  };
+  // draw collected eyes as white eyes with dark pupils (on top of a darkness overlay)
+  RV.drawDarkEyes = function (ctx, eyes, alpha = 1) {
+    if (alpha <= 0) return;
+    for (const e of eyes) {
+      ctx.save();
+      ctx.setTransform(e.m[0], e.m[1], e.m[2], e.m[3], e.m[4], e.m[5]);
+      ctx.globalAlpha *= alpha;
+      ctx.scale(1, Math.max(0.08, 1 - e.blink));
+      ellipse(ctx, 0, 0, e.rx, e.ry);
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+      ctx.clip();
+      circle(ctx, e.px, e.py, e.pr);
+      ctx.fillStyle = '#1b0f0a';
+      ctx.fill();
+      ctx.restore();
+    }
+  };
+
   function eye(ctx, x, y, rx, ry, o) {
     const kind = o.eyes || 'open';
     const lw = o.lw || 4;
@@ -23,14 +56,15 @@
     const blink = clamp(o.blink || 0);
     const wide = kind === 'wide' ? 1.18 : 1;
     const sy = Math.max(0.08, 1 - blink);
+    const lx = (o.look ? o.look[0] : 0) * rx * 0.45, ly = (o.look ? o.look[1] : 0) * ry * 0.4;
+    const ir = rx * (kind === 'wide' ? 0.62 : 0.78);
+    probeEye(ctx, rx * wide, ry * wide, blink, lx, ly + ry * 0.08, ir * 0.62);
     ctx.scale(1, sy);
     ellipse(ctx, 0, 0, rx * wide, ry * wide);
     fs(ctx, '#ffffff', lw);
     ctx.save();
     ellipse(ctx, 0, 0, rx * wide, ry * wide);
     ctx.clip();
-    const lx = (o.look ? o.look[0] : 0) * rx * 0.45, ly = (o.look ? o.look[1] : 0) * ry * 0.4;
-    const ir = rx * (kind === 'wide' ? 0.62 : 0.78);
     circle(ctx, lx, ly + ry * 0.08, ir);
     fs(ctx, o.irisC || '#5a3620');
     circle(ctx, lx, ly + ry * 0.08, ir * 0.55);
@@ -799,12 +833,13 @@
       }
       const rx = puppy ? 16 : 12, ry = puppy ? 18 : 14;
       const blink = clamp(o.blink || 0);
+      const lx = (o.look ? o.look[0] : 0) * 3, ly = (o.look ? o.look[1] : 0) * 3;
       ctx.save();
       ctx.translate(ex, ey);
+      probeEye(ctx, rx + 3, ry + 3, blink, lx * 1.6, ly * 1.6, rx * 0.62);
       ctx.scale(1, Math.max(0.08, 1 - blink));
       ellipse(ctx, 0, 0, rx + 3, ry + 3); ctx.fillStyle = '#7d4a26'; ctx.fill();
       ellipse(ctx, 0, 0, rx, ry); fs(ctx, '#2a160e');
-      const lx = (o.look ? o.look[0] : 0) * 3, ly = (o.look ? o.look[1] : 0) * 3;
       circle(ctx, lx - rx * 0.32, ly - ry * 0.35, rx * (puppy ? 0.42 : 0.36)); fs(ctx, '#ffffff');
       circle(ctx, lx + rx * 0.35, ly + ry * 0.35, rx * 0.16); fs(ctx, '#ffffff');
       if (puppy) {
@@ -1122,7 +1157,16 @@
     // mouth
     const mk = p.mouth || 'closed';
     ctx.beginPath();
-    if (mk === 'open' || mk === 'tongue' || mk === 'talk' || mk === 'howl') {
+    if (mk === 'talk' && (p.open || 0) > 0.08) {
+      // talking: the jaw drops open with each syllable
+      const o = clamp(p.open);
+      const jaw = () => { ctx.beginPath(); ctx.moveTo(88, 15); ctx.quadraticCurveTo(64, 21, 40, 17); ctx.quadraticCurveTo(58, 22 + o * 18, 84, 20); ctx.closePath(); };
+      jaw(); ctx.fillStyle = '#4a1512'; ctx.fill();
+      ctx.save(); ctx.clip();
+      ellipse(ctx, 62, 22 + o * 12, 14, 5 + o * 3); ctx.fillStyle = '#f07e8e'; ctx.fill();
+      ctx.restore();
+      jaw(); ctx.lineWidth = 4; ctx.lineJoin = 'round'; ctx.strokeStyle = OUT; ctx.stroke();
+    } else if (mk === 'open' || mk === 'tongue' || mk === 'talk' || mk === 'howl') {
       const o = mk === 'talk' ? clamp(p.open || 0) : 1;
       ctx.moveTo(90, 16); ctx.quadraticCurveTo(60, 20 + o * 18, 36, 18);
       ctx.lineWidth = 4; ctx.strokeStyle = OUT; ctx.stroke();
