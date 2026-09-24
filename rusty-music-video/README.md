@@ -5,6 +5,8 @@ hand animation and there are no image assets: Rusty, the three kids, the spaceti
 the 1972 disco bunker and everything else are drawn on an HTML canvas, frame by frame,
 in time with the music.
 
+![Title card](docs/poster.jpg)
+
 - **Watch the video:** `output/rusty-the-dogs-spacetime-adventure.mp4`
 - **Watch it live in a browser:** open `index.html`. The same animation code draws each
   frame in real time, synced to `audio/rusty-the-dogs-spacetime-adventure.mp3`. It has
@@ -23,6 +25,8 @@ in time with the music.
 | Chorus 3 / Bridge | Neon disco with a light-up floor, dancers in flares, Rusty howling, a painted velvet moon, and "TIME!" |
 | Verse 4 | Through the tunnel of light, then home. Puppy eyes, a group hug, checking the box in all weathers, and sleeping by the fire |
 | Finale / Outro | A dream-world finale with fireworks, then the box whooshes off into the stars and the constellation comes back: *The End?* |
+
+![Storyboard: 20 moments from the video](docs/storyboard.jpg)
 
 The song's lyrics appear karaoke-style: each word lights up as it's sung. In the choruses,
 every "Rusty the dog!" lands as a big title slam.
@@ -54,7 +58,8 @@ src/
   video.js       picks the shot for each moment, draws transitions and finishing touches
 tools/
   render.mjs     render the MP4          frames.mjs  contact sheets of chosen timestamps
-  sheet.mjs      character sheet         analysis/   song analysis (Python)
+  sheet.mjs      character sheet         storyboard.mjs  README images
+  analysis/      song analysis (Python)
 ```
 
 ## Re-rendering
