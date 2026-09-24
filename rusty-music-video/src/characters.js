@@ -368,6 +368,54 @@
     mouth(ctx, fx * 1.1, r * 0.55, r * 0.46, p, 4);
   }
 
+  // Wide-leg cropped trousers (the big sister's cream culottes): one shape per leg running
+  // hip -> knee -> mid-calf so it bends with the leg, tucked up under the top and flaring at the hem.
+  function culottes(ctx, h, k, f, K, pw, lw) {
+    const unit = (x, y) => { const l = Math.hypot(x, y) || 1; return [x / l, y / l]; };
+    const d1 = unit(k[0] - h[0], k[1] - h[1]);           // thigh direction
+    const d2 = unit(f[0] - k[0], f[1] - k[1]);           // shin direction
+    const n1 = [-d1[1], d1[0]], n2 = [-d2[1], d2[0]];
+    const nk = unit(n1[0] + n2[0], n1[1] + n2[1]);        // knee normal (mitred)
+    const miter = 1 / Math.max(0.65, nk[0] * n1[0] + nk[1] * n1[1]);
+    const hemT = Math.min(0.6, 1.07 - K.crop);          // how far down the shin the hem sits
+    const c = [lerp(k[0], f[0], hemT), lerp(k[1], f[1], hemT)];
+    const top = [h[0] - d1[0] * 16, h[1] - d1[1] * 16]; // reaches up under the cardigan
+    const wT = pw * 0.7, wK = pw * 0.74 * miter, wC = pw * 0.98;
+    const off = (p, n, w) => [p[0] + n[0] * w, p[1] + n[1] * w];
+    const a1 = off(top, n1, wT), a2 = off(k, nk, wK), a3 = off(c, n2, wC);
+    const b1 = off(top, n1, -wT), b2 = off(k, nk, -wK), b3 = off(c, n2, -wC);
+    // straight fabric panels with a rounded bend at the knee; the rounding is capped so it
+    // never runs past either panel (an oversized corner doubles the outline back on itself)
+    const corner = (p0, p1, p2, r) => {
+      const u = unit(p0[0] - p1[0], p0[1] - p1[1]), v = unit(p2[0] - p1[0], p2[1] - p1[1]);
+      const theta = Math.acos(clamp(u[0] * v[0] + u[1] * v[1], -1, 1));
+      if (theta > Math.PI - 0.02) { ctx.lineTo(p1[0], p1[1]); return; }
+      const half = Math.tan(theta / 2);
+      const room = 0.45 * Math.min(Math.hypot(p0[0] - p1[0], p0[1] - p1[1]), Math.hypot(p2[0] - p1[0], p2[1] - p1[1]));
+      ctx.arcTo(p1[0], p1[1], p2[0], p2[1], Math.min(r, room * half));
+    };
+    const hem = [c[0] + d2[0] * 7, c[1] + d2[1] * 7];
+    const r = pw * 0.9;
+    // the knee pushes the fabric out on one side (convex, rounded); the inner seam hangs straight
+    const lx = f[0] - h[0], ly = f[1] - h[1];
+    const aOuter = (k[0] - h[0]) * -ly + (k[1] - h[1]) * lx >= 0;
+    ctx.beginPath();
+    ctx.moveTo(a1[0], a1[1]);
+    if (aOuter) corner(a1, a2, a3, r);
+    ctx.lineTo(a3[0], a3[1]);
+    ctx.quadraticCurveTo(hem[0], hem[1], b3[0], b3[1]);
+    if (!aOuter) corner(b3, b2, b1, r);
+    ctx.lineTo(b1[0], b1[1]);
+    ctx.closePath();
+    fs(ctx, K.pants, lw);
+    // soft fold from the knee to the hem
+    const fk = off(k, nk, wK * 0.18), fc = off(c, n2, wC * 0.3);
+    ctx.beginPath();
+    ctx.moveTo(fk[0], fk[1]);
+    ctx.quadraticCurveTo((fk[0] + fc[0]) / 2 + n2[0] * 4, (fk[1] + fc[1]) / 2 + n2[1] * 4, fc[0], fc[1]);
+    ctx.lineWidth = 2.6; ctx.strokeStyle = K.pantsSh; ctx.lineCap = 'round'; ctx.stroke();
+  }
+
   function shoe(ctx, x, y, K, side, lw) {
     ctx.save();
     ctx.translate(x, y);
@@ -466,25 +514,10 @@
       const [h, k, f] = L.chain;
       const pw = K.legW;
       if (K.crop < 1) {
-        // bare calf + sock, then wide culottes over thigh + top of shin
+        // bare calf + sock, then wide cropped trousers that follow the bent leg
         limb(ctx, [k, f], pw * 0.56, SKIN, lw);
         limb(ctx, [[lerp(k[0], f[0], 0.72), lerp(k[1], f[1], 0.72)], f], pw * 0.6, K.sock, lw);
-        const cx = lerp(k[0], f[0], K.crop - 0.3), cy = lerp(k[1], f[1], K.crop - 0.3);
-        const ang = Math.atan2(f[1] - k[1], f[0] - k[0]) - Math.PI / 2;
-        ctx.save();
-        ctx.translate(cx, cy);
-        ctx.rotate(ang);
-        // wide-leg trouser shape
-        ctx.beginPath();
-        ctx.moveTo(-pw * 0.62, -Math.hypot(k[0] - cx, k[1] - cy) - K.thigh * 0.9);
-        ctx.lineTo(pw * 0.62, -Math.hypot(k[0] - cx, k[1] - cy) - K.thigh * 0.9);
-        ctx.lineTo(pw * 0.95, 4);
-        ctx.quadraticCurveTo(0, 12, -pw * 0.95, 4);
-        ctx.closePath();
-        fs(ctx, K.pants, lw);
-        ctx.beginPath(); ctx.moveTo(L.side * pw * 0.1, -30); ctx.lineTo(L.side * pw * 0.3, 0);
-        ctx.lineWidth = 2.5; ctx.strokeStyle = K.pantsSh; ctx.stroke();
-        ctx.restore();
+        culottes(ctx, h, k, f, K, pw, lw);
       } else if (K.flare) {
         limb(ctx, [h, k, f], pw, K.pants, lw);
         const ang = Math.atan2(f[1] - k[1], f[0] - k[0]) - Math.PI / 2;

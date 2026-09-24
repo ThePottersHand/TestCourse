@@ -58,6 +58,7 @@ src/
   video.js       picks the shot for each moment, draws transitions and finishing touches
 tools/
   render.mjs     render the MP4          frames.mjs  contact sheets of chosen timestamps
+  patch.mjs      redraw one character's frames in an existing MP4
   sheet.mjs      character sheet         storyboard.mjs  README images
   analysis/      song analysis (Python)
 ```
@@ -74,6 +75,20 @@ node tools/frames.mjs output/check.png 30 75 140  # quick contact sheet of times
 ```
 
 Useful flags for `render.mjs`: `--crf` (quality, lower = better), `--preset`, `--workers`, `--fps`.
+
+### Fixing one character without re-rendering everything
+
+After changing how one character is drawn, `tools/patch.mjs` redraws only the frames that
+character appears in and splices them into an existing full-quality render at its keyframes.
+Every other stretch of the video keeps its original encoded bytes. For example, after a change
+to the big sister (`big`; the others are `boy` and `little`):
+
+```bash
+node tools/patch.mjs --master old-1080p.mp4 --out new-1080p.mp4 --who big
+```
+
+The existing render must come from `tools/render.mjs` with its default settings, so the new
+pieces match it.
 
 Re-running the song analysis requires Python with `demucs`, `faster-whisper`, `librosa` and `soundfile`:
 

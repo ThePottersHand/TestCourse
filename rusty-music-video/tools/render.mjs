@@ -104,7 +104,8 @@ const video = path.join(tmp, 'video.mp4');
 await run(FFMPEG, ['-hide_banner', '-loglevel', 'error', '-y', '-f', 'concat', '-safe', '0', '-i', list, '-c', 'copy', video]);
 await run(FFMPEG, ['-hide_banner', '-loglevel', 'error', '-y', '-i', video, '-ss', String(start), '-t', String(end - start), '-i', audio,
   // re-zero the audio clock (MP3 encoder delay) so it lines up with the analysis timings
-  '-map', '0:v', '-map', '1:a', '-af', 'asetpts=N/SR/TB', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k', '-shortest', '-movflags', '+faststart',
+  // (no -shortest: it trimmed the last frames of the fade-out when the audio came up a hair short)
+  '-map', '0:v', '-map', '1:a', '-af', 'asetpts=N/SR/TB', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart',
   '-metadata', "title=Rusty the Dog's Spacetime Adventure", out]);
 fs.rmSync(tmp, { recursive: true, force: true });
 const mb = fs.statSync(out).size / 1e6;
