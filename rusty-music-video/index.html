@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rusty the Dog's Spacetime Adventure</title>
+  <meta name="description" content="A cartoon music video drawn entirely with code, synced live to the song.">
+  <style>
+    @font-face { font-family: 'Luckiest Guy'; src: url('fonts/LuckiestGuy-Regular.ttf') format('truetype'); font-display: block; }
+    @font-face { font-family: 'Fredoka'; src: url('fonts/Fredoka-SemiBold.ttf') format('truetype'); font-weight: 600; font-display: block; }
+    @font-face { font-family: 'Shrikhand'; src: url('fonts/Shrikhand-Regular.ttf') format('truetype'); font-display: block; }
+    @font-face { font-family: 'VT323'; src: url('fonts/VT323-Regular.ttf') format('truetype'); font-display: block; }
+    @font-face { font-family: 'Monoton'; src: url('fonts/Monoton-Regular.ttf') format('truetype'); font-display: block; }
+
+    :root {
+      --bg: #0d0a1f;
+      --panel: #1a1535;
+      --text: #f5f0ff;
+      --muted: #a9a0c8;
+      --accent: #ffd23f;
+      --accent-2: #ff4fa3;
+      --track: #3a3160;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; }
+    body {
+      background: radial-gradient(1200px 600px at 50% -10%, #2b1f66 0%, var(--bg) 60%) fixed, var(--bg);
+      color: var(--text);
+      font-family: 'Fredoka', 'Trebuchet MS', system-ui, sans-serif;
+      display: flex; flex-direction: column; align-items: center;
+      padding: 16px;
+    }
+    h1 {
+      font-family: 'Luckiest Guy', 'Arial Black', sans-serif;
+      font-weight: normal; letter-spacing: 1px;
+      font-size: clamp(22px, 4vw, 40px);
+      margin: 4px 0 12px; text-align: center;
+      color: var(--accent);
+      text-shadow: 0 3px 0 #7a2e00;
+    }
+    .stage {
+      position: relative; width: min(100%, 1280px, calc((100vh - 170px) * 16 / 9));
+      aspect-ratio: 16 / 9; background: #000; border-radius: 14px; overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.08);
+    }
+    canvas { width: 100%; height: 100%; display: block; }
+    .big-play {
+      position: absolute; inset: 0; margin: auto; width: 128px; height: 128px; border-radius: 50%;
+      border: 0; background: var(--accent); color: #2b1a14; cursor: pointer;
+      box-shadow: 0 10px 30px rgba(0,0,0,.45), 0 0 0 8px rgba(255,210,63,.3);
+      display: grid; place-items: center; transition: transform .15s ease;
+    }
+    .big-play:hover { transform: scale(1.06); }
+    .big-play svg { width: 56px; height: 56px; margin-left: 8px; }
+    .big-play[hidden] { display: none; }
+    .loading { position: absolute; bottom: 14px; left: 0; right: 0; text-align: center; color: var(--muted); font-size: 14px; }
+    .controls {
+      width: min(100%, 1280px, calc((100vh - 170px) * 16 / 9)); margin-top: 12px;
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+      background: var(--panel); padding: 10px 12px; border-radius: 12px;
+    }
+    .btn {
+      border: 0; background: #2c2556; color: var(--text); border-radius: 9px; height: 38px; min-width: 38px; padding: 0 10px;
+      font: inherit; font-size: 15px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .btn:hover { background: #3b3274; }
+    .btn[aria-pressed="true"] { background: var(--accent); color: #2b1a14; }
+    .btn svg { width: 18px; height: 18px; }
+    .time { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 14px; min-width: 96px; text-align: center; }
+    .scrub { flex: 1 1 240px; position: relative; height: 38px; display: flex; align-items: center; }
+    input[type=range] { width: 100%; accent-color: var(--accent-2); height: 6px; cursor: pointer; }
+    .chapters { width: min(100%, 1280px, calc((100vh - 170px) * 16 / 9)); display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; justify-content: center; }
+    .chapters button { border: 0; border-radius: 999px; padding: 6px 12px; background: #221c45; color: var(--muted); font: inherit; font-size: 13px; cursor: pointer; }
+    .chapters button.on { background: var(--accent-2); color: #fff; }
+    .foot { color: var(--muted); font-size: 13px; margin-top: 14px; text-align: center; }
+    .foot a { color: var(--accent); }
+    @media (max-width: 560px) { .time { min-width: 0; } .btn span { display: none; } }
+  </style>
+</head>
+<body>
+  <h1>Rusty the Dog's Spacetime Adventure</h1>
+  <div class="stage" id="stage">
+    <canvas id="c" width="1280" height="720" aria-label="Animated music video"></canvas>
+    <button class="big-play" id="bigPlay" aria-label="Play">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l15 8-15 8z"/></svg>
+    </button>
+    <div class="loading" id="loading">Loading song…</div>
+  </div>
+  <div class="controls">
+    <button class="btn" id="play" aria-label="Play/pause">
+      <svg id="icoPlay" viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l15 8-15 8z"/></svg>
+      <svg id="icoPause" viewBox="0 0 24 24" fill="currentColor" style="display:none"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg>
+    </button>
+    <div class="time" id="time">0:00 / 0:00</div>
+    <div class="scrub"><input type="range" id="seek" min="0" max="378.8" step="0.01" value="0" aria-label="Seek"></div>
+    <button class="btn" id="cc" aria-pressed="true" aria-label="Toggle lyrics"><span>Lyrics</span> CC</button>
+    <button class="btn" id="fs" aria-label="Fullscreen">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+    </button>
+  </div>
+  <div class="chapters" id="chapters"></div>
+  <p class="foot">Every frame is drawn live with code (HTML canvas) in time with the song. Space = play/pause, ←/→ = skip 5s.
+    Prefer a file? <a href="output/rusty-the-dogs-spacetime-adventure.mp4">Download the MP4</a>.</p>
+
+  <audio id="song" src="audio/rusty-the-dogs-spacetime-adventure.mp3" preload="auto"></audio>
+
+  <script src="src/core.js"></script>
+  <script src="src/timing.js"></script>
+  <script src="src/characters.js"></script>
+  <script src="src/moves.js"></script>
+  <script src="src/world.js"></script>
+  <script src="src/fx.js"></script>
+  <script src="src/captions.js"></script>
+  <script src="src/shots.js"></script>
+  <script src="src/shots2.js"></script>
+  <script src="src/shots3.js"></script>
+  <script src="src/video.js"></script>
+  <script>
+  (function () {
+    'use strict';
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+    const audio = document.getElementById('song');
+    const seek = document.getElementById('seek');
+    const timeEl = document.getElementById('time');
+    const bigPlay = document.getElementById('bigPlay');
+    const loading = document.getElementById('loading');
+    const cc = document.getElementById('cc');
+    let captions = true;
+    try { captions = localStorage.getItem('rusty-cc') !== 'off'; } catch (e) { /* storage unavailable */ }
+    cc.setAttribute('aria-pressed', String(captions));
+
+    const DUR = RV.DURATION;
+    seek.max = DUR.toFixed(2);
+    const fmt = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+    timeEl.textContent = `0:00 / ${fmt(DUR)}`;
+
+    // chapters
+    const CH = [['Intro', 0], ['Rusty goes missing', 22.74], ['Chorus', 72.52], ['Blast off', 95.36], ['1972!', 137.3],
+      ['Chorus 2', 159.79], ['Stuck underground', 182.63], ['Disco!', 245.05], ['Secret disco bunker', 258.64],
+      ['Home sweet home', 297.17], ['Finale', 338.76], ['The end?', 351.62]];
+    const chapWrap = document.getElementById('chapters');
+    const chapBtns = CH.map(([name, t]) => {
+      const b = document.createElement('button');
+      b.textContent = name;
+      b.addEventListener('click', () => { setTime(t); if (audio.paused) play(); });
+      chapWrap.appendChild(b);
+      return b;
+    });
+
+    // keep the canvas crisp at the displayed size
+    function resize() {
+      const r = canvas.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const w = Math.min(1920, Math.round(r.width * dpr));
+      const h = Math.round(w * 9 / 16);
+      if (canvas.width !== w || canvas.height !== h) {
+        canvas.width = w; canvas.height = h;
+        if (audio.currentTime > 0 || !audio.paused) draw(currentTime()); else RV.renderFrame(ctx, posterT, { captions: false });
+      }
+    }
+    window.addEventListener('resize', resize);
+
+    // smooth clock: audio.currentTime can update coarsely, so interpolate between updates
+    let lastAudioT = 0, lastWall = performance.now();
+    function currentTime() {
+      if (audio.paused) return audio.currentTime;
+      const at = audio.currentTime;
+      const now = performance.now();
+      if (at !== lastAudioT) { lastAudioT = at; lastWall = now; return at; }
+      return Math.min(at + (now - lastWall) / 1000, DUR);
+    }
+    function setTime(t) { audio.currentTime = Math.max(0, Math.min(DUR - 0.05, t)); lastAudioT = -1; draw(t); }
+
+    let posterT = 16.5;
+    function draw(t) {
+      RV.renderFrame(ctx, t, { captions });
+      timeEl.textContent = `${fmt(t)} / ${fmt(DUR)}`;
+      if (document.activeElement !== seek) seek.value = t.toFixed(2);
+      const idx = CH.reduce((k, c, i) => (t >= c[1] ? i : k), 0);
+      chapBtns.forEach((b, i) => b.classList.toggle('on', i === idx));
+    }
+    function loop() {
+      if (!audio.paused) draw(currentTime());
+      requestAnimationFrame(loop);
+    }
+
+    function play() {
+      bigPlay.hidden = true;
+      audio.play().catch(() => { bigPlay.hidden = false; });
+    }
+    function toggle() { if (audio.paused) play(); else audio.pause(); }
+    audio.addEventListener('play', () => { document.getElementById('icoPlay').style.display = 'none'; document.getElementById('icoPause').style.display = ''; });
+    audio.addEventListener('pause', () => { document.getElementById('icoPlay').style.display = ''; document.getElementById('icoPause').style.display = 'none'; draw(audio.currentTime); });
+    audio.addEventListener('ended', () => { bigPlay.hidden = false; });
+    audio.addEventListener('canplaythrough', () => { loading.hidden = true; });
+    audio.addEventListener('error', () => { loading.textContent = 'Could not load the song file (audio/…mp3).'; });
+
+    bigPlay.addEventListener('click', play);
+    document.getElementById('play').addEventListener('click', toggle);
+    canvas.addEventListener('click', toggle);
+    seek.addEventListener('input', () => { const t = Number(seek.value); bigPlay.hidden = true; setTime(t); });
+    cc.addEventListener('click', () => {
+      captions = !captions;
+      cc.setAttribute('aria-pressed', String(captions));
+      try { localStorage.setItem('rusty-cc', captions ? 'on' : 'off'); } catch (e) { /* ignore */ }
+      draw(currentTime());
+    });
+    document.getElementById('fs').addEventListener('click', () => {
+      const s = document.getElementById('stage');
+      if (document.fullscreenElement) document.exitFullscreen(); else if (s.requestFullscreen) s.requestFullscreen();
+    });
+    document.addEventListener('fullscreenchange', () => setTimeout(resize, 50));
+    document.addEventListener('keydown', (e) => {
+      if (e.target.tagName === 'INPUT' && e.target.type !== 'range') return;
+      if (e.code === 'Space') { e.preventDefault(); toggle(); }
+      if (e.code === 'ArrowRight') setTime(currentTime() + 5);
+      if (e.code === 'ArrowLeft') setTime(currentTime() - 5);
+    });
+
+    const fontsReady = document.fonts && document.fonts.load
+      ? Promise.all(['40px "Luckiest Guy"', '40px "Fredoka"', '40px "Shrikhand"', '40px "VT323"', '40px "Monoton"'].map((f) => document.fonts.load(f))).catch(() => {})
+      : Promise.resolve();
+    fontsReady.then(() => {
+      resize();
+      RV.renderFrame(ctx, posterT, { captions: false }); // poster: the title card
+      requestAnimationFrame(loop);
+    });
+  })();
+  </script>
+</body>
+</html>

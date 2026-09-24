@@ -1,0 +1,3 @@
+node_modules/
+output/*
+!output/rusty-the-dogs-spacetime-adventure.mp4

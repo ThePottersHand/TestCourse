@@ -1,0 +1,16 @@
+{
+  "name": "rusty-music-video",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Rusty the Dog's Spacetime Adventure - a cartoon music video drawn entirely with code.",
+  "type": "module",
+  "scripts": {
+    "render": "node tools/render.mjs",
+    "render:preview": "node tools/render.mjs --width 960 --height 540 --out output/preview-540p.mp4",
+    "frames": "node tools/frames.mjs",
+    "sheet": "node tools/sheet.mjs output/character-sheet.png"
+  },
+  "devDependencies": {
+    "@napi-rs/canvas": "^1.0.9"
+  }
+}
