@@ -157,6 +157,40 @@
     }
   };
 
+
+  // Tapered capsule from (x0,y0) to (x1,y1) with end widths w0, w1 (filled).
+  WC.capsule = function (g, x0, y0, x1, y1, w0, w1) {
+    const dx = x1 - x0, dy = y1 - y0, L = Math.hypot(dx, dy) || 1;
+    const nx = -dy / L, ny = dx / L, r0 = w0 / 2, r1 = w1 / 2;
+    g.beginPath();
+    g.moveTo(x0 + nx * r0, y0 + ny * r0); g.lineTo(x1 + nx * r1, y1 + ny * r1);
+    g.lineTo(x1 - nx * r1, y1 - ny * r1); g.lineTo(x0 - nx * r0, y0 - ny * r0); g.closePath(); g.fill();
+    WC.fillCircle(g, x0, y0, r0); WC.fillCircle(g, x1, y1, r1);
+  };
+
+  // Heart outline (classic parametric curve), centred at (cx,cy), width ~2*r.
+  WC.heartPath = function (p, cx, cy, r) {
+    for (let i = 0; i <= 64; i++) {
+      const t = (i / 64) * Math.PI * 2;
+      const x = 16 * Math.pow(Math.sin(t), 3);
+      const y = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
+      const X = cx + (x / 16) * r, Y = cy + (y / 16) * r;
+      if (i) p.lineTo(X, Y); else p.moveTo(X, Y);
+    }
+    p.closePath(); return p;
+  };
+
+  // Tapered brush stroke along a spline (pts in px), max width w; `taper` shapes the ends.
+  WC.brushStroke = function (g, pts, w, per = 14, taper = 1.2) {
+    const q = WC.sampleSpline(pts, false, 1, per);
+    g.lineCap = 'round';
+    for (let i = 1; i < q.length; i++) {
+      const t = i / q.length;
+      g.lineWidth = Math.max(0.5, w * (0.3 + 0.7 * Math.pow(Math.sin(Math.PI * Math.min(1, t * 1.05)), 1 / taper)));
+      g.beginPath(); g.moveTo(q[i - 1][0], q[i - 1][1]); g.lineTo(q[i][0], q[i][1]); g.stroke();
+    }
+  };
+
   // Transform helpers for 2D affine matrices [a,b,c,d,e,f] (canvas convention).
   WC.mat = {
     ident: () => [1, 0, 0, 1, 0, 0],
@@ -174,5 +208,14 @@
       return [a, b, c, d, -(a * m[4] + c * m[5]), -(b * m[4] + d * m[5])];
     },
     apply: (m, x, y) => [m[0] * x + m[2] * y + m[4], m[1] * x + m[3] * y + m[5]],
+    // rotation by `a` (radians) about point (px,py), with optional scale about the same point
+    about: (px, py, a, sx = 1, sy = sx) => {
+      const c = Math.cos(a), s = Math.sin(a);
+      const m = [c * sx, s * sx, -s * sy, c * sy, 0, 0];
+      m[4] = px - (m[0] * px + m[2] * py); m[5] = py - (m[1] * px + m[3] * py);
+      return m;
+    },
+    tr: (x, y) => [1, 0, 0, 1, x, y],
+    sc: (sx, sy = sx) => [sx, 0, 0, sy, 0, 0],
   };
 })(window.WC = window.WC || {});

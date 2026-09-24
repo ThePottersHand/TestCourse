@@ -1,6 +1,6 @@
 // Render a page to PNG in headless Chromium (WebGL via SwiftShader).
 // usage: node tools/render-still.mjs <url-or-file> <out.png> [width] [height] [globalToWaitFor]
-// e.g.   node tools/render-still.mjs "http://localhost:8765/concept.html?scale=2" still.png 3840 2160 __done
+// e.g.   node tools/render-still.mjs "http://localhost:8765/frame.html?t=95&scale=2" still.png 3840 2160 __done
 import { createRequire } from 'module';
 import path from 'path';
 const require = createRequire(import.meta.url);

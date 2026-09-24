@@ -1,0 +1,314 @@
+<title>The Art of Making Up My Mind</title>
+<meta name="description" content="Review cut of the watercolour animation, painted live in the browser in sync with the song.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:ital,wght@0,400;0,500;0,700;1,400&family=IM+Fell+English:ital@0;1&family=Pinyon+Script&display=swap">
+<style>
+  @font-face { font-family: 'PinyonLocal'; src: url('fonts/PinyonScript-Regular.ttf') format('truetype'); font-display: swap; }
+  @font-face { font-family: 'FellLocal'; src: url('fonts/IMFellEnglish-Regular.ttf') format('truetype'); font-display: swap; }
+  @font-face { font-family: 'FellLocal'; font-style: italic; src: url('fonts/IMFellEnglish-Italic.ttf') format('truetype'); font-display: swap; }
+
+  /* One deliberate look: a dark gallery wall so the painted sheet is the only light thing. */
+  :root {
+    color-scheme: dark;
+    --wall: #15161d;
+    --wall-2: #1c1e28;
+    --wall-3: #272a37;
+    --ink: #ece7dd;
+    --muted: #a8a2b0;
+    --faint: #6f6b7a;
+    --rose: #e58ea0;
+    --rose-deep: #c8506c;
+    --indigo: #8e9cc4;
+    --indigo-deep: #4d5a8c;
+    --gold: #dcae57;
+    --violet: #b99ac0;
+    --radius: 6px;
+    --display: 'IM Fell English', 'FellLocal', Georgia, 'Times New Roman', serif;
+    --body: 'Alegreya Sans', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  }
+  [hidden] { display: none !important; }
+  html, body { background: var(--wall); }
+  body { color: var(--ink); font: 16px/1.5 var(--body); padding-inline: 16px; padding-block: 28px 48px; }
+  .page { max-width: 1180px; margin: 0 auto; display: grid; gap: 22px; }
+
+  header { display: grid; gap: 6px; }
+  .eyebrow { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+  h1 { font: italic 400 clamp(30px, 4.6vw, 50px)/1.08 var(--display); margin: 0; text-wrap: balance; }
+  h1 .like { color: var(--rose); } h1 .hate { color: var(--indigo); }
+  .lede { margin: 2px 0 0; color: var(--muted); max-width: 64ch; }
+  .lede b { font-weight: 500; }
+  .lede .r { color: var(--rose); } .lede .i { color: var(--indigo); }
+
+  .stage { position: relative; width: 100%; max-width: 100%; aspect-ratio: 16 / 9; background: #efe7d8 url('poster.jpg') center / cover no-repeat;
+    border-radius: var(--radius); overflow: hidden; box-shadow: 0 18px 50px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.04); }
+  .stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; visibility: hidden; }
+  .stage:fullscreen { border-radius: 0; background: #000; }
+  .stage:fullscreen canvas { object-fit: contain; }
+
+  .veil { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(21,22,29,.55); backdrop-filter: blur(2px); }
+  .loading { display: grid; gap: 12px; justify-items: center; width: min(360px, 80%); text-align: center; }
+  .loading p { margin: 0; font: italic 22px/1.2 var(--display); }
+  .bar { width: 100%; height: 6px; border-radius: 3px; background: rgba(255,255,255,.14); overflow: hidden; }
+  .bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--rose), var(--violet), var(--indigo)); transition: width .15s linear; }
+  .loading small { color: var(--muted); font-variant-numeric: tabular-nums; }
+
+  .bigplay { width: 92px; height: 92px; border-radius: 50%; border: 0; cursor: pointer; background: var(--rose-deep); color: #fff;
+    display: grid; place-items: center; box-shadow: 0 10px 30px rgba(0,0,0,.4); transition: transform .15s ease, background .15s ease; }
+  .bigplay:hover { transform: scale(1.05); background: #b8405e; }
+  .bigplay svg { width: 38px; height: 38px; margin-left: 6px; }
+  .veil.ready { background: rgba(21,22,29,.18); backdrop-filter: none; }
+
+  .transport { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; background: var(--wall-2); border-radius: var(--radius); padding: 12px 14px; }
+  .btn { height: 38px; min-width: 38px; padding: 0 12px; border-radius: 19px; border: 1px solid var(--wall-3); background: var(--wall-3); color: var(--ink);
+    font: 500 15px/1 var(--body); display: inline-flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; }
+  .btn:hover { border-color: var(--faint); }
+  .btn svg { width: 16px; height: 16px; }
+  .btn.play { background: var(--rose-deep); border-color: var(--rose-deep); color: #fff; width: 46px; padding: 0; }
+  .time { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 15px; min-width: 92px; }
+  .time b { color: var(--ink); font-weight: 500; }
+
+  .scrubwrap { flex: 1 1 320px; display: grid; gap: 4px; min-width: 0; }
+  .sections { position: relative; height: 16px; font-size: 11px; color: var(--faint); }
+  .sections span { position: absolute; top: 0; white-space: nowrap; transform: translateX(2px); letter-spacing: .04em; }
+  .track { position: relative; height: 10px; border-radius: 5px; background: var(--wall-3); }
+  .track .seg { position: absolute; top: 0; bottom: 0; opacity: .5; }
+  .track .fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 5px; background: linear-gradient(90deg, var(--rose), var(--violet)); opacity: .9; pointer-events: none; }
+  #scrub { position: absolute; inset: -8px 0; width: 100%; height: 26px; margin: 0; opacity: 0; cursor: pointer; }
+  .track .knob { position: absolute; top: 50%; width: 16px; height: 16px; margin: -8px 0 0 -8px; border-radius: 50%; background: var(--ink); box-shadow: 0 1px 4px rgba(0,0,0,.5); pointer-events: none; }
+  #scrub:focus-visible + .knob { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+  .opts { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .toggle { display: inline-flex; align-items: center; gap: 8px; font-size: 15px; color: var(--muted); cursor: pointer; }
+  .toggle input { width: 18px; height: 18px; accent-color: var(--rose); }
+  select { height: 38px; border-radius: 19px; border: 1px solid var(--wall-3); background: var(--wall-3); color: var(--ink); font: 15px var(--body); padding: 0 12px; }
+  :focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+  .scenes h2 { font: italic 400 24px/1.2 var(--display); margin: 6px 0 10px; }
+  .scenes ol { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px; }
+  .scenes button { width: 100%; height: 100%; text-align: left; display: grid; grid-template-columns: 52px 1fr; gap: 2px 10px; padding: 10px 12px;
+    border-radius: var(--radius); border: 1px solid transparent; background: var(--wall-2); color: var(--ink); font: 15px/1.35 var(--body); cursor: pointer; }
+  .scenes button:hover { border-color: var(--wall-3); }
+  .scenes button[aria-current="true"] { border-color: var(--rose); background: #241f2a; }
+  .scenes .ts { grid-row: span 2; color: var(--muted); font-variant-numeric: tabular-nums; padding-top: 1px; }
+  .scenes .nm { font-weight: 500; }
+  .scenes .ds { color: var(--muted); font-size: 14px; }
+  .note { color: var(--faint); font-size: 14px; max-width: 70ch; margin: 0; }
+  .err { color: var(--rose); }
+  @media (max-width: 560px) { .time { min-width: 0; } .bigplay { width: 72px; height: 72px; } }
+  @media (prefers-reduced-motion: reduce) { .bigplay, .bar i { transition: none; } }
+</style>
+
+<div class="page">
+  <header>
+    <div class="eyebrow">Review cut &middot; watercolour animation &middot; 2:31</div>
+    <h1>The Art of Making Up My Mind</h1>
+    <p class="lede">Elizabeth Bennet's thoughts on Mr Darcy, painted in <b class="r">rose</b> for <i>like</i> and <b class="i">indigo</b> for <i>hate</i>. Every frame is painted live in your browser in time with the song.</p>
+  </header>
+
+  <div class="stage" id="stage">
+    <canvas id="film" aria-label="Watercolour animation"></canvas>
+    <div class="veil" id="veil">
+      <div class="loading" id="loading">
+        <p>Mixing the paints&hellip;</p>
+        <div class="bar"><i id="bar"></i></div>
+        <small id="pct">0%</small>
+      </div>
+      <button class="bigplay" id="bigplay" hidden aria-label="Play">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l12-7.5z"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="transport">
+    <button class="btn play" id="play" aria-label="Play" disabled>
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path id="playIcon" d="M7 4.5v15l12-7.5z"/></svg>
+    </button>
+    <div class="time" id="time"><b>0:00</b> / 2:31</div>
+    <div class="scrubwrap">
+      <div class="sections" id="sections" aria-hidden="true"></div>
+      <div class="track" id="track">
+        <div class="fill" id="fill"></div>
+        <input type="range" id="scrub" min="0" max="151.32" step="0.01" value="0" aria-label="Position in the song" disabled>
+        <div class="knob" id="knob"></div>
+      </div>
+    </div>
+    <div class="opts">
+      <label class="toggle"><input type="checkbox" id="lyrics" checked> Lyrics</label>
+      <select id="quality" aria-label="Picture quality">
+        <option value="auto">Auto quality</option>
+        <option value="1">1080p</option>
+        <option value="0.75">810p</option>
+        <option value="0.5">540p</option>
+      </select>
+      <button class="btn" id="full" aria-label="Full screen">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <section class="scenes">
+    <h2>Scenes</h2>
+    <ol id="scenes"></ol>
+  </section>
+  <p class="note">This is the code version for review. The final video will be rendered frame by frame from this same code. If playback stutters, choose a lower quality: the painting keeps its look and only the pixel count drops.</p>
+</div>
+
+<audio id="audio" src="audio/the-art-of-making-up-my-mind.mp3" preload="auto"></audio>
+
+<script src="js/geom.js"></script>
+<script src="js/sdf.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/figures.js"></script>
+<script src="js/people.js"></script>
+<script src="js/timing.js"></script>
+<script src="js/anim.js"></script>
+<script src="js/kit.js"></script>
+<script src="js/film.js"></script>
+<script src="js/scenes/title.js"></script>
+<script src="js/scenes/ballroom.js"></script>
+<script src="js/scenes/mind.js"></script>
+<script src="js/scenes/profiles.js"></script>
+<script src="js/scenes/oak.js"></script>
+<script src="js/scenes/blush.js"></script>
+<script src="js/scenes/sisters.js"></script>
+<script src="js/scenes/portrait.js"></script>
+<script src="js/scenes/dawn.js"></script>
+<script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const audio = $('audio'), stage = $('stage'), canvas = $('film');
+  const DUR = WC.Film.duration;
+  const SCENES = [
+    [0, 'Title', 'A drop of rose blooms and the title is inked in.'],
+    [2.9, 'The Assembly Rooms', '"I swear that boy is just the worst." She fans herself; he stands aloof.'],
+    [12.95, 'On my mind', 'A tiny Darcy on the hill inside her silhouette. A heart, then an indigo drop.'],
+    [29.25, 'Face to face', '"Staring at my eyes." Each "maybe" floods the page rose or indigo.'],
+    [55.7, 'Rude and mean', 'He turns his back. "Tolerable" is written, then struck out.'],
+    [68.45, 'Tall and strong', 'Pemberley’s lawn: he stretches tall, the old oak shakes.'],
+    [74.2, 'A certain way', 'The blush spreads and roses open on the beat.'],
+    [80.75, 'The sisters', 'Jane, Mary, Kitty and Lydia disapprove.'],
+    [85.45, 'The portrait', 'Pemberley’s gallery. Petals fly toward his painted eyes.'],
+    [112.55, 'The dance', 'Rose and indigo trade places across the ballroom.'],
+    [129.0, 'Mind made up', 'A violet heart blooms between them.'],
+    [134.3, 'Dawn', 'They walk out together; the paint settles.'],
+  ];
+  const fmt = (s) => { s = Math.max(0, s); const m = Math.floor(s / 60), r = Math.floor(s % 60); return m + ':' + String(r).padStart(2, '0'); };
+  const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* storage unavailable */ } } };
+
+  // --- section bands on the scrubber
+  const sec = WC.TIMING.sections, labels = { intro: 'Intro', verse1: 'Verse 1', prechorus1: 'Pre', chorus1: 'Chorus', interlude: '', verse2: 'Verse 2', prechorus2: 'Pre', chorus2: 'Chorus', chorus3: 'Chorus', outro: 'Outro' };
+  const tint = { verse1: 'var(--muted)', verse2: 'var(--muted)', prechorus1: 'var(--gold)', prechorus2: 'var(--gold)', chorus1: 'var(--rose)', chorus2: 'var(--rose)', chorus3: 'var(--violet)', outro: 'var(--indigo)' };
+  sec.forEach((s, i) => {
+    if (!sec[i + 1]) return;
+    const a = s.start / DUR * 100, w = (sec[i + 1].start - s.start) / DUR * 100;
+    if (labels[s.name]) { const sp = document.createElement('span'); sp.textContent = labels[s.name]; sp.style.left = a + '%'; if (w < 6) sp.style.display = 'none'; $('sections').appendChild(sp); }
+    if (tint[s.name]) { const d = document.createElement('div'); d.className = 'seg'; d.style.left = a + '%'; d.style.width = w + '%'; d.style.background = tint[s.name]; $('track').insertBefore(d, $('fill')); }
+  });
+  // --- scene list
+  SCENES.forEach(([t0, name, desc], i) => {
+    const li = document.createElement('li'), b = document.createElement('button');
+    b.type = 'button'; b.id = 'scene-' + i;
+    b.innerHTML = `<span class="ts">${fmt(t0 + (i ? 0.6 : 0))}</span><span class="nm"></span><span class="ds"></span>`;
+    b.querySelector('.nm').textContent = name; b.querySelector('.ds').textContent = desc;
+    b.addEventListener('click', () => seek(i ? t0 + 0.6 : 0));
+    li.appendChild(b); $('scenes').appendChild(li);
+  });
+
+  let eng = null, ready = false, playing = false, t = 0, clock = null, raf = 0, lyrics = true;
+  lyrics = store.get('pp-lyrics') !== '0'; $('lyrics').checked = lyrics;
+  const qSaved = store.get('pp-quality'); if (qSaved) $('quality').value = qSaved;
+
+  function autoScale() {
+    const px = stage.clientWidth * (window.devicePixelRatio || 1);
+    return Math.max(0.5, Math.min(1, Math.round(px / 1920 * 4) / 4));
+  }
+  function wantedScale() { const v = $('quality').value; return v === 'auto' ? autoScale() : +v; }
+
+  function draw() {
+    if (!ready) return;
+    WC.Film.render(eng, t, { lyrics });
+    const p = t / DUR * 100;
+    $('fill').style.width = p + '%'; $('knob').style.left = p + '%';
+    $('scrub').value = t.toFixed(2);
+    $('time').innerHTML = `<b>${fmt(t)}</b> / ${fmt(DUR)}`;
+    let cur = 0; SCENES.forEach(([t0], i) => { if (t >= t0) cur = i; });
+    SCENES.forEach((_, i) => $('scene-' + i).setAttribute('aria-current', i === cur ? 'true' : 'false'));
+  }
+
+  // playback clock: follow the audio, smoothed with the frame clock
+  let perf = [], lastAdapt = 0;
+  function loop(now) {
+    if (!playing) return;
+    const at = audio.currentTime;
+    if (!clock) clock = { p: now, a: at };
+    let est = clock.a + (now - clock.p) / 1000;
+    if (Math.abs(est - at) > 0.12) { clock = { p: now, a: at }; est = at; }
+    t = Math.min(DUR, est);
+    const f0 = performance.now();
+    draw();
+    const dt = performance.now() - f0;
+    perf.push(dt); if (perf.length > 40) perf.shift();
+    if ($('quality').value === 'auto' && perf.length === 40 && now - lastAdapt > 3000) {
+      const avg = perf.reduce((a, b) => a + b, 0) / perf.length;
+      if (avg > 38 && eng.scale > 0.5) { eng.resize(Math.max(0.5, eng.scale - 0.25)); perf = []; lastAdapt = now; }
+    }
+    if (audio.ended || t >= DUR - 0.02) { setPlaying(false); return; }
+    raf = requestAnimationFrame(loop);
+  }
+
+  function setPlaying(on) {
+    if (on === playing) return;
+    playing = on;
+    $('playIcon').setAttribute('d', on ? 'M6 4.5h4.5v15H6zM13.5 4.5H18v15h-4.5z' : 'M7 4.5v15l12-7.5z');
+    $('play').setAttribute('aria-label', on ? 'Pause' : 'Play');
+    $('veil').hidden = true;
+    if (on) {
+      if (t >= DUR - 0.05) t = 0;
+      audio.currentTime = t;
+      const p = audio.play();
+      if (p && p.catch) p.catch(() => { playing = false; $('playIcon').setAttribute('d', 'M7 4.5v15l12-7.5z'); });
+      clock = null; raf = requestAnimationFrame(loop);
+    } else {
+      audio.pause(); cancelAnimationFrame(raf); draw();
+    }
+  }
+  function seek(s) {
+    t = Math.max(0, Math.min(DUR, s));
+    audio.currentTime = t; clock = null;
+    if (!playing) draw();
+  }
+
+  $('play').addEventListener('click', () => setPlaying(!playing));
+  $('bigplay').addEventListener('click', () => setPlaying(true));
+  $('scrub').addEventListener('input', (e) => seek(+e.target.value));
+  $('lyrics').addEventListener('change', (e) => { lyrics = e.target.checked; store.set('pp-lyrics', lyrics ? '1' : '0'); if (!playing) draw(); });
+  $('quality').addEventListener('change', (e) => { store.set('pp-quality', e.target.value); if (eng) { eng.resize(wantedScale()); perf = []; if (!playing) draw(); } });
+  $('full').addEventListener('click', () => { const f = stage.requestFullscreen || stage.webkitRequestFullscreen; if (f) { try { const r = f.call(stage); if (r && r.catch) r.catch(() => {}); } catch (e) { /* not available */ } } });
+  document.addEventListener('keydown', (e) => {
+    if (!ready || e.target.closest('select, input[type="checkbox"], button')) return;
+    if (e.code === 'Space') { e.preventDefault(); setPlaying(!playing); }
+    else if (e.key === 'ArrowRight') { seek(t + 5); } else if (e.key === 'ArrowLeft') { seek(t - 5); }
+  });
+  audio.addEventListener('pause', () => { if (playing && !audio.ended) setPlaying(false); });
+
+  (async function start() {
+    try {
+      const fontList = [`60px ${WC.K.FONT_SCRIPT}`, `60px ${WC.K.FONT_TITLE}`];
+      await Promise.race([Promise.all(fontList.map((f) => document.fonts.load(f))), new Promise((r) => setTimeout(r, 4000))]);
+      eng = new WC.Engine(canvas, { scale: wantedScale(), paperSeed: 3 });
+      await WC.Film.build(eng, (p) => { $('bar').style.width = Math.round(p * 100) + '%'; $('pct').textContent = Math.round(p * 100) + '%'; });
+      ready = true;
+      t = 0.95; draw(); t = 0;
+      canvas.style.visibility = 'visible';
+      $('loading').hidden = true; $('bigplay').hidden = false; $('veil').classList.add('ready');
+      $('play').disabled = false; $('scrub').disabled = false;
+    } catch (e) {
+      $('loading').innerHTML = '<p class="err"></p><small>Try a recent version of Chrome, Edge, Firefox or Safari with hardware acceleration turned on.</small>';
+      $('loading').querySelector('.err').textContent = 'The animation could not start: ' + (e && e.message ? e.message : e);
+      console.error(e);
+    }
+  })();
+})();
+</script>

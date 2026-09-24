@@ -204,6 +204,19 @@
     },
   };
 
+
+  // Closed, dreamy eye: lid curves down, lashes fall.
+  F.inkEyeClosed = function (g, eye, s) {
+    const x = eye.iris.x, y = eye.iris.y;
+    g.lineCap = 'round';
+    const lid = WC.sampleSpline([[x - 0.052, y - 0.004], [x - 0.02, y + 0.012], [x + 0.012, y + 0.010], [x + 0.022, y - 0.002]], false, s, 10);
+    for (let i = 1; i < lid.length; i++) { g.lineWidth = 0.009 * s * (0.4 + 0.6 * Math.sin(Math.PI * i / lid.length)); g.beginPath(); g.moveTo(lid[i - 1][0], lid[i - 1][1]); g.lineTo(lid[i][0], lid[i][1]); g.stroke(); }
+    g.lineWidth = 0.004 * s;
+    [[-0.02, 0.012], [-0.004, 0.013], [0.01, 0.01]].forEach(([dx, dy]) => { g.beginPath(); g.moveTo((x + dx) * s, (y + dy) * s); g.lineTo((x + dx + 0.008) * s, (y + dy + 0.018) * s); g.stroke(); });
+    const brow = eye.strokes[eye.strokes.length - 1];
+    g.lineWidth = brow.w * s * 0.8; g.beginPath(); brow.pts.forEach(([bx, by], i) => (i ? g.lineTo(bx * s, (by - 0.006) * s) : g.moveTo(bx * s, (by - 0.006) * s))); g.stroke();
+  };
+
   // ---------------------------------------------------------------- Props
   // Daisy petal (long, slightly notched) pointing +x from the origin, length L, width W.
   F.petal = function (p, L, W) {

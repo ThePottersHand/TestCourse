@@ -1,0 +1,51 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>People lab</title>
+<style>body{margin:0;background:#eee}canvas{display:block}</style></head>
+<body><canvas id="c" width="1920" height="1080"></canvas>
+<script src="../js/geom.js"></script>
+<script src="../js/figures.js"></script>
+<script src="../js/people.js"></script>
+<script>
+const c = document.getElementById('c'), g = c.getContext('2d');
+g.fillStyle = '#f4ecdc'; g.fillRect(0, 0, 1920, 1080);
+const M = WC.mat, P = WC.people;
+function drawParts(fig, parts, order, X, cols) {
+  order.forEach(([name, bone, col, xoff]) => {
+    g.save(); const m = xoff ? M.mul(X[bone], M.tr(xoff, 0)) : X[bone];
+    g.setTransform(m[0], m[1], m[2], m[3], m[4], m[5]);
+    g.fillStyle = col; g.strokeStyle = col; parts[name].draw(g, fig.s); g.restore();
+  });
+}
+function lizzy(gx, gy, size, dir, pose, label) {
+  const s = size; const root = P.root(gx, gy, size, dir, s, P.lizzy.groundH);
+  const X = P.solve(P.lizzy.bones, pose, s, root);
+  const L = P.lizzy.parts;
+  drawParts({ s }, L, [['skirt', 'skirt', '#e8a0b0'], ['hem', 'skirt', '#c7607f'], ['torso', 'torso', '#eeaaa6'], ['sash', 'torso', '#6fb0a8'],
+    ['head', 'head', '#eeaaa6'], ['hair', 'head', '#8a3f45'], ['ribbon', 'head', '#6fb0a8'], ['flower', 'head', '#f7dde2'],
+    ['upper', 'upper', '#e59a9c'], ['fore', 'fore', '#e59a9c']], X);
+  if (pose.fan != null) { g.save(); const m = X.fore; g.setTransform(m[0], m[1], m[2], m[3], m[4], m[5]); g.fillStyle = '#e9d19a'; P.lizzy.fanDraw(P.lizzy.fanStates[pose.fan])(g, s); g.restore(); }
+  g.save(); const m = X.head; g.setTransform(m[0], m[1], m[2], m[3], m[4], m[5]); g.fillStyle = g.strokeStyle = '#1b1410'; WC.figures.inkEye(g, WC.figures.lizzy.eye, s); g.restore();
+  g.fillStyle = '#333'; g.font = '16px monospace'; g.fillText(label, gx - 40, gy + 30);
+}
+function darcy(gx, gy, size, dir, pose, label) {
+  const s = size; const root = P.root(gx, gy, size, dir, s, P.darcy.groundH);
+  const X = P.solve(P.darcy.bones, pose, s, root);
+  const D = P.darcy.parts;
+  drawParts({ s }, D, [['upper', 'upperF', '#3d4a70', 0.08 * s], ['fore', 'foreF', '#3d4a70', 0.08 * s], ['thigh', 'thighF', '#56648f', 0.02 * s], ['shin', 'shinF', '#56648f', 0.02 * s], ['boot', 'shinF', '#232a45', 0.02 * s],
+    ['tails', 'tails', '#5b6a96'], ['thigh', 'thighN', '#9aa4c4'], ['shin', 'shinN', '#9aa4c4'], ['boot', 'shinN', '#2f3656'],
+    ['torso', 'torso', '#6b7aa6'], ['waistcoat', 'torso', '#dcb56a'], ['lapel', 'torso', '#3f4c78'], ['head', 'head', '#8494bd'],
+    ['cravat', 'torso', '#f6f3ea'], ['hair', 'head', '#2f3656'], ['upper', 'upperN', '#6b7aa6'], ['fore', 'foreN', '#6b7aa6']], X);
+  g.save(); const m = X.head; g.setTransform(m[0], m[1], m[2], m[3], m[4], m[5]); g.fillStyle = g.strokeStyle = '#10141f'; WC.figures.inkEye(g, WC.figures.darcy.eye, s); g.restore();
+  g.fillStyle = '#333'; g.font = '16px monospace'; g.fillText(label, gx - 40, gy + 30);
+}
+const LP = P.lizzy.poses, DP = P.darcy.poses;
+lizzy(130, 1000, 110, 1, LP.stand(0), 'stand');
+lizzy(370, 1000, 110, 1, LP.fan(0, 3, 0), 'fan');
+lizzy(610, 1000, 110, 1, LP.walk(0, 1.2), 'walk');
+lizzy(860, 1000, 110, 1, LP.reach(0, 1), 'reach');
+darcy(1100, 1000, 118, -1, DP.stand(0), 'stand');
+darcy(1330, 1000, 118, -1, DP.walk(0, 1.2), 'walk');
+darcy(1560, 1000, 118, -1, DP.reach(0, 1), 'reach');
+darcy(1800, 1000, 118, -1, DP.bow(0, 1), 'bow');
+window.__done = true;
+</script></body></html>

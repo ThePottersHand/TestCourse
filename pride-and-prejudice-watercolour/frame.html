@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<title>Film Frame</title>
+<style>
+  @font-face { font-family: 'PinyonLocal'; src: url('fonts/PinyonScript-Regular.ttf'); }
+  @font-face { font-family: 'FellLocal'; src: url('fonts/IMFellEnglish-Regular.ttf'); }
+  @font-face { font-family: 'FellLocal'; font-style: italic; src: url('fonts/IMFellEnglish-Italic.ttf'); }
+  html, body { margin: 0; background: #1d1a17; }
+  canvas { display: block; width: 100vw; height: auto; }
+</style></head>
+<body><canvas id="c"></canvas>
+<script src="js/geom.js"></script>
+<script src="js/sdf.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/figures.js"></script>
+<script src="js/people.js"></script>
+<script src="js/timing.js"></script>
+<script src="js/anim.js"></script>
+<script src="js/kit.js"></script>
+<script src="js/film.js"></script>
+<script src="js/scenes/title.js"></script>
+<script src="js/scenes/ballroom.js"></script>
+<script src="js/scenes/mind.js"></script>
+<script src="js/scenes/profiles.js"></script>
+<script src="js/scenes/oak.js"></script>
+<script src="js/scenes/blush.js"></script>
+<script src="js/scenes/sisters.js"></script>
+<script src="js/scenes/portrait.js"></script>
+<script src="js/scenes/dawn.js"></script>
+<script>
+// Dev/offline renderer: frame.html?t=95&only=portrait,title&scale=1&lyrics=1
+(async function () {
+  const q = new URLSearchParams(location.search);
+  await Promise.all([document.fonts.load(`60px ${WC.K.FONT_SCRIPT}`), document.fonts.load(`60px ${WC.K.FONT_TITLE}`), document.fonts.load(`italic 60px ${WC.K.FONT_TITLE}`)]);
+  const eng = new WC.Engine(document.getElementById('c'), { scale: +(q.get('scale') || 1), paperSeed: 3 });
+  const only = q.get('only') ? q.get('only').split(',') : null;
+  const t0 = performance.now();
+  await WC.Film.build(eng, null, only);
+  const t1 = performance.now();
+  window.renderAt = (t) => { WC.Film.render(eng, t, { lyrics: q.get('lyrics') !== '0' }); eng.gl.finish(); };
+  const times = (q.get('t') || '95').split(',').map(Number);
+  window.renderAt(times[0]);
+  console.log('masks', eng.stats.masks, 'MB', (eng.stats.maskBytes / 1e6).toFixed(1), 'build ms', (t1 - t0).toFixed(0), 'render ms', (performance.now() - t1).toFixed(0));
+  window.__done = true;
+})().catch((e) => { console.log('ERR', e.stack || e.message); window.__done = true; });
+</script></body></html>
