@@ -1,0 +1,39 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Figure lab</title>
+<style>body{margin:0;background:#eee}canvas{display:block}</style></head>
+<body><canvas id="c" width="1920" height="1080"></canvas>
+<script src="../js/geom.js"></script>
+<script src="../js/figures.js"></script>
+<script>
+const c = document.getElementById('c'), g = c.getContext('2d');
+g.fillStyle = '#f4ecdc'; g.fillRect(0, 0, 1920, 1080);
+function part(fn, col, s, rnd) { g.fillStyle = col; g.strokeStyle = col; fn(g, s, rnd); }
+function drawLizzy(s, tx, ty) {
+  const L = WC.figures.lizzy;
+  g.save(); g.translate(tx, ty);
+  part(L.body, '#d9788a', s);
+  part(L.cheek, '#e3906f', s); part(L.lips, '#a8324a', s);
+  part(L.hair, '#7a2f3a', s, WC.rng(7));
+  part(L.hairLights, 'rgba(255,255,255,.35)', s);
+  part(L.ribbon, '#3f8f8a', s);
+  part(L.flowerPetals, '#f1d8dc', s); part(L.flowerHeart, '#d9a441', s);
+  part(L.earring, '#c9a14a', s);
+  g.fillStyle = g.strokeStyle = '#1b1410'; WC.figures.inkEye(g, L.eye, s);
+  g.restore();
+}
+function drawDarcy(s, tx, ty) {
+  const D = WC.figures.darcy;
+  g.save(); g.translate(tx, ty); g.scale(-1, 1);
+  part(D.body, '#4a5a7c', s);
+  part(D.coatCollar, '#36445f', s);
+  part(D.cravat, '#f7f3ea', s);
+  part(D.cravatShade, 'rgba(90,110,140,.25)', s);
+  part(D.hair, '#253048', s, WC.rng(11));
+  part(D.hairLights, 'rgba(255,255,255,.3)', s);
+  g.fillStyle = g.strokeStyle = '#10141f'; WC.figures.inkEye(g, D.eye, s);
+  g.restore();
+}
+drawLizzy(420, 330, 190);
+drawDarcy(453, 1560, 150);
+window.__done = true;
+</script></body></html>
