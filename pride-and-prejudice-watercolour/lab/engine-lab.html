@@ -1,0 +1,49 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Engine lab</title>
+<style>body{margin:0;background:#222}canvas{display:block;width:100vw}</style></head>
+<body><canvas id="c"></canvas>
+<script src="../js/geom.js"></script>
+<script src="../js/sdf.js"></script>
+<script src="../js/flood.js"></script>
+<script src="../js/engine.js"></script>
+<script src="../js/figures.js"></script>
+<script src="../js/people.js"></script>
+<script>
+(async function () {
+  const q = new URLSearchParams(location.search);
+  const t = +(q.get('t') || 0.5);
+  const eng = new WC.Engine(document.getElementById('c'), { scale: 1, paperSeed: 3 });
+  const F = WC.figures, P = WC.people;
+  const LZ = { x: 300, y: 170, s: 360 };
+  const t0 = performance.now();
+  const bg = eng.maskAuto((g) => g.fillRect(20, 20, 1880, 1040), { maskScale: 0.3, margin: 60 });
+  const face = eng.maskAuto((g) => { g.save(); g.translate(LZ.x, LZ.y); F.lizzy.body(g, LZ.s); g.restore(); }, { maskScale: 0.8, flood: { seeds: [[LZ.x + 0.39 * LZ.s, LZ.y + 0.49 * LZ.s]] } });
+  const hair = eng.maskAuto((g) => { g.save(); g.translate(LZ.x, LZ.y); F.lizzy.hair(g, LZ.s, WC.rng(7)); g.restore(); }, { flood: { seeds: [[LZ.x - 0.25 * LZ.s, LZ.y - 0.05 * LZ.s]] } });
+  // a gown from the puppet, drawn standing
+  const s = 100, root = P.root(1000, 1000, s, 1, s, P.lizzy.groundH);
+  const X = P.solve(P.lizzy.bones, P.lizzy.poses.stand(0), s, root);
+  const gown = eng.maskAuto((g) => { ['skirt', 'torso', 'head', 'upper', 'fore'].forEach((k) => { const m = X[P.lizzy.parts[k].bone]; g.save(); g.setTransform(1,0,0,1,0,0); g.transform(m[0], m[1], m[2], m[3], m[4], m[5]); P.lizzy.parts[k].draw(g, s); g.restore(); }); }, { flood: { seeds: [[1000, 260]] } });
+  const dc = { x: 1720, y: 200, s: 330 };
+  const darcy = eng.maskAuto((g) => { g.save(); g.translate(dc.x, dc.y); g.scale(-1, 1); F.darcy.body(g, dc.s); g.restore(); }, { maskScale: 0.8 });
+  const beam = eng.maskAuto((g) => { g.beginPath(); g.moveTo(560, -40); g.lineTo(700, -40); g.lineTo(1060, 1100); g.lineTo(760, 1100); g.fill(); }, { maskScale: 0.3, margin: 60 });
+  const glow = eng.maskAuto((g) => WC.fillCircle(g, 1400, 300, 160), { maskScale: 0.4, margin: 120 });
+  const word = eng.maskAuto((g) => { g.font = '90px serif'; g.fillText('tolerable', 1150, 720); }, { margin: 30 });
+  console.log('build ms', (performance.now() - t0).toFixed(0));
+  eng.setTime(t); eng.setBoil(Math.floor(t * 12));
+  eng.begin(0);
+  const W = (m, o) => eng.wash(m, o);
+  // marbled rose / indigo background, the boundary drifting with time
+  W(bg, { pig: '#f1b3c2', pigB: '#aab5da', mix: { dir: [1, 0], at: 960 + 300 * Math.sin(t * 0.6), width: 260, noise: 1.3, noiseScale: 260, flow: 0.12, vein: 0.5 }, density: 0.5, soft: 3, edge: 0.4, warp: 20, warpScale: 240, flow: 0.5, seed: 1 });
+  const p = Math.min(1, t / 2.5);
+  W(face, { pig: '#f3a9a2', pigB: '#d488ae', mix: { dir: [-1, 0.5], at: -300, width: 240, noise: 1 }, density: 0.92, edge: 1.3, edgeW: 5, flood: { at: p, soft: 26, noise: 40, edge: 1.2, edgeW: 16 }, wet: 1 - Math.min(1, Math.max(0, (t - 2.5) / 1.5)), seed: 2 });
+  W(hair, { pig: '#9e4b52', pigB: '#6d3b35', density: 1.05, edge: 1.1, edgeW: 5, rough: 1.8, roughScale: 7, gran: 0.55, flood: { at: Math.min(1, Math.max(0, (t - 1.2) / 1.5)), soft: 20, noise: 30 }, wet: 0.6, seed: 3 });
+  W(gown, { pig: '#eba2b1', pigB: '#d994b6', density: 0.9, edge: 1.2, sway: { amp: 16, y0: 1000 - 5.4 * s, y1: 1000, k: 2, omega: 2.4, wave: 260 }, flood: { at: Math.min(1, t / 3), soft: 24, noise: 30 }, seed: 4 });
+  W(darcy, { pig: '#8494bd', pigB: '#6273a0', density: 0.92, edge: 1.1, morph: { amount: 0.5 + 0.5 * Math.sin(t * 1.2), mirror: true, axis: dc.x - 0.05 * dc.s }, seed: 5 });
+  W(word, { pig: '#2f2019', density: 1.4, edge: 1.2, edgeW: 2, soft: 0.8, warp: 1, rough: 0.5, drip: { amp: 20 + 60 * Math.min(1, t / 3), scale: 18 }, seed: 6 });
+  eng.light(beam, { colour: '#ffdca0', density: 0.28, soft: 50, warp: 20, streak: { angle: 1.25, amt: 0.8, len: 260 }, seed: 7 });
+  eng.light(glow, { colour: '#ffc070', density: 0.5 * (0.8 + 0.2 * Math.sin(t * 9)), soft: 120, warp: 30, seed: 8 });
+  eng.present({ glow: 0.9 });
+  eng.gl.finish();
+  window.__done = true;
+})().catch((e) => { console.log('ERR', e.stack || e.message); window.__done = true; });
+</script></body></html>
