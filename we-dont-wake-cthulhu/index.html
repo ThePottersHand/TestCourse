@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>We Don't Wake Cthulhu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Mochiy+Pop+One&display=swap">
+<style>
+  :root {
+    color-scheme: dark;
+    --ground: #0f0a26;
+    --panel: #1a1238;
+    --line: #34296a;
+    --ink: #f4eeff;
+    --muted: #b3a6d9;
+    --mint: #8fe3b0;
+    --pink: #ff9ecf;
+    --gold: #ffd166;
+    --shadow: rgba(6, 2, 20, 0.6);
+    --display: "Mochiy Pop One", "Fredoka", "Arial Rounded MT Bold", "Trebuchet MS", sans-serif;
+    --body: "Fredoka", "Arial Rounded MT Bold", "Trebuchet MS", system-ui, sans-serif;
+  }
+  html, body { background: var(--ground); color: var(--ink); }
+  [hidden] { display: none !important; }
+  body {
+    margin: 0;
+    font-family: var(--body);
+    font-size: 16px;
+    line-height: 1.5;
+    padding-inline: 16px;
+    padding-block: 24px 40px;
+  }
+  .wrap { max-width: 1280px; margin: 0 auto; display: grid; gap: 14px; }
+  .head { display: grid; gap: 4px; }
+  h1 {
+    margin: 0;
+    font-family: var(--display);
+    font-weight: 400;
+    font-size: clamp(26px, 4.4vw, 46px);
+    line-height: 1.15;
+    letter-spacing: 0.01em;
+    text-wrap: balance;
+  }
+  h1 .mint { color: var(--mint); }
+  .sub { margin: 0; color: var(--muted); font-size: clamp(15px, 1.7vw, 18px); max-width: 65ch; }
+  .stage-wrap {
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: 18px;
+    overflow: hidden;
+    background: #120a2e;
+    box-shadow: 0 0 0 3px var(--line), 0 18px 50px var(--shadow);
+  }
+  .stage-wrap:fullscreen { border-radius: 0; box-shadow: none; background: #000; display: grid; place-items: center; }
+  .stage-wrap:fullscreen canvas { width: min(100vw, calc(100vh * 16 / 9)); height: auto; }
+  canvas { display: block; width: 100%; height: auto; cursor: pointer; }
+  .big-play {
+    position: absolute;
+    left: 50%; bottom: 7%;
+    transform: translateX(-50%);
+    display: inline-flex; align-items: center; gap: 12px;
+    padding: 12px 22px 12px 12px;
+    border: 3px solid #2a1b3d;
+    border-radius: 999px;
+    background: var(--gold);
+    color: #2a1b3d;
+    font: 600 clamp(15px, 2vw, 20px) var(--body);
+    cursor: pointer;
+    box-shadow: 0 6px 0 #2a1b3d;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .big-play:hover { transform: translateX(-50%) translateY(-2px); box-shadow: 0 8px 0 #2a1b3d; }
+  .big-play:active { transform: translateX(-50%) translateY(3px); box-shadow: 0 3px 0 #2a1b3d; }
+  .big-play svg { width: 40px; height: 40px; flex: none; }
+  .big-play span { white-space: nowrap; }
+  .controls {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px;
+    padding: 10px 12px;
+    background: var(--panel);
+    border: 2px solid var(--line);
+    border-radius: 14px;
+  }
+  .ctl {
+    font: 600 15px var(--body);
+    color: var(--ink);
+    background: #2a1f55;
+    border: 2px solid var(--line);
+    border-radius: 10px;
+    padding: 7px 12px;
+    cursor: pointer;
+    min-height: 40px;
+  }
+  .ctl:hover { background: #33276a; }
+  .ctl[aria-pressed="true"] { background: var(--mint); color: #13301f; border-color: var(--mint); }
+  #playBtn { width: 44px; padding: 0; display: grid; place-items: center; }
+  #playBtn svg { width: 18px; height: 18px; }
+  #playBtn .i-pause { display: none; }
+  #playBtn.is-playing .i-pause { display: block; }
+  #playBtn.is-playing .i-play { display: none; }
+  .time { font-variant-numeric: tabular-nums; color: var(--muted); min-width: 92px; }
+  #scrub { flex: 1 1 240px; min-width: 0; accent-color: var(--pink); height: 28px; }
+  .sections { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    display: inline-flex; align-items: baseline; gap: 8px;
+    font: 500 14px var(--body);
+    color: var(--muted);
+    background: transparent;
+    border: 2px solid var(--line);
+    border-radius: 999px;
+    padding: 5px 12px;
+    cursor: pointer;
+  }
+  .chip:hover { color: var(--ink); border-color: #4a3c8f; }
+  .chip-time { font-variant-numeric: tabular-nums; opacity: 0.75; font-size: 13px; }
+  .chip.is-current { color: #2a1b3d; background: var(--pink); border-color: var(--pink); }
+  .hint { margin: 0; color: var(--muted); font-size: 14px; }
+  .note { margin: 0; padding: 10px 14px; border-radius: 12px; background: #3a1f3a; color: #ffd6ec; border: 2px solid #6a3060; }
+  button:focus-visible, input:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+  @media (max-width: 560px) {
+    .big-play { padding: 6px 14px 6px 6px; gap: 8px; font-size: 14px; bottom: 5%; box-shadow: 0 4px 0 #2a1b3d; }
+    .big-play svg { width: 28px; height: 28px; }
+    #fsBtn { display: none; }
+    .time { min-width: 0; }
+    #scrub { flex-basis: 100%; order: 5; }
+    .hint { display: none; }
+  }
+  html.render body { padding: 0; margin: 0; background: #000; }
+  html.render .head, html.render .controls, html.render .sections, html.render .hint, html.render .big-play, html.render .note { display: none !important; }
+  html.render .wrap { max-width: none; display: block; }
+  html.render .stage-wrap { width: 1920px; height: 1080px; border-radius: 0; box-shadow: none; }
+  html.render canvas { width: 1920px; height: 1080px; }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header class="head">
+    <h1>We Don’t Wake <span class="mint">Cthulhu</span></h1>
+    <p class="sub">An animated singalong about polishing the altar, lighting the candles, and then deciding the ancient one deserves a good night’s sleep. Song by thepottershand.</p>
+  </header>
+  <div class="stage-wrap" id="stageWrap">
+    <canvas id="stage" width="1920" height="1080" role="img" aria-label="Animated music video: a chibi kid prepares a summoning ritual, changes their mind, and lets a sleepy little Cthulhu keep dreaming."></canvas>
+    <button id="bigPlay" class="big-play" type="button">
+      <svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="18" fill="#8fe3b0" stroke="#2a1b3d" stroke-width="3"/><path d="M16 12 L29 20 L16 28 Z" fill="#2a1b3d"/></svg>
+      <span>Play with sound</span>
+    </button>
+  </div>
+  <p class="note" id="note" hidden></p>
+  <div class="controls">
+    <button id="playBtn" class="ctl" type="button" aria-label="Play">
+      <svg class="i-play" viewBox="0 0 18 18" aria-hidden="true"><path d="M4 2 L16 9 L4 16 Z" fill="currentColor"/></svg>
+      <svg class="i-pause" viewBox="0 0 18 18" aria-hidden="true"><rect x="3" y="2" width="4" height="14" rx="1" fill="currentColor"/><rect x="11" y="2" width="4" height="14" rx="1" fill="currentColor"/></svg>
+    </button>
+    <span id="time" class="time">0:00 / 2:57</span>
+    <input id="scrub" type="range" min="0" max="177.67" step="0.01" value="0" aria-label="Position in song">
+    <button id="ccBtn" class="ctl" type="button" aria-pressed="true">Lyrics</button>
+    <button id="fsBtn" class="ctl" type="button">Full screen</button>
+  </div>
+  <nav class="sections" id="sections" aria-label="Jump to a part of the song"></nav>
+  <p class="hint">Space plays or pauses · ← → skip 5 seconds · C toggles lyrics · F goes full screen</p>
+</main>
+<audio id="song" src="we-dont-wake-cthulhu.mp3" preload="auto"></audio>
+<script src="js/data.js"></script>
+<script src="js/kit.js"></script>
+<script src="js/cast.js"></script>
+<script src="js/sets.js"></script>
+<script src="js/scenes-a.js"></script>
+<script src="js/scenes-b.js"></script>
+<script src="js/timeline.js"></script>
+<script src="js/player.js"></script>
+</body>
+</html>
