@@ -172,6 +172,8 @@
     },
     reach: (t, amt = 1) => ({ torso: -0.03 * amt, head: -0.06 * amt, upper: -1.30 * amt + 0.1, fore: -0.35 * amt - 0.2, skirt: 0.01 * Math.sin(t) }),
     dance: (t, amt = 1) => ({ torso: 0.01 * Math.sin(t * 3), head: -0.05, upper: -2.55 * amt, fore: -0.25 * amt, skirt: 0.02 * Math.sin(t * 3) }),
+    // palm raised toward her partner's, at shoulder height, not quite touching
+    palm: () => ({ torso: -0.02, head: -0.06, upper: -0.55, fore: -2.15, skirt: 0.01 }),
     curtsey: (t, amt) => ({ torso: 0.08 * amt, head: 0.18 * amt, upper: 0.25, fore: -0.6, skirt: 0 }),
   };
 
@@ -293,6 +295,8 @@
   DC.poses = {
     // hands clasped behind his back, chin up
     stand: (t) => ({ torso: -0.01 + 0.006 * Math.sin(t * 1.2), head: -0.07 + 0.02 * Math.sin(t * 0.7), upperN: 0.22, foreN: [1.05, 1, 0.42], upperF: 0.2, foreF: [1.0, 1, 0.42], thighN: -0.05, thighF: 0.07, tails: 0.01 * Math.sin(t) }),
+    // relaxed, arms at his sides (reads cleanly as one silhouette)
+    still: () => ({ torso: -0.01, head: -0.06, upperN: 0.06, foreN: -0.12, upperF: 0.04, foreF: -0.1, thighN: -0.04, thighF: 0.06 }),
     walk: (t, phase) => {
       const c = Math.sin(phase), k = Math.max(0, Math.sin(phase - 0.9)), k2 = Math.max(0, Math.sin(phase + Math.PI - 0.9));
       return {
@@ -306,6 +310,8 @@
     arms: (t) => ({ torso: -0.01, head: -0.12, upperN: -0.18, foreN: [-1.55, 1, 0.45], upperF: -0.12, foreF: [-1.5, 1, 0.45], thighN: -0.05, thighF: 0.07 }),
     // dancing: near arm raised to join hands high between the partners
     dance: (t, amt = 1) => ({ torso: 0.01 * Math.sin(t * 3), head: -0.03, upperN: -2.55 * amt, foreN: -0.2 * amt, upperF: 0.25, foreF: 0.5, thighN: -0.05, thighF: 0.08 }),  // arms folded, chin up
+    // palm raised toward hers at shoulder height; far arm at his side
+    palm: () => ({ torso: -0.02, head: 0.02, upperN: -0.5, foreN: -2.2, upperF: 0.05, foreF: -0.1, thighN: -0.04, thighF: 0.06 }),
   };
   DC.walkY = (phase, s) => -0.035 * s * Math.abs(Math.cos(phase)); // bob (apply to root)
 
@@ -387,6 +393,23 @@
       WC.fillCircle(g, x + bx * k, y + by * k, r * k);
       for (let i = 0; i < 9; i++) { const a = (i / 9) * Math.PI * 2 + rnd(); WC.fillCircle(g, x + (bx + Math.cos(a) * r * 0.9) * k, y + (by + Math.sin(a) * r * 0.9) * k, (4 + rnd() * 4) * k); }
     });
+  };
+  // Classical rotunda (the temple in the rain): base centre (x, y), width w.
+  Props.temple = (g, x, y, w) => {
+    const k = w / 100;
+    g.fillRect(x - 50 * k, y - 6 * k, 100 * k, 6 * k);                   // steps
+    g.fillRect(x - 46 * k, y - 11 * k, 92 * k, 5 * k);
+    g.fillRect(x - 42 * k, y - 16 * k, 84 * k, 5 * k);                    // podium
+    [-36, -21, -7, 7, 21, 36].forEach((cx) => g.fillRect(x + (cx - 3) * k, y - 70 * k, 6 * k, 54 * k));   // columns
+    g.fillRect(x - 44 * k, y - 80 * k, 88 * k, 10 * k);                   // entablature
+    g.fillRect(x - 40 * k, y - 84 * k, 80 * k, 4 * k);
+    g.beginPath(); g.ellipse(x, y - 84 * k, 38 * k, 30 * k, 0, Math.PI, 0); g.fill();   // dome
+    g.fillRect(x - 4 * k, y - 122 * k, 8 * k, 10 * k);                    // lantern
+    g.beginPath(); g.arc(x, y - 122 * k, 4 * k, Math.PI, 0); g.fill();
+  };
+  Props.templeGaps = (g, x, y, w) => {                                    // dark interior between columns
+    const k = w / 100;
+    [-28.5, -14, 0, 14, 28.5].forEach((cx, i) => g.fillRect(x + (cx - (i === 2 ? 3.5 : 4.5)) * k, y - 68 * k, (i === 2 ? 7 : 9) * k, 52 * k));
   };
   // Tall arched window: (x, y) top-left of rectangle part, w, h (arch added on top)
   Props.window = (g, x, y, w, h) => { g.fillRect(x, y, w, h); g.beginPath(); g.arc(x + w / 2, y, w / 2, Math.PI, 0); g.fill(); };

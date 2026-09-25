@@ -8,12 +8,12 @@
   // ---- transitions ---------------------------------------------------------------------
   const corners = [[0, 0], [1920, 0], [0, 1080], [1920, 1080]];
   const TR = {
-    bloom: (x, y, o = {}) => (p) => ({ type: 'bloom', x, y, r: -120 + A.inOut(p) * (o.reach || 2300), soft: o.soft || 40, noise: o.noise || 110, noiseScale: o.noiseScale || 170, tide: 0.45, tideW: 5, tideColour: o.tide || '#a3968a' }),
+    bloom: (x, y, o = {}) => (p) => ({ type: 'bloom', x, y, r: -120 + A.inOut(p) * (o.reach || 2300), soft: o.soft || 40, noise: o.noise || 110, noiseScale: o.noiseScale || 170, tide: 0.45, tideW: 5, tideColour: o.tide || '#a3968a', run: o.run || 0, p }),
     wipe: (dx, dy, o = {}) => {
       const L = Math.hypot(dx, dy); dx /= L; dy /= L;
       const ds = corners.map(([x, y]) => x * dx + y * dy);
       const lo = Math.min(...ds) - 260, hi = Math.max(...ds) + 260;
-      return (p) => ({ type: 'wipe', dir: [dx, dy], at: lo + (hi - lo) * A.inOut(p), soft: o.soft || 34, noise: o.noise || 120, noiseScale: o.noiseScale || 160, aniso: o.aniso || 1, tide: o.tideAmt != null ? o.tideAmt : 0.45, tideW: 5, tideColour: o.tide || '#a3968a' });
+      return (p) => ({ type: 'wipe', dir: [dx, dy], at: lo + (hi - lo) * A.inOut(p), soft: o.soft || 34, noise: o.noise || 120, noiseScale: o.noiseScale || 160, aniso: o.aniso || 1, tide: o.tideAmt != null ? o.tideAmt : 0.45, tideW: 5, tideColour: o.tide || '#a3968a', run: o.run || 0, p });
     },
   };
 
@@ -23,8 +23,8 @@
     { scene: 'ballroom', v: 'v1', from: 2.9, in: 0.9, tr: TR.bloom(960, 560, { reach: 2300 }) },
     { scene: 'mind', from: 12.95, in: 0.95, tr: TR.wipe(-1, -0.15) },
     { scene: 'profiles', v: 'c1', from: 29.25, in: 1.0, tr: TR.bloom(770, 420, { reach: 2400 }) },
-    { scene: 'ballroom', v: 'v2', from: 55.7, in: 1.8, tr: TR.wipe(0.05, 1, { aniso: 4, noise: 150, noiseScale: 150, tide: '#8190b4' }) },
-    { scene: 'oak', from: 68.45, in: 0.9, tr: TR.wipe(1, 0.1) },
+    { scene: 'storm', from: 55.7, in: 1.6, tr: TR.wipe(0.05, 1, { aniso: 4, noise: 150, noiseScale: 150, tide: '#8190b4', run: 150 }) },
+    { scene: 'pemberley', from: 68.45, in: 1.0, tr: TR.wipe(1, 0.1, { tide: '#c9a46a' }) },
     { scene: 'blush', from: 74.2, in: 0.9, tr: TR.bloom(760, 470, { reach: 2400 }) },
     { scene: 'sisters', from: 80.75, in: 0.8, tr: TR.wipe(-1, 0.1) },
     { scene: 'portrait', from: 85.45, in: 0.9, tr: TR.wipe(1, -0.1) },
@@ -66,6 +66,7 @@
     t = Math.max(0, Math.min(Film.duration, t));
     const s = Film.at(t);
     eng.setBoil(Math.floor(t * 12));
+    eng.setTime(t);
     const paint = (e) => { const sc = WC.scenes[e.scene]; if (sc && Film.masks[e.scene]) sc.render(eng, Film.masks[e.scene], t, e); };
     eng.begin(0); paint(s.a);
     let tr = null;

@@ -1,0 +1,51 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Cast lab</title>
+<style>body{margin:0;background:#222}canvas{display:block;width:100vw}</style></head>
+<body><canvas id="c"></canvas>
+<script src="../js/geom.js"></script>
+<script src="../js/sdf.js"></script>
+<script src="../js/flood.js"></script>
+<script src="../js/engine.js"></script>
+<script src="../js/figures.js"></script>
+<script src="../js/people.js"></script>
+<script src="../js/timing.js"></script>
+<script src="../js/anim.js"></script>
+<script src="../js/kit.js"></script>
+<script src="../js/cast.js"></script>
+<script>
+(async function () {
+  const q = new URLSearchParams(location.search);
+  const mode = q.get('mode') || 'turn';
+  const eng = new WC.Engine(document.getElementById('c'), { scale: 1, paperSeed: 3 });
+  const B = new WC.K.Builder(eng), C = WC.cast, P = WC.people;
+  const xs = [190, 560, 930, 1300, 1670];
+  if (mode === 'turn') {
+    xs.forEach((x, i) => C.lizzy(B, 'L' + i, { x, y: 1000, s: 100, dir: 1, pose: P.lizzy.poses.stand(0) }));
+  } else if (mode === 'fan') {
+    xs.forEach((x, i) => { C.lizzy(B, 'A' + i, { x, y: 1000, s: 100, dir: -1, pose: P.lizzy.poses.stand(0) }); C.lizzy(B, 'F' + i, { x, y: 1000, s: 100, dir: -1, pose: P.lizzy.poses.fan(0, 3, 0), fan: 3 }); });
+  } else {
+    xs.forEach((x, i) => C.darcy(B, 'D' + i, { x, y: 1000, s: 108, dir: -1, pose: P.darcy.poses.stand(0), fromFeet: true }));
+  }
+  const t0 = performance.now();
+  B.jobs.forEach((j) => j());
+  console.log('masks', B.jobs.length, 'ms', (performance.now() - t0).toFixed(0));
+  const Mk = B.M, cam = [1, 0, 0, 1, 0, 0];
+  eng.setTime(1.3); eng.begin(0);
+  const bg = eng.maskAuto((g) => g.fillRect(20, 20, 1880, 1040), { maskScale: 0.3, margin: 60 });
+  eng.wash(bg, { pig: '#efd29e', pigB: '#e9bfa8', mix: { dir: [0, 1], at: 500, width: 400, noise: 0.9 }, density: 0.6, soft: 4, warp: 20, warpScale: 240, flow: 0.5, seed: 1 });
+  xs.forEach((x, i) => {
+    const k = i / 4;
+    if (mode === 'turn') C.paintLizzy(eng, Mk, 'L' + i, { cam, t: 1.3, turn: k, sway: 6 });
+    else if (mode === 'fan') {
+      // morph pose A (arm down) -> pose F (fan raised): every layer morphs to its partner
+      const I = Mk['A' + i + 'Info'];
+      ['Body', 'Fan'].forEach(() => {});
+      C.paintLizzy(eng, Object.assign({}, Mk, morphPair(Mk, 'A' + i, 'F' + i)), 'A' + i, { cam, t: 1.3, sway: 6, morphTo: k });
+    } else C.paintDarcy(eng, Mk, 'D' + i, { cam, t: 1.3, p: [0.15, 0.35, 0.55, 0.8, 1][i], wet: 1, fromFeet: true });
+  });
+  function morphPair(Mk, a, b) { return {}; }
+  eng.present({});
+  eng.gl.finish();
+  window.__done = true;
+})().catch((e) => { console.log('ERR', e.stack || e.message); window.__done = true; });
+</script></body></html>

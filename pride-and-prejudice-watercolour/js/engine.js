@@ -275,12 +275,13 @@
       T = texture(uAccA, uv).rgb;
       L = light(uLitA, uv);
     }
+    vec3 OT = vec3(1.);
     if (uOverlayOn > .5) {
       vec2 ouv = vec2(uv.x, 1. - uv.y);
       vec3 a = texture(uOverlay, ouv).rgb, b = textureLod(uOverlay, ouv, 1.3).rgb;
       float grain = .86 + .28 * vnoise(gl_FragCoord.xy / (3. * uScale) + 5.);
       vec3 d = max(a, b * .28) * (1. + .7 * clamp(a - b, 0., 1.)) * grain * uOvStr;
-      T *= pow(max(uOvR, vec3(.004)), vec3(d.r)) * pow(max(uOvG, vec3(.004)), vec3(d.g)) * pow(max(uOvB, vec3(.004)), vec3(d.b));
+      OT = pow(max(uOvR, vec3(.004)), vec3(d.r)) * pow(max(uOvG, vec3(.004)), vec3(d.g)) * pow(max(uOvB, vec3(.004)), vec3(d.b));
     }
     T = mix(vec3(1.), T, uFade);
     vec4 P = texture(uPaper, uv);
@@ -295,6 +296,7 @@
     // light falls on the sheet: screen it over the paint, textured by the paper's tooth
     L *= .82 + .36 * P.r;
     col = 1. - (1. - col) * (1. - clamp(L, 0., 1.));
+    col *= OT;
     vec2 q = uv - .5; q.x *= uRes.x / uRes.y;
     col *= 1. - uVignette * smoothstep(.35, 1.05, length(q));
     col += (hash12(gl_FragCoord.xy + uSeed * 91.) - .5) * uGrain;
@@ -425,7 +427,7 @@
       const cv = this._mcv;
       if (cv.width < cw || cv.height < ch) { cv.width = Math.max(cv.width, cw); cv.height = Math.max(cv.height, ch); }
       const g = cv.getContext('2d', { willReadFrequently: true });
-      g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, cw, ch);
+      g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1; g.clearRect(0, 0, cw, ch);
       g.save(); g.beginPath(); g.rect(0, 0, cw, ch); g.clip();
       g.setTransform(ms, 0, 0, ms, -x0 * ms, -y0 * ms);
       g.fillStyle = '#fff'; g.strokeStyle = '#fff';
@@ -477,10 +479,12 @@
       if (!this._scan) this._scan = document.createElement('canvas');
       if (this._scan.width < W || this._scan.height < H) { this._scan.width = Math.max(W, this._scan.width); this._scan.height = Math.max(H, this._scan.height); }
       const g = this._scan.getContext('2d', { willReadFrequently: true });
-      g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, W, H);
+      g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1; g.clearRect(0, 0, W, H);
+      g.save();
       g.setTransform(ss, 0, 0, ss, -area.x * ss, -area.y * ss);
       g.fillStyle = '#fff'; g.strokeStyle = '#fff';
       draw(g);
+      g.restore();
       const d = g.getImageData(0, 0, W, H).data;
       let x0 = W, y0 = H, x1 = -1, y1 = -1;
       for (let y = 0; y < H; y++) {

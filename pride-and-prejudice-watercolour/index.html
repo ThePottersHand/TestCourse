@@ -101,7 +101,7 @@
 
 <div class="page">
   <header>
-    <div class="eyebrow">Review cut &middot; watercolour animation &middot; 2:31</div>
+    <div class="eyebrow">Review cut 2 &middot; watercolour animation &middot; 2:31</div>
     <h1>The Art of Making Up My Mind</h1>
     <p class="lede">Elizabeth Bennet's thoughts on Mr Darcy, painted in <b class="r">rose</b> for <i>like</i> and <b class="i">indigo</b> for <i>hate</i>. Every frame is painted live in your browser in time with the song.</p>
   </header>
@@ -158,18 +158,21 @@
 
 <script src="js/geom.js"></script>
 <script src="js/sdf.js"></script>
+<script src="js/flood.js"></script>
 <script src="js/engine.js"></script>
 <script src="js/figures.js"></script>
 <script src="js/people.js"></script>
 <script src="js/timing.js"></script>
 <script src="js/anim.js"></script>
 <script src="js/kit.js"></script>
+<script src="js/cast.js"></script>
 <script src="js/film.js"></script>
 <script src="js/scenes/title.js"></script>
 <script src="js/scenes/ballroom.js"></script>
 <script src="js/scenes/mind.js"></script>
 <script src="js/scenes/profiles.js"></script>
-<script src="js/scenes/oak.js"></script>
+<script src="js/scenes/storm.js"></script>
+<script src="js/scenes/pemberley.js"></script>
 <script src="js/scenes/blush.js"></script>
 <script src="js/scenes/sisters.js"></script>
 <script src="js/scenes/portrait.js"></script>
@@ -181,19 +184,20 @@
   const audio = $('audio'), stage = $('stage'), canvas = $('film');
   const DUR = WC.Film.duration;
   const SCENES = [
-    [0, 'Title', 'A drop of rose blooms and the title is inked in.'],
-    [2.9, 'The Assembly Rooms', '"I swear that boy is just the worst." She fans herself; he stands aloof.'],
-    [12.95, 'On my mind', 'A tiny Darcy on the hill inside her silhouette. A heart, then an indigo drop.'],
-    [29.25, 'Face to face', '"Staring at my eyes." Each "maybe" floods the page rose or indigo.'],
-    [55.7, 'Rude and mean', 'He turns his back. "Tolerable" is written, then struck out.'],
-    [68.45, 'Tall and strong', 'Pemberley’s lawn: he stretches tall, the old oak shakes.'],
-    [74.2, 'A certain way', 'The blush spreads and roses open on the beat.'],
-    [80.75, 'The sisters', 'Jane, Mary, Kitty and Lydia disapprove.'],
-    [85.45, 'The portrait', 'Pemberley’s gallery. Petals fly toward his painted eyes.'],
-    [112.55, 'The dance', 'Rose and indigo trade places across the ballroom.'],
-    [129.0, 'Mind made up', 'A violet heart blooms between them.'],
-    [134.3, 'Dawn', 'They walk out together; the paint settles.'],
+    [0, 'Title', 'A drop of rose blooms on the bare sheet; light passes over as the title is inked in.'],
+    [2.9, 'The Assembly Rooms', 'The ballroom floods in by candlelight. On "worst" she turns away and her fan comes up.'],
+    [12.95, 'On my mind', 'A sunset floods into her silhouette and a tiny Darcy is painted on the hill. Her heart glows, then an indigo drop marbles through it.'],
+    [29.25, 'Face to face', 'Her face floods out from her eye, then his. Rose and indigo tug across the page; she turns away on "hate".'],
+    [55.7, 'The storm', 'Rain, and lightning on "rude" and "mean". His words are lifted out of the sky, then the rain runs them down the page.'],
+    [68.45, 'Tall and strong', 'Pemberley at golden hour, painted from his boots up. On "strong": wind, sun rays and glitter on the lake.'],
+    [74.2, 'A certain way', 'Warmth floods out from her blush and roses open on the beat.'],
+    [80.75, 'The sisters', 'They paint in one per beat, lean in to whisper, and turn their backs on "wrong".'],
+    [85.45, 'The portrait', 'His painted eye, then his face and the gilt frame flood out. A sunbeam crosses the gallery.'],
+    [112.55, 'The dance', 'Palms almost touching, trailing colour. They turn away on "hate" and back on "like".'],
+    [129.0, 'Mind made up', 'A violet heart floods open between them.'],
+    [134.3, 'Dawn', 'Together in the mist as the sun rises. The paint dries and fades back into the paper.'],
   ];
+
   const fmt = (s) => { s = Math.max(0, s); const m = Math.floor(s / 60), r = Math.floor(s % 60); return m + ':' + String(r).padStart(2, '0'); };
   const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* storage unavailable */ } } };
 

@@ -87,6 +87,53 @@
   };
   K.petalMask = (B) => B.box('petal', (g) => { g.fill(WC.figures.petal(new Path2D(), 100, 42)); }, { x: 0, y: -24, w: 100, h: 48 }, { margin: 24, maskScale: 1.5 });
 
+
+  // ---- v2: painting on the page -------------------------------------------------------
+  // progress of a paint-on beat between t0 and t0+dur
+  K.pp = (t, t0, dur, fn) => (fn || A.out)(A.ramp(t, t0, t0 + dur));
+  // wetness of a wash laid between t0 and t1: wet while painting, then dries
+  K.wet = (t, t0, t1, dry = 1.6) => (t < t0 ? 0 : 1 - A.smooth((t - t1) / dry));
+  // shared small masks: a soft dot (motes, bokeh), a four-point star (glints)
+  K.commonMasks = (B) => {
+    B.box('dot', (g) => WC.fillCircle(g, 0, 0, 50), { x: -50, y: -50, w: 100, h: 100 }, { margin: 40, maskScale: 1 });
+    B.box('star', (g) => {
+      g.beginPath();
+      for (let i = 0; i < 8; i++) { const a = (i / 8) * Math.PI * 2 - Math.PI / 2, r = i % 2 ? 7 : 50; const x = Math.cos(a) * r, y = Math.sin(a) * r; i ? g.lineTo(x, y) : g.moveTo(x, y); }
+      g.closePath(); g.fill();
+    }, { x: -50, y: -50, w: 100, h: 100 }, { margin: 30, maskScale: 1.5 });
+    K.petalMask(B);
+  };
+  // drifting motes of light (candle bokeh, dust in a sunbeam, sparks)
+  K.motes = (eng, cam, dot, t, o) => {
+    const n = o.n || 20;
+    for (let i = 0; i < n; i++) {
+      const h = (k) => A.hash(i * 17 + k + (o.seed || 0) * 101);
+      const life = o.life || 6, ph = h(1) * life;
+      const age = ((t + ph) % life), u = age / life;
+      const x = o.x + (h(2) - 0.5) * o.w + Math.sin(t * (0.5 + h(3)) + h(4) * 6) * (o.sway || 18) + (o.vx || 0) * age;
+      const y = o.y + (h(5) - 0.5) * o.h + (o.vy != null ? o.vy : -24) * age;
+      const r = (o.r || 8) * (0.5 + h(6));
+      const tw = 0.6 + 0.4 * Math.sin(t * (2 + h(7) * 4) + h(8) * 6);
+      const a = Math.sin(Math.PI * u) * tw * (o.alpha != null ? o.alpha : 1);
+      if (a <= 0.02) continue;
+      eng.light(dot, { xf: WC.mat.mul(cam, [r / 50, 0, 0, r / 50, x, y]), colour: o.colour || '#ffd59a', density: (o.intensity || 0.5) * a, soft: 26, warp: 0, seed: i });
+    }
+  };
+  // a four-point glint that flares and fades
+  K.glint = (eng, cam, star, x, y, t, t0, dur, size, colour) => {
+    const u = A.ramp(t, t0, t0 + dur); if (u <= 0 || u >= 1) return;
+    const k = Math.sin(Math.PI * u), r = size * (0.6 + 0.4 * k) / 50, rot = 0.4 * u;
+    const c = Math.cos(rot) * r, s = Math.sin(rot) * r;
+    eng.light(star, { xf: WC.mat.mul(cam, [c, s, -s, c, x, y]), colour: colour || '#fff2d0', density: 0.9 * k, soft: 3, warp: 0, seed: 3 });
+  };
+
+  // mix two hex colours (as a painter would: multiplicatively, in log space)
+  K.mixHex = (a, b, t) => {
+    const c = WC.mixPig(a, b, A.clamp(t));
+    return '#' + c.map((v) => Math.round(Math.min(1, v) * 255).toString(16).padStart(2, '0')).join('');
+  };
+  K.mixStyle = (a, b, t) => { const o = {}; for (const k in a) o[k] = b[k] ? K.mixHex(a[k], b[k], t) : a[k]; return o; };
+
   // ---- text ---------------------------------------------------------------------------
   K.FONT_SCRIPT = "'Pinyon Script', 'PinyonLocal', cursive";
   K.FONT_TITLE = "'IM Fell English', 'FellLocal', Georgia, serif";
