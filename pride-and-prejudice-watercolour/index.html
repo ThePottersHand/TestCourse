@@ -46,7 +46,7 @@
   .stage:fullscreen { border-radius: 0; background: #000; }
   .stage:fullscreen canvas { object-fit: contain; }
 
-  .veil { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(21,22,29,.55); backdrop-filter: blur(2px); }
+  .veil { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(21,22,29,.62); }
   .loading { display: grid; gap: 12px; justify-items: center; width: min(360px, 80%); text-align: center; }
   .loading p { margin: 0; font: italic 22px/1.2 var(--display); }
   .bar { width: 100%; height: 6px; border-radius: 3px; background: rgba(255,255,255,.14); overflow: hidden; }
@@ -57,7 +57,7 @@
     display: grid; place-items: center; box-shadow: 0 10px 30px rgba(0,0,0,.4); transition: transform .15s ease, background .15s ease; }
   .bigplay:hover { transform: scale(1.05); background: #b8405e; }
   .bigplay svg { width: 38px; height: 38px; margin-left: 6px; }
-  .veil.ready { background: rgba(21,22,29,.18); backdrop-filter: none; }
+  .veil.ready { background: rgba(21,22,29,.18); }
 
   .transport { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; background: var(--wall-2); border-radius: var(--radius); padding: 12px 14px; }
   .btn { height: 38px; min-width: 38px; padding: 0 12px; border-radius: 19px; border: 1px solid var(--wall-3); background: var(--wall-3); color: var(--ink);
@@ -101,7 +101,7 @@
 
 <div class="page">
   <header>
-    <div class="eyebrow">Review cut 2 &middot; watercolour animation &middot; 2:31</div>
+    <div class="eyebrow">Review cut 3 &middot; watercolour animation &middot; 2:31</div>
     <h1>The Art of Making Up My Mind</h1>
     <p class="lede">Elizabeth Bennet's thoughts on Mr Darcy, painted in <b class="r">rose</b> for <i>like</i> and <b class="i">indigo</b> for <i>hate</i>. Every frame is painted live in your browser in time with the song.</p>
   </header>
@@ -168,14 +168,17 @@
 <script src="js/cast.js"></script>
 <script src="js/film.js"></script>
 <script src="js/scenes/title.js"></script>
-<script src="js/scenes/ballroom.js"></script>
+<script src="js/scenes/fields.js"></script>
 <script src="js/scenes/mind.js"></script>
 <script src="js/scenes/profiles.js"></script>
+<script src="js/scenes/edge.js"></script>
 <script src="js/scenes/storm.js"></script>
 <script src="js/scenes/pemberley.js"></script>
-<script src="js/scenes/blush.js"></script>
+<script src="js/scenes/orchard.js"></script>
 <script src="js/scenes/sisters.js"></script>
 <script src="js/scenes/portrait.js"></script>
+<script src="js/scenes/letter.js"></script>
+<script src="js/scenes/murmur.js"></script>
 <script src="js/scenes/dawn.js"></script>
 <script>
 (function () {
@@ -185,18 +188,20 @@
   const DUR = WC.Film.duration;
   const SCENES = [
     [0, 'Title', 'A drop of rose blooms on the bare sheet; light passes over as the title is inked in.'],
-    [2.9, 'The Assembly Rooms', 'The ballroom floods in by candlelight. On "worst" she turns away and her fan comes up.'],
-    [12.95, 'On my mind', 'A sunset floods into her silhouette and a tiny Darcy is painted on the hill. Her heart glows, then an indigo drop marbles through it.'],
-    [29.25, 'Face to face', 'Her face floods out from her eye, then his. Rose and indigo tug across the page; she turns away on "hate".'],
-    [55.7, 'The storm', 'Rain, and lightning on "rude" and "mean". His words are lifted out of the sky, then the rain runs them down the page.'],
-    [68.45, 'Tall and strong', 'Pemberley at golden hour, painted from his boots up. On "strong": wind, sun rays and glitter on the lake.'],
-    [74.2, 'A certain way', 'Warmth floods out from her blush and roses open on the beat.'],
-    [80.75, 'The sisters', 'They paint in one per beat, lean in to whisper, and turn their backs on "wrong".'],
-    [85.45, 'The portrait', 'His painted eye, then his face and the gilt frame flood out. A sunbeam crosses the gallery.'],
-    [112.55, 'The dance', 'Palms almost touching, trailing colour. They turn away on "hate" and back on "like".'],
-    [129.0, 'Mind made up', 'A violet heart floods open between them.'],
-    [134.3, 'Dawn', 'Together in the mist as the sun rises. The paint dries and fades back into the paper.'],
+    [2.9, 'Across the fields', 'Chapter 7: she walks to Netherfield into the wind, clouds racing, and splashes through a puddle; the mud climbs her hem.'],
+    [12.95, 'On my mind', 'A sunset floods into her silhouette; tiny Darcy on the hill. Her heart glows, then an indigo drop marbles through it.'],
+    [29.25, 'Staring', 'Two silhouettes face to face; a line of light between their eyes.'],
+    [35.6, 'Rocks and mountains', '"What are young men to rocks and mountains?" On the edge, the weather follows her: sun, a storm on "hate", a rainbow.'],
+    [55.7, 'The storm', 'The proposal in the rain. Lightning on "rude" and "mean"; his words are lifted out of the sky and run down the page.'],
+    [68.45, 'Pemberley', 'Golden hour, painted from his boots up. On "strong": wind, sun rays and glitter on the lake.'],
+    [74.2, 'Blossom', 'An orchard in April: she reaches up and the blossom bursts open from her hand.'],
+    [80.75, 'The sisters', 'Four silhouette portraits swing on their nails to whisper, then swing hard on "wrong".'],
+    [85.45, 'The gallery', 'His silhouette portrait at Pemberley; the gilt frame runs round from its bow.'],
+    [91.5, 'The letter', 'Chapters 35-36: his letter blows away on the wind in the bluebell grove. "Till this moment I never knew myself."'],
+    [112.55, 'Oakham Mount', 'Dusk and a murmuration of starlings; he is painted in beside her and the flock draws a heart.'],
+    [134.3, 'Dawn', 'Together in the mist as the sun rises; their colours meet in violet and the paint fades into the paper.'],
   ];
+
 
   const fmt = (s) => { s = Math.max(0, s); const m = Math.floor(s / 60), r = Math.floor(s % 60); return m + ':' + String(r).padStart(2, '0'); };
   const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* storage unavailable */ } } };

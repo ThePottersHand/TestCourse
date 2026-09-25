@@ -8,9 +8,8 @@
   WC.scenes = WC.scenes || {};
   const SUN = [912, 600];
   const LZ = { x: 860, y: 868, s: 40 }, DC = { x: 968, y: 870, s: 43 };
-  const VIOLET_L = { gown: '#c9a3d0', gownB: '#d9a8c4', hem: '#9f7ab6', sash: '#8f86c0', hair: '#7d4a62', hairB: '#5d3b55', ribbon: '#8f86c0' };
-  const VIOLET_D = { coat: '#7a6aa8', coatB: '#6a5c9a', face: '#9a8cc0', legs: '#b3a6cf', boots: '#4a3f70', hair: '#4a3f6e', lapel: '#5a4f88' };
-  const ROSE_L = C.lizzyStyle, INDIGO_D = C.darcyStyle;
+  // their silhouettes start in their own colours and meet in violet
+  const VIOLET = ['#4f3a66', '#8e6fae'];
 
   WC.scenes.dawn = {
     build(B) {
@@ -61,11 +60,12 @@
       const come = A.ease(t, 136.6, 142.4);
       const gap = 120 * (1 - come);
       const merge = A.ease(t, 141.0, 146.0);
-      const lzStyle = K.mixStyle(ROSE_L, VIOLET_L, merge), dcStyle = K.mixStyle(INDIGO_D, VIOLET_D, merge);
+      const col = (who) => [K.mixHex(C.INK[who][0], VIOLET[0], merge), K.mixHex(C.INK[who][1], VIOLET[1], merge)];
+      const lc = col('lizzy'), dcc = col('darcy');
       const fade = 1 - 0.75 * fin;
       const lp = pp(135.6, 2.2), dp = pp(136.0, 2.2);
-      C.paintDarcy(eng, Mk, 'dc', { cam, xf: M.tr(gap, 0), t, p: dp, wet: K.wet(t, 136.0, 138.2), alpha: fade, sway: 2.5, omega: 1.2, style: dcStyle, seed: 9 });
-      C.paintLizzy(eng, Mk, 'lz', { cam, xf: M.tr(-gap, 0), t, p: lp, wet: K.wet(t, 135.6, 137.8), alpha: fade, sway: 4, omega: 1.3, style: lzStyle, seed: 8 });
+      C.paint(eng, Mk, 'dc', { cam, xf: M.tr(gap, 0), t, p: dp, wet: K.wet(t, 136.0, 138.2), alpha: fade, sway: 2.5, omega: 1.2, pig: dcc[0], pigB: dcc[1], seed: 9 });
+      C.paint(eng, Mk, 'lz', { cam, xf: M.tr(-gap, 0), t, p: lp, wet: K.wet(t, 135.6, 137.8), alpha: fade, sway: 4, omega: 1.3, pig: lc[0], pigB: lc[1], seed: 8 });
       // morning mist drifts across their feet
       W(Mk.mistNear, { mode: 'lift', lift: 0.6 * pp(136.2, 1.4), soft: 20, warp: 30, warpScale: 80, seed: 11 }, M.tr(50 * Math.sin(t * 0.25 + 1), 0));
       W(Mk.mistNear, { pig: '#efe6f0', density: 0.3 * pp(136.2, 1.4), soft: 22, warp: 30, warpScale: 80, seed: 12 }, M.tr(50 * Math.sin(t * 0.25 + 1), 0));

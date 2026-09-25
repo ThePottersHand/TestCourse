@@ -1,8 +1,9 @@
 // Scene: On My Mind (verse 1, lines 3-5), painted on.
-// Her profile is sketched, then a sunset floods into the silhouette from the sun, hills sweep
-// in stroke by stroke, and on "on my mind" a tiny Darcy is painted on the hilltop.
-// "And in my heart": the camera drifts down as a heart floods open on her breast, lit from
-// within. "But I don't know if that's a crime": an indigo drop falls and marbles through it.
+// Her silhouette is sketched, then a sunset floods into it from the sun: her whole outline,
+// hair and all, becomes a window onto Pemberley's hills. On "on my mind" a tiny Darcy is
+// painted on the hilltop. "And in my heart": the camera drifts down as a heart floods open on
+// her breast, lit from within. "But I don't know if that's a crime": an indigo drop falls and
+// marbles through it.
 (function (WC) {
   'use strict';
   const A = WC.A, K = WC.K, M = WC.mat, F = WC.figures, P = WC.people, C = WC.cast;
@@ -11,33 +12,33 @@
   const LZ = { x: 560, y: 175, s: 500 };
   const HEART = [655, 1010];
   const SUN = [690, 552];
-  const clipLizzy = (g) => { g.beginPath(); WC.spline(g, F.lizzyBody, true, LZ.s, LZ.x, LZ.y); g.clip(); };
-  const hill = (pts) => (g) => { g.save(); clipLizzy(g); g.beginPath(); WC.spline(g, pts, false, 1); g.lineTo(1400, 1500); g.lineTo(-200, 1500); g.closePath(); g.fill(); g.restore(); };
-  const inLizzy = (g, fn) => { g.save(); g.translate(LZ.x, LZ.y); fn(); g.restore(); };
+  // her silhouette: profile, hair, ribbon and flower as one outline
+  const sil = (g) => { g.save(); g.translate(LZ.x, LZ.y); const L = F.lizzy; L.body(g, LZ.s); L.hair(g, LZ.s, WC.rng(7)); L.ribbon(g, LZ.s); L.flowerPetals(g, LZ.s); g.restore(); };
+  const inSil = (shape) => (g) => K.clipTo(g, shape, sil);
+  const hill = (pts) => inSil((g) => { g.beginPath(); WC.spline(g, pts, false, 1); g.lineTo(1400, 1500); g.lineTo(-200, 1500); g.closePath(); g.fill(); });
+  const INFO = { kind: 'lizzy', x: LZ.x, y: LZ.y, s: LZ.s, dir: 1 };
 
   WC.scenes.mind = {
     build(B) {
       K.commonMasks(B);
-      const L = F.lizzy;
       B.mask('bg', K.rect(30, 26, 1860, 1400), { maskScale: 0.25, margin: 80, flood: { seeds: [[700, 450]] } });
       B.mask('glow', (g) => { g.beginPath(); g.ellipse(600, 380, 420, 360, -0.2, 0, 7); g.fill(); }, { maskScale: 0.35, margin: 140 });
       B.mask('strokeR', (g) => { WC.brushStroke(g, [[1200, 180], [1500, 120], [1760, 240], [1820, 520]], 130); WC.brushStroke(g, [[1250, 780], [1550, 700], [1790, 820]], 90); }, { maskScale: 0.4, margin: 80, flood: { seeds: [[1200, 180], [1250, 780]] } });
-      B.mask('sky', (g) => inLizzy(g, () => L.body(g, LZ.s)), { maskScale: 0.6, flood: { seeds: [SUN] } });
+      B.mask('sky', sil, { maskScale: 0.6, flood: { seeds: [SUN] } });
       B.mask('sun', (g) => WC.fillCircle(g, SUN[0], SUN[1], 44), { maskScale: 0.8, margin: 60 });
       B.mask('sunGlow', (g) => WC.fillCircle(g, SUN[0], SUN[1], 120), { maskScale: 0.4, margin: 120 });
       B.mask('hillFar', hill([[-200, 580], [300, 560], [470, 548], [640, 572], [860, 556], [1400, 570]]), { maskScale: 0.6, flood: { seeds: [[320, 575]] } });
       B.mask('hillMid', hill([[-200, 640], [360, 624], [560, 606], [700, 628], [900, 650], [1400, 660]]), { maskScale: 0.6, flood: { seeds: [[330, 640]] } });
       B.mask('hillNear', hill([[-200, 760], [300, 700], [520, 690], [760, 740], [1000, 800], [1400, 820]]), { maskScale: 0.5, flood: { seeds: [[330, 720]] } });
       B.mask('field', hill([[-200, 900], [400, 860], [800, 900], [1400, 960]]), { maskScale: 0.5, flood: { seeds: [[500, 900]] } });
-      B.mask('mist', (g) => { g.save(); clipLizzy(g); g.beginPath(); g.ellipse(560, 600, 260, 22, 0, 0, 7); g.fill(); g.beginPath(); g.ellipse(700, 675, 220, 16, 0, 0, 7); g.fill(); g.restore(); }, { maskScale: 0.6, margin: 40 });
-      B.mask('house', (g) => { g.save(); clipLizzy(g); WC.props.pemberley(g, 440, 560, 110); g.restore(); }, { margin: 20, flood: { seeds: [[440, 530]] } });
-      B.mask('houseWin', (g) => { g.save(); clipLizzy(g); WC.props.pemberleyWindows(g, 440, 560, 110); g.restore(); }, { margin: 10, maskScale: 2 });
-      B.mask('rim', (g) => { g.lineWidth = 9; g.lineJoin = 'round'; g.beginPath(); WC.spline(g, F.lizzyBody, true, LZ.s, LZ.x, LZ.y); g.stroke(); }, { maskScale: 0.8, margin: 30, flood: { seeds: [[LZ.x + 0.45 * LZ.s, LZ.y + 0.4 * LZ.s]] } });
-      C.lizzyBust(B, 'lz', LZ);
+      B.mask('mist', inSil((g) => { g.beginPath(); g.ellipse(560, 600, 260, 22, 0, 0, 7); g.fill(); g.beginPath(); g.ellipse(700, 675, 220, 16, 0, 0, 7); g.fill(); }), { maskScale: 0.6, margin: 40 });
+      B.mask('house', inSil((g) => WC.props.pemberley(g, 440, 560, 110)), { margin: 20, flood: { seeds: [[440, 530]] } });
+      B.mask('houseWin', inSil((g) => WC.props.pemberleyWindows(g, 440, 560, 110)), { margin: 10, maskScale: 2 });
+      B.mask('crown', inSil((g) => { g.beginPath(); g.rect(-400, -400, 2800, 862); g.fill(); }), { maskScale: 0.6, margin: 20, flood: { seeds: [SUN] } });
       B.box('heart', (g) => { g.fill(WC.heartPath(new Path2D(), 0, 0, 120)); }, { x: -140, y: -140, w: 280, h: 260 }, { margin: 60, flood: { seeds: [[0, -20]] } });
       B.box('drop', (g) => { g.beginPath(); g.moveTo(0, -30); g.bezierCurveTo(12, -8, 16, 4, 0, 16); g.bezierCurveTo(-16, 4, -12, -8, 0, -30); g.fill(); }, { x: -20, y: -34, w: 40, h: 54 }, { margin: 20, maskScale: 2 });
       B.mask('splash', K.splat(31, HEART[0], HEART[1] - 20, 150, 110, 40, 7), { margin: 16 });
-      C.darcy(B, 'tiny', { x: 548, y: 611, s: 10, dir: 1, pose: P.darcy.poses.still(), lite: true });
+      C.darcy(B, 'tiny', { x: 548, y: 611, s: 10, dir: 1, pose: P.darcy.poses.still() });
     },
 
     render(eng, Mk, t) {
@@ -70,28 +71,17 @@
       hl(Mk.field, 15.4, 2.0, '#d9a6b8', '#b7a3d0', 0.42, 12);
       const drift = (t - 15) * 7;
       W(Mk.mist, { mode: 'lift', lift: 0.45 * K.pp(t, 15.4, 1.2), soft: 14, warp: 16, warpScale: 70, seed: 9 }, M.tr(drift, 0));
-      W(Mk.rim, { pig: '#d98fa6', density: 0.5, soft: 3, edge: 0.4, warp: 3, warpScale: 130, rough: 1.3, flood: { at: K.pp(t, 13.2, 1.6), soft: 20, noise: 20 }, seed: 13 });
+      // her outline: the same wash pooled along the edge of the silhouette
+      W(Mk.sky, { pig: '#b5607f', density: 0.7, hollow: 1, hollowW: 7, soft: 1.5, edge: 0.8, edgeW: 3, warp: 3, warpScale: 130, rough: 1.3, flood: { at: K.pp(t, 13.2, 1.6), soft: 20, noise: 20 }, seed: 13 });
+      // the top of her head (her hair) deepens into dusk
+      W(Mk.crown, { pig: '#8a4f7c', pigB: '#c98fb4', mix: { dir: [0, 1], at: 330, width: 120, noise: 1 }, density: 0.55 * K.pp(t, 15.0, 1.6), soft: 8, edge: 0.3, warp: 20, warpScale: 120, flow: 0.5, seed: 14,
+        reveal: { dir: [0, 1], at: 470, soft: 60, noise: 40 } });
 
       // tiny Darcy, painted on the hilltop on "on my mind", lit from behind by the sun
       const dp = K.pp(t, mindT - 0.8, 1.2);
       if (dp > 0) {
-        C.paintDarcy(eng, Mk, 'tiny', { cam, t, p: dp, wet: K.wet(t, mindT - 0.8, mindT + 0.4), sway: 1.2, style: { coat: '#39406a', coatB: '#2f3656', face: '#4d5a86', legs: '#56648f', hair: '#1f2440', hairB: '#2a2440' }, lift: 0.7 });
+        C.paint(eng, Mk, 'tiny', { cam, t, p: dp, wet: K.wet(t, mindT - 0.8, mindT + 0.4), sway: 1.2, pig: '#2a2f55', pigB: '#3a4270', lift: 0.7 });
       }
-
-      // her hair, ribbon, flower, lips on top of the landscape
-      const hairP = K.pp(t, 15.3, 1.8), hw = K.wet(t, 15.3, 17.1);
-      const hairSway = { amp: 2.5, y0: LZ.y + 0.25 * LZ.s, y1: LZ.y + 0.95 * LZ.s, k: 1.4, omega: 1.9, wave: 90, phase: 0.7 };
-      W(Mk.lzLips, { pig: '#c9506c', density: 0.5 * K.pp(t, 16.6, 0.6), soft: 1.2, edge: 1.1, edgeW: 3, warp: 1.2, warpScale: 40, rough: 0.6, seed: 14 });
-      W(Mk.lzHair, { pig: '#9e4b52', pigB: '#6d3b35', mix: { dir: [-1, 0.2], at: (-(LZ.x - 0.149 * LZ.s) + 0.2 * (LZ.y + 0.2 * LZ.s)) / 1.0198, width: 0.38 * LZ.s, noise: 0.9 }, density: 1.05, edge: 1.1, edgeW: 5, soft: 1.1, warp: 3, rough: 1.8, roughScale: 7, flow: 0.45, gran: 0.55,
-        flood: { at: hairP, soft: 22, noise: 30 }, wet: hw, sway: hairSway, seed: 15 });
-      W(Mk.lzHairLights, { mode: 'lift', lift: 0.5 * K.pp(t, 17.0, 0.6), soft: 2.5, warp: 2, rough: 1.4, sway: hairSway, seed: 16 });
-      const rp = K.pp(t, 16.2, 0.9), ribSway = { amp: 4, y0: LZ.y + 0.05 * LZ.s, y1: LZ.y + 0.7 * LZ.s, k: 1.1, omega: 2.2, wave: 70, phase: 2 };
-      W(Mk.lzRibbon, { mode: 'lift', lift: 0.85, soft: 1.2, flood: { at: rp, soft: 16, noise: 20 }, sway: ribSway, seed: 17 });
-      W(Mk.lzRibbon, { pig: '#6fb0a8', pigB: '#4f8f96', mix: { dir: [-1, 0.5], at: (-(LZ.x - 0.455 * LZ.s) + 0.5 * LZ.y) / 1.118, width: 0.255 * LZ.s, noise: 0.6 }, density: 1.0, edge: 1.3, edgeW: 4, warp: 2, warpScale: 70, rough: 1, flow: 0.4, gran: 0.4, flood: { at: rp, soft: 16, noise: 20 }, sway: ribSway, seed: 17 });
-      const fp = K.pp(t, 16.5, 0.7);
-      W(Mk.lzFlower, { mode: 'lift', lift: 0.85, soft: 1, flood: { at: fp, soft: 10, noise: 10 }, seed: 18 });
-      W(Mk.lzFlower, { pig: '#f4d3da', density: 0.8, edge: 1.6, edgeW: 3, warp: 1.5, warpScale: 40, rough: 0.8, flood: { at: fp, soft: 10, noise: 10 }, seed: 18 });
-      W(Mk.lzFlowerHeart, { pig: '#e9c46a', pigB: '#b9773a', mix: { dir: [1, 1], at: 0, width: 10, noise: 0.3 }, density: 1.1 * K.pp(t, 17.0, 0.4), edge: 1.2, edgeW: 3, gran: 0.9, seed: 19 });
 
       // the heart floods open, lit from within
       const hx = M.tr(HEART[0], HEART[1]);
@@ -119,11 +109,9 @@
       // ink: the sketch, the eye, birds, the question mark
       const g = K.ink(eng, cam);
       g.strokeStyle = '#0f0';
-      C.sketchLizzy(g, Mk.lzInfo, K.pp(t, 12.95, 1.3, A.inOut));
+      C.sketchBust(g, INFO, K.pp(t, 12.95, 1.3, A.inOut));
       C.pen(g, [[250, 562], [900, 556]], K.pp(t, 13.2, 0.8), 1.1, 4);
       g.fillStyle = g.strokeStyle = '#f00';
-      const blink = [23.2].some((b) => t > b && t < b + 0.14);
-      C.inkLizzyBust(g, Mk.lzInfo, { p: K.pp(t, 16.0, 1.0, (x) => x), closed: blink });
       g.lineWidth = 1.6; g.lineCap = 'round';
       const bp = K.pp(t, 16.0, 1.0);
       if (bp > 0) {

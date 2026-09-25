@@ -1,8 +1,10 @@
 // Scene: The Storm (interlude + verse 2, lines 1-2).
-// The proposal in the rain. A storm floods down the sheet, the temple and the bent tree are
-// laid in, rain streams across everything. "rude": lightning, and she turns away. "mean":
-// lightning again, and he turns too. "And he says stuff he shouldn't say": he turns back and his
-// words are lifted out of the dark sky in light, then the rain runs them down the page.
+// The proposal in the rain (chapter 34). A storm floods down the sheet, the temple and the bent
+// tree are laid in, rain streams across everything, the wind tears at her skirts. "rude":
+// lightning, and she draws herself up. "mean":
+// lightning again. Each flash throws them into black silhouette against the lit sky. "And he
+// says stuff he shouldn't say": he leans in, and his words are lifted out of the dark sky in
+// light, then the rain runs them down the page.
 (function (WC) {
   'use strict';
   const A = WC.A, K = WC.K, M = WC.mat, P = WC.people, C = WC.cast;
@@ -88,11 +90,16 @@
       W(Mk.dot, { pig: '#46495f', density: 0.35 * K.pp(t, 58.5, 1), soft: 18, warp: 5, seed: 11 }, M.mul(M.tr(1190, 1018), M.sc(2.0, 0.2)));
 
       // ---- the two of them, soaked, turning away from each other
-      const lzTurn = A.ease(t, rude - 0.05, rude + 0.65);
-      const dcTurn = A.keys(t, [[mean - 0.05, 0], [mean + 0.65, 1], [A.word(12, 'he') - 0.3, 1], [saysT + 0.2, 0]]);
+      // no turning: she draws herself up on "rude", he leans in as he says what he shouldn't
+      const lzLean = -0.035 * A.ease(t, rude - 0.1, rude + 0.6) * (1 - A.ease(t, 66, 68));
+      const dcLean = 0.05 * A.keys(t, [[saysT - 0.6, 0], [saysT + 0.4, 1], [shouldnt + 0.4, 1], [68.4, 0.4]]);
       const wind = 7 + 6 * gust;
-      C.paintLizzy(eng, Mk, 'lz', { cam, t, p: K.pp(t, 57.0, 2.0), wet: K.wet(t, 57.0, 59.0), turn: lzTurn, sway: wind, omega: 2.4, style: { gown: '#dd8fa2', gownB: '#c98aa6', hem: '#a85577' }, seed: 5 });
-      C.paintDarcy(eng, Mk, 'dc', { cam, t, p: K.pp(t, 57.6, 2.0), wet: K.wet(t, 57.6, 59.6), turn: dcTurn, sway: wind * 0.8, omega: 2.2, style: { coat: '#4f5b86', coatB: '#434d74', face: '#7b87b0' }, seed: 6 });
+      const lxf = M.about(740, 1010, lzLean), dxf = M.about(1190, 1016, -dcLean);
+      const dark = Math.min(1, flash * 3);   // lightning throws them into black silhouette
+      C.paint(eng, Mk, 'lz', { cam, xf: lxf, t, p: K.pp(t, 57.0, 2.0), wet: K.wet(t, 57.0, 59.0), sway: wind, omega: 2.4, wind: -0.3 - 0.05 * wind, seed: 5,
+        pig: K.mixHex('#7e3558', '#241a2c', dark), pigB: K.mixHex('#c96a88', '#2c2032', dark) });
+      C.paint(eng, Mk, 'dc', { cam, xf: dxf, t, p: K.pp(t, 57.6, 2.0), wet: K.wet(t, 57.6, 59.6), sway: wind * 0.8, omega: 2.2, wind: 0.3 + 0.04 * wind, seed: 6,
+        pig: K.mixHex('#1f2750', '#141424', dark), pigB: K.mixHex('#3e4d85', '#1a1a2c', dark) });
 
       // ---- his words, lifted out of the sky in light, then run down the page by the rain
       WORDS.forEach((w, i) => {
@@ -134,11 +141,6 @@
       C.pen(g, [[-40, 702], [700, 690], [1960, 676]], K.pp(t, 55.8, 1.2, A.inOut), 1.1, 4);
       const tp = K.pp(t, 56.0, 1.2, A.inOut), k = TEMPLE.w / 100;
       C.pen(g, [[TEMPLE.x - 52 * k, TEMPLE.y + 2], [TEMPLE.x - 44 * k, TEMPLE.y - 82 * k], [TEMPLE.x, TEMPLE.y - 126 * k], [TEMPLE.x + 44 * k, TEMPLE.y - 82 * k], [TEMPLE.x + 52 * k, TEMPLE.y + 2]], tp, 1.2, 8);
-      g.fillStyle = g.strokeStyle = '#f00';
-      const flip = (I) => [-1, 0, 0, 1, 2 * I.x, 0];
-      const LI = Mk.lzInfo, DI = Mk.dcInfo;
-      if (K.pp(t, 57.0, 2.0) > 0.85 && (lzTurn < 0.05 || lzTurn > 0.95)) K.withXf(g, lzTurn > 0.5 ? flip(LI) : [1, 0, 0, 1, 0, 0], () => P.lizzy.ink(g, { s: LI.s }, LI.X, {}));
-      if (K.pp(t, 57.6, 2.0) > 0.85 && (dcTurn < 0.05 || dcTurn > 0.95)) K.withXf(g, dcTurn > 0.5 ? flip(DI) : [1, 0, 0, 1, 0, 0], () => P.darcy.ink(g, { s: DI.s }, DI.X, {}));
       eng.ink({ strength: [1.7, 0.5, 1.2], seed: 7 });
     },
   };

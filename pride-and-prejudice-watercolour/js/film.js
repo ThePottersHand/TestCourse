@@ -20,18 +20,20 @@
   // ---- schedule (seconds). Each entry fades in over `in` seconds from `from`.
   Film.schedule = [
     { scene: 'title', from: 0, in: 0 },
-    { scene: 'ballroom', v: 'v1', from: 2.9, in: 0.9, tr: TR.bloom(960, 560, { reach: 2300 }) },
+    { scene: 'fields', from: 2.9, in: 0.9, tr: TR.bloom(960, 560, { reach: 2300 }) },
     { scene: 'mind', from: 12.95, in: 0.95, tr: TR.wipe(-1, -0.15) },
-    { scene: 'profiles', v: 'c1', from: 29.25, in: 1.0, tr: TR.bloom(770, 420, { reach: 2400 }) },
+    { scene: 'profiles', from: 29.25, in: 1.0, tr: TR.bloom(770, 420, { reach: 2400 }) },
+    { scene: 'edge', from: 35.6, in: 1.3, tr: TR.wipe(1, -0.25, { run: 90, tide: '#9a8aa8' }) },
     { scene: 'storm', from: 55.7, in: 1.6, tr: TR.wipe(0.05, 1, { aniso: 4, noise: 150, noiseScale: 150, tide: '#8190b4', run: 150 }) },
     { scene: 'pemberley', from: 68.45, in: 1.0, tr: TR.wipe(1, 0.1, { tide: '#c9a46a' }) },
-    { scene: 'blush', from: 74.2, in: 0.9, tr: TR.bloom(760, 470, { reach: 2400 }) },
+    { scene: 'orchard', from: 74.2, in: 0.9, tr: TR.bloom(760, 470, { reach: 2400 }) },
     { scene: 'sisters', from: 80.75, in: 0.8, tr: TR.wipe(-1, 0.1) },
     { scene: 'portrait', from: 85.45, in: 0.9, tr: TR.wipe(1, -0.1) },
-    { scene: 'ballroom', v: 'dance', from: 112.55, in: 1.0, tr: TR.bloom(960, 520, { reach: 2300 }) },
-    { scene: 'profiles', v: 'c3', from: 129.0, in: 0.9, tr: TR.bloom(960, 470, { reach: 2300 }) },
+    { scene: 'letter', from: 91.5, in: 1.1, tr: TR.bloom(520, 560, { reach: 2500, tide: '#8a9a7a' }) },
+    { scene: 'murmur', from: 112.55, in: 1.3, tr: TR.wipe(-0.2, -1, { noise: 150, noiseScale: 200, tide: '#b88aa0', run: 60 }) },
     { scene: 'dawn', from: 134.3, in: 1.6, tr: TR.wipe(0, -1, { noise: 160, noiseScale: 200, tide: '#c9a46a' }) },
   ];
+
   Film.duration = 151.32;
 
   Film.at = function (t) {
@@ -53,7 +55,7 @@
     let done = 0, last = performance.now();
     for (const job of jobs) {
       job(); done++;
-      if (performance.now() - last > 30) { if (onProgress) onProgress(done / total); await new Promise((r) => setTimeout(r, 0)); last = performance.now(); }
+      if (performance.now() - last > 150) { if (onProgress) onProgress(done / total); await new Promise((r) => setTimeout(r, 0)); last = performance.now(); }
     }
     if (onProgress) onProgress(1);
     Film.masks = {};
@@ -83,21 +85,21 @@
     { lines: [0, 1], x: 960, y: [112, 190], size: 60 },
     { lines: [2], x: 1430, y: [960], size: 60 },
     { lines: [3, 4], x: 1430, y: [900, 978], size: 60 },
-    { lines: [5], x: 960, y: [1010], size: 62 },
-    { lines: [6, 7], x: 930, y: [944, 1016], size: 58 },
-    { lines: [8, 9], x: 930, y: [944, 1016], size: 58 },
-    { lines: [10], x: 930, y: [944, 1016], size: 58, split: 4 },
+    { lines: [5], x: 960, y: [104], size: 62 },
+    { lines: [6, 7], x: 1300, y: [944, 1016], size: 58 },
+    { lines: [8, 9], x: 1300, y: [944, 1016], size: 58 },
+    { lines: [10], x: 1300, y: [944, 1016], size: 58, split: 4 },
     { lines: [11, 12], x: 960, y: [112, 190], size: 60 },
     { lines: [13], x: 560, y: [150], size: 64 },
     { lines: [14], x: 1400, y: [990], size: 62 },
     { lines: [15], x: 960, y: [104], size: 62 },
     { lines: [16], x: 1160, y: [1010], size: 64 },
-    { lines: [17, 18], x: [700, 900], y: [930, 1012], size: 84, align: 'left' },
-    { lines: [19, 20], x: [640, 820], y: [930, 1012], size: 76, align: 'left' },
-    { lines: [21], x: [640, 820], y: [930, 1012], size: 76, align: 'left', split: 4 },
+    { lines: [17, 18], x: [1080, 1240], y: [930, 1012], size: 78, align: 'left' },
+    { lines: [19, 20], x: [1020, 1160], y: [930, 1012], size: 70, align: 'left' },
+    { lines: [21], x: [1040, 1180], y: [930, 1012], size: 70, align: 'left', split: 4 },
     { lines: [22, 23], x: 960, y: [92, 160], size: 54 },
     { lines: [24, 25], x: 960, y: [92, 160], size: 54 },
-    { lines: [26], x: 880, y: [950, 1020], size: 54, split: 4 },
+    { lines: [26], x: 1340, y: [950, 1020], size: 54, split: 4 },
   ];
   // Each group's visible window.
   (function () {

@@ -1,6 +1,7 @@
-// Full-figure Regency puppets, jointed like cut-paper silhouettes (Lotte Reiniger style),
-// plus the four Bennet sisters as busts. All drawn facing +x in H units (crown -> chin = 1),
-// origin at the crown. Masks are built once in the rest pose; poses are rotations about joints.
+// Figure shapes and poses: Elizabeth and Darcy as full figures drawn in parts (facing +x, H units
+// where crown -> chin = 1, origin at the crown), a pose being rotations about the joints, plus the
+// four Bennet sisters as busts and the scenery props. The cast bakes a posed figure into a single
+// silhouette, so the joints never show.
 (function (WC) {
   'use strict';
   const F = WC.figures, M = WC.mat;
@@ -28,13 +29,6 @@
     return M.mul(M.tr(gx, gy), M.mul(M.trs(0, 0, lean, k * dir, k), M.tr(0, -groundH * build)));
   };
 
-  // Screen box of a figure: local H-unit bounds -> screen via cam x root (design px).
-  P.box = function (cam, root, s, x0, y0, x1, y1) {
-    const m = M.mul(cam, root);
-    const c = [[x0, y0], [x1, y0], [x0, y1], [x1, y1]].map(([x, y]) => M.apply(m, x * s, y * s));
-    const xs = c.map((q) => q[0]), ys = c.map((q) => q[1]);
-    return [Math.min(...xs) - 24, Math.min(...ys) - 24, Math.max(...xs) + 24, Math.max(...ys) + 24];
-  };
 
   const pts = (arr, s) => arr.map(([x, y, c]) => (c ? [x * s, y * s, c] : [x * s, y * s]));
   const fill = (g, arr, s) => WC.fillSpline(g, arr, true, s);
@@ -87,77 +81,9 @@
     g.beginPath(); g.arc(cx, cy, R, a0, a1); g.arc(cx, cy, r, a1, a0, true); g.closePath(); g.fill();
   };
 
-  LZ.build = function (eng, s, opts = {}) {
-    const area = { x: -3 * s, y: -1 * s, w: 6 * s, h: 10 * s };
-    const out = { s };
-    for (const k in LZ.parts) out[k] = eng.maskAuto((g) => LZ.parts[k].draw(g, s), { area, margin: 24, maskScale: opts.maskScale || 1 });
-    out.fan = LZ.fanStates.map((a) => eng.maskAuto(LZ.fanDraw(a), { area, margin: 20, maskScale: opts.maskScale || 1 }));
-    return out;
-  };
 
-  LZ.style = {
-    gown: '#eba2b1', gownB: '#d994b6', skin: '#f0a9a4', skinB: '#d88dae', hem: '#c7607f', sash: '#6fb0a8',
-    hair: '#9e4b52', hairB: '#6d3b35', ribbon: '#6fb0a8', fan: '#a9d3cc', fanB: '#e58ea0',
-  };
 
-  // Paint Elizabeth. pose: bone angles + {fan: 0..3, fanAlpha}. o.cam: camera; o.tint: override colours
-  LZ.paint = function (eng, B, root, pose, o = {}) {
-    const S = Object.assign({}, LZ.style, o.style || {});
-    const cam = o.cam || M.ident();
-    const X = P.solve(LZ.bones, pose, B.s, root);
-    const xf = (bone) => M.mul(cam, X[bone]);
-    const a = o.alpha != null ? o.alpha : 1, sd = o.seed || 0;
-    const common = { alpha: a, warp: 3, warpScale: 110, rough: 1.3, flow: 0.45, flowScale: 110, gran: 0.4, edge: 1.2, edgeW: 4.5 };
-    const W = (mask, bone, p) => eng.wash(mask, Object.assign({ xf: xf(bone) }, common, p));
-    const lift = (o.lift != null ? o.lift : 0.92) * a;
-    const box = P.box(cam, root, B.s, -1.7, -0.6, 2.9, LZ.groundH + 0.3);
-    eng.beginGroup(box);
-    W(B.skirt, 'skirt', { pig: S.gown, pigB: S.gownB, mix: { dir: [-1, 0.4], at: 0, width: B.s * 1.2, noise: 0.9, noiseScale: 140 }, density: 0.85, seed: 101 + sd });
-    if (!o.simple) W(B.hem, 'skirt', { pig: S.hem, density: 0.5, soft: 3, seed: 102 + sd, edge: 1.4 });
-    W(B.torso, 'torso', { pig: S.skin, pigB: S.skinB, mix: { dir: [-1, 0.5], at: -0.3 * B.s, width: B.s * 0.6, noise: 0.9 }, density: 0.9, seed: 103 + sd });
-    if (!o.simple) { W(B.sash, 'torso', { mode: 'lift', lift: 0.8, soft: 1.5, seed: 104 + sd }); W(B.sash, 'torso', { pig: S.sash, density: 0.95, edge: 1.3, seed: 104 + sd }); }
-    W(B.head, 'head', { pig: S.skin, pigB: S.skinB, mix: { dir: [-1, 0.5], at: -0.25 * B.s, width: B.s * 0.4, noise: 0.9 }, density: 0.9, seed: 105 + sd });
-    W(B.hair, 'head', { pig: S.hair, pigB: S.hairB, mix: { dir: [-1, 0.2], at: -0.3 * B.s, width: B.s * 0.4, noise: 0.9 }, density: 1.05, rough: 1.6, roughScale: 6, gran: 0.55, seed: 106 + sd });
-    if (!o.simple) {
-      W(B.hairLights, 'head', { mode: 'lift', lift: 0.45, soft: 1.5, rough: 1, seed: 107 + sd });
-      W(B.ribbon, 'head', { mode: 'lift', lift: 0.85, soft: 1.2, seed: 108 + sd });
-      W(B.ribbon, 'head', { pig: S.ribbon, density: 0.95, edge: 1.3, seed: 108 + sd });
-      W(B.flower, 'head', { mode: 'lift', lift: 0.85, soft: 1, seed: 109 + sd });
-      W(B.flower, 'head', { pig: '#f4d3da', density: 0.7, edge: 1.6, edgeW: 2.5, warp: 1.2, seed: 109 + sd, alpha: a * (o.flowerAlpha != null ? o.flowerAlpha : 1) });
-      W(B.flowerHeart, 'head', { pig: '#e9c46a', pigB: '#b9773a', mix: { dir: [1, 1], at: 0, width: 6, noise: 0.3 }, density: 1.1, seed: 110 + sd });
-    }
-    eng.endGroup(lift);
-    eng.beginGroup(box);
-    W(B.upper, 'upper', { pig: S.skin, pigB: S.skinB, mix: { dir: [0, 1], at: 2 * B.s, width: B.s, noise: 0.8 }, density: 0.8, seed: 111 + sd });
-    W(B.fore, 'fore', { pig: S.skin, density: 0.8, seed: 112 + sd });
-    if (pose.fan != null && (pose.fanAlpha == null || pose.fanAlpha > 0)) {
-      const i = Math.max(0, Math.min(3, Math.round(pose.fan)));
-      W(B.fan[i], 'fore', { pig: S.fan, pigB: S.fanB, mix: { dir: [0, 1], at: 4.45 * B.s, width: 0.12 * B.s, noise: 0.4 }, density: 1.0, edge: 1.8, edgeW: 2.5, seed: 113 + sd, alpha: a * (pose.fanAlpha != null ? pose.fanAlpha : 1) });
-    }
-    eng.endGroup(lift * 0.9);
-    return X;
-  };
 
-  // Ink details for Elizabeth (eye, fan ribs). g is a layer context with the camera applied.
-  LZ.ink = function (g, B, X, pose, o = {}) {
-    g.save();
-    const m = X.head; g.transform(m[0], m[1], m[2], m[3], m[4], m[5]);
-    g.fillStyle = g.strokeStyle = '#f00';
-    if (o.eyeClosed) F.inkEyeClosed(g, F.lizzy.eye, B.s); else F.inkEye(g, F.lizzy.eye, B.s);
-    g.restore();
-    if (pose.fan != null && pose.fan >= 0.5 && (pose.fanAlpha == null || pose.fanAlpha > 0.3)) {
-      const i = Math.max(0, Math.min(3, Math.round(pose.fan))), open = LZ.fanStates[i];
-      g.save(); const f = X.fore; g.transform(f[0], f[1], f[2], f[3], f[4], f[5]);
-      g.strokeStyle = '#f00'; g.lineWidth = 0.012 * B.s; g.lineCap = 'round';
-      const cx = -0.01 * B.s, cy = 4.08 * B.s;
-      for (let k = 0; k <= 8; k++) {
-        const ang = Math.PI / 2 - open / 2 + (open * k) / 8;
-        g.beginPath(); g.moveTo(cx + Math.cos(ang) * 0.14 * B.s, cy + Math.sin(ang) * 0.14 * B.s);
-        g.lineTo(cx + Math.cos(ang) * 0.6 * B.s, cy + Math.sin(ang) * 0.6 * B.s); g.stroke();
-      }
-      g.restore();
-    }
-  };
 
   // Poses ----------------------------------------------------------
   LZ.poses = {
@@ -228,69 +154,9 @@
       bootFoot(g, s, 0.02); WC.fillEllipse(g, 0.11 * s, 5.70 * s, 0.03 * s, 0.06 * s, 0); } },
   };
 
-  DC.build = function (eng, s, opts = {}) {
-    const area = { x: -3 * s, y: -1 * s, w: 6 * s, h: 10 * s };
-    const out = { s };
-    for (const k in DC.parts) out[k] = eng.maskAuto((g) => DC.parts[k].draw(g, s), { area, margin: 24, maskScale: opts.maskScale || 1 });
-    return out;
-  };
 
-  DC.style = {
-    coat: '#6b7aa6', coatB: '#566795', face: '#8494bd', faceB: '#6273a0', legs: '#99a3c2', boots: '#2f3656',
-    hair: '#39406a', hairB: '#4d3a3a', lapel: '#3f4c78', cravat: '#c3cadc', waistcoat: '#dcb56a', far: '#56648f',
-  };
 
-  // Near limbs reuse their masks for the far side (different bones, darker wash, painted first).
-  DC.paint = function (eng, B, root, pose, o = {}) {
-    const S = Object.assign({}, DC.style, o.style || {});
-    const cam = o.cam || M.ident();
-    const X = P.solve(DC.bones, pose, B.s, root);
-    // far limbs sit a touch behind: shift them along the facing axis in bone space
-    const xf = (bone) => M.mul(cam, X[bone]);
-    const a = o.alpha != null ? o.alpha : 1, sd = o.seed || 0;
-    const common = { alpha: a, warp: 3, warpScale: 110, rough: 1.3, flow: 0.45, flowScale: 110, gran: 0.45, edge: 1.2, edgeW: 4.5 };
-    const W = (mask, bone, p) => eng.wash(mask, Object.assign({ xf: xf(bone) }, common, p));
-    const lift = (o.lift != null ? o.lift : 0.92) * a;
-    const box = P.box(cam, root, B.s, -1.9, -0.6, 3.1, DC.groundH + 0.3);
-    // far arm + leg (behind the body)
-    eng.beginGroup(box);
-    eng.wash(B.upper, Object.assign({}, common, { xf: M.mul(cam, M.mul(X.upperF, M.tr(0.08 * B.s, 0))), pig: S.far, density: 0.9, seed: 201 + sd }));
-    eng.wash(B.fore, Object.assign({}, common, { xf: M.mul(cam, M.mul(X.foreF, M.tr(0.08 * B.s, 0))), pig: S.far, density: 0.9, seed: 202 + sd }));
-    eng.wash(B.thigh, Object.assign({}, common, { xf: M.mul(cam, M.mul(X.thighF, M.tr(0.02 * B.s, 0))), pig: S.far, density: 0.85, seed: 203 + sd }));
-    eng.wash(B.shin, Object.assign({}, common, { xf: M.mul(cam, M.mul(X.shinF, M.tr(0.02 * B.s, 0))), pig: S.far, density: 0.85, seed: 204 + sd }));
-    if (!o.simple) eng.wash(B.boot, Object.assign({}, common, { xf: M.mul(cam, M.mul(X.shinF, M.tr(0.02 * B.s, 0))), pig: S.boots, density: 0.8, seed: 205 + sd }));
-    eng.endGroup(lift * 0.8);
-    eng.beginGroup(box);
-    W(B.tails, 'tails', { pig: S.coat, pigB: S.coatB, mix: { dir: [0, 1], at: 3.5 * B.s, width: B.s, noise: 0.8 }, density: 0.95, seed: 206 + sd });
-    // near leg
-    W(B.hips, 'hips', { pig: S.legs, density: 0.85, seed: 220 + sd });
-    W(B.thigh, 'thighN', { pig: S.legs, density: 0.85, seed: 207 + sd });
-    W(B.shin, 'shinN', { pig: S.legs, density: 0.85, seed: 208 + sd });
-    W(B.boot, 'shinN', { pig: S.boots, density: 1.0, edge: 1.3, seed: 209 + sd });
-    // body
-    W(B.torso, 'torso', { pig: S.coat, pigB: S.coatB, mix: { dir: [0.2, 1], at: 2.2 * B.s, width: B.s, noise: 0.8 }, density: 0.95, seed: 210 + sd });
-    if (!o.simple) W(B.lapel, 'torso', { pig: S.lapel, density: 0.85, edge: 1.3, seed: 212 + sd });
-    W(B.head, 'head', { pig: S.face, pigB: S.faceB, mix: { dir: [0.3, 1], at: 0.6 * B.s, width: 0.5 * B.s, noise: 0.7 }, density: 0.92, seed: 213 + sd });
-    W(B.cravat, 'torso', { mode: 'lift', lift: o.simple ? 0.6 : 0.92, soft: 1.2, rough: 1, seed: 214 + sd, alpha: a });
-    if (!o.simple) W(B.cravatShade, 'torso', { pig: S.cravat, density: 0.8, soft: 4, edge: 0.5, seed: 215 + sd });
-    W(B.hair, 'head', { pig: S.hair, pigB: S.hairB, mix: { dir: [1, 0.4], at: -0.2 * B.s, width: 0.4 * B.s, noise: 0.8 }, density: 1.05, rough: 1.8, roughScale: 6, gran: 0.6, seed: 216 + sd });
-    if (!o.simple) W(B.hairLights, 'head', { mode: 'lift', lift: 0.4, soft: 1.5, rough: 1, seed: 217 + sd });
-    eng.endGroup(lift);
-    // near arm on top
-    eng.beginGroup(box);
-    W(B.upper, 'upperN', { pig: S.coat, density: 0.9, seed: 218 + sd });
-    W(B.fore, 'foreN', { pig: S.coat, density: 0.9, seed: 219 + sd });
-    eng.endGroup(lift * 0.85);
-    return X;
-  };
 
-  DC.ink = function (g, B, X, pose, o = {}) {
-    g.save();
-    const m = X.head; g.transform(m[0], m[1], m[2], m[3], m[4], m[5]);
-    g.fillStyle = g.strokeStyle = '#f00';
-    F.inkEye(g, F.darcy.eye, B.s);
-    g.restore();
-  };
 
   DC.poses = {
     // hands clasped behind his back, chin up
@@ -313,7 +179,6 @@
     // palm raised toward hers at shoulder height; far arm at his side
     palm: () => ({ torso: -0.02, head: 0.02, upperN: -0.5, foreN: -2.2, upperF: 0.05, foreF: -0.1, thighN: -0.04, thighF: 0.06 }),
   };
-  DC.walkY = (phase, s) => -0.035 * s * Math.abs(Math.cos(phase)); // bob (apply to root)
 
   // ================================================================ The sisters (busts)
   // Variation on Elizabeth's profile + distinctive hair / bonnet for each.
@@ -410,36 +275,5 @@
   Props.templeGaps = (g, x, y, w) => {                                    // dark interior between columns
     const k = w / 100;
     [-28.5, -14, 0, 14, 28.5].forEach((cx, i) => g.fillRect(x + (cx - (i === 2 ? 3.5 : 4.5)) * k, y - 68 * k, (i === 2 ? 7 : 9) * k, 52 * k));
-  };
-  // Tall arched window: (x, y) top-left of rectangle part, w, h (arch added on top)
-  Props.window = (g, x, y, w, h) => { g.fillRect(x, y, w, h); g.beginPath(); g.arc(x + w / 2, y, w / 2, Math.PI, 0); g.fill(); };
-  Props.windowBars = (g, x, y, w, h) => {
-    const b = Math.max(2, w * 0.035);
-    g.fillRect(x + w / 2 - b / 2, y - w / 2, b, h + w / 2);
-    for (let i = 1; i < 5; i++) g.fillRect(x, y + (h * i) / 5 - b / 2, w, b);
-  };
-  // Chandelier body: tiers of arms and a drop, centred at (x,y), width w.
-  Props.chandelier = (g, x, y, w) => {
-    const k = w / 100;
-    WC.fillEllipse(g, x, y, 42 * k, 7 * k, 0);
-    WC.fillEllipse(g, x, y - 16 * k, 28 * k, 5 * k, 0);
-    WC.fillEllipse(g, x, y + 14 * k, 16 * k, 10 * k, 0);
-    WC.capsule(g, x, y - 40 * k, x, y + 22 * k, 3 * k, 5 * k);
-    for (let i = -3; i <= 3; i++) { g.fillRect(x + i * 13 * k - 1.2 * k, y - 16 * k, 2.4 * k, 12 * k); }
-    for (let i = -2; i <= 2; i++) { g.fillRect(x + i * 12 * k - 1.2 * k, y - 32 * k, 2.4 * k, 12 * k); }
-  };
-  // Loose painted rose: petals as tapered arcs around a centre (x,y), radius r
-  Props.rose = (g, x, y, r, rot = 0) => {
-    for (let i = 0; i < 5; i++) {
-      const a = rot + (i / 5) * Math.PI * 2;
-      WC.fillEllipse(g, x + Math.cos(a) * r * 0.55, y + Math.sin(a) * r * 0.55, r * 0.55, r * 0.4, a + Math.PI / 2);
-    }
-    WC.fillCircle(g, x, y, r * 0.5);
-  };
-  Props.roseCentre = (g, x, y, r, rot = 0) => {
-    g.lineCap = 'round'; g.lineWidth = r * 0.075;
-    g.beginPath();
-    for (let i = 0; i <= 40; i++) { const t = i / 40, a = rot + t * Math.PI * 2.3, rr = r * 0.06 + t * r * 0.34; const X = x + Math.cos(a) * rr, Y = y + Math.sin(a) * rr; i ? g.lineTo(X, Y) : g.moveTo(X, Y); }
-    g.stroke();
   };
 })(window.WC = window.WC || {});

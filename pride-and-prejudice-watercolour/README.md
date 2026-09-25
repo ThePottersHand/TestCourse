@@ -3,25 +3,28 @@
 A painterly, heavily stylised watercolour animation for the song *The Art of Making Up My Mind*,
 which is Elizabeth Bennet's running argument with herself about Mr Darcy.
 
-**Status: code version 2 ready for review.** Version 2 drops the jointed puppets: every scene is
-now painted onto the page as you watch, with flowing colour and light. Once the review is signed
-off, the same code will render the final video frame by frame.
+**Status: code version 3 ready for review.** Version 3 moves the story outdoors and into the
+novel: real silhouettes with no faces, no figures flipping back and forth, and landscapes that
+are always moving (wind, clouds, water, light, birds). Once the review is signed off, the same
+code will render the final video frame by frame.
 
 ![Concept still](concept/concept-still.png)
 
 ## Concept
 
-- **Painted on the page.** Nothing slides or pops in. Each scene starts as bare paper and a
-  pencil line, and the paint floods out from where the brush touches: faces from the eye, a
-  sunset from the sun, a gilt frame running round both ways from its bow, Darcy from his boots up.
-- **No puppets.** Figures are whole painted silhouettes. They come alive through the paint:
-  hems, ribbons and coat tails move in the air, busts breathe, and a figure turns by flowing
-  into its own mirror image.
+- **Real silhouettes.** Every figure is one solid painted shape (hair, bonnet and ribbons
+  included), like a Regency cut-paper silhouette laid in wet watercolour. No eyes, no lips, no
+  jointed limbs. Figures come to life through the air around them: hems, coat tails and bonnet
+  ribbons move in the wind.
+- **Painted on the page.** Each scene starts as bare paper and pencil, and the paint floods out
+  from where the brush touches: a sunset from the sun, Darcy from his boots up, a gilt frame
+  running round both ways from its bow.
+- **Scenes from the book, and Lizzy out of doors.** The walk to Netherfield, "rocks and
+  mountains", the proposal in the rain, Pemberley, Darcy's letter in the grove at Rosings, the
+  picture gallery, Oakham Mount.
 - **Two warring pigments.** Elizabeth is rose madder ("maybe I like him") and Darcy is indigo
-  ("maybe I hate him"). Their colours tug across the page and marble into violet on "the art of
-  making up my mind".
-- **Light.** Candlelight, sunsets, lightning, sunbeams and glints are painted into their own
-  light layer and glow over the paper.
+  ("maybe I hate him"). The weather, the light and even his handwriting take their colour, and
+  the two meet in violet on "the art of making up my mind".
 - **Hand-lettered lyrics**, written on word by word in time with the vocal, in Pinyon Script
   (a Regency copperplate hand). *like*, *heart* and *feel* are painted in rose; *hate*, *worst*,
   *rude* and *wrong* in indigo; *mind* and *eyes* in violet. Lyrics can be switched off in the player.
@@ -31,17 +34,18 @@ off, the same code will render the final video frame by frame.
 | Time | Scene |
 | --- | --- |
 | 0:00 | Title: a drop of rose blooms on the bare sheet; light passes over as the title is inked in |
-| 0:03 | The Assembly Rooms: the ballroom floods in by candlelight; on "worst" she turns away and her fan comes up |
-| 0:13 | On my mind: a sunset floods into her silhouette and a tiny Darcy is painted on the hill; her heart glows, then an indigo drop marbles through it |
-| 0:29 | Face to face: her face floods out from her eye, then his; rose and indigo tug across the page, and she turns away on "hate" |
-| 0:56 | The storm: rain, and lightning on "rude" and "mean"; his words ("your inferiority", "a degradation") are lifted out of the sky, then the rain runs them down the page |
-| 1:08 | Tall and strong: Pemberley at golden hour, painted from his boots up as the camera tilts; on "strong", wind, sun rays and glitter on the lake |
-| 1:14 | A certain way: warmth floods out from her blush and roses open on the beat |
-| 1:21 | The sisters: they paint in one per beat, lean in to whisper, and turn their backs on "wrong" |
-| 1:25 | The portrait: his painted eye, then his face and the gilt frame flood out; a sunbeam crosses the gallery |
-| 1:52 | The dance: palms almost touching, trailing colour; they turn away on "hate" and back on "like" |
-| 2:09 | Mind made up: a violet heart floods open between them |
-| 2:14 | Dawn: together in the mist as the sun rises; the paint dries and fades back into the paper |
+| 0:03 | Across the fields (ch. 7): she walks to Netherfield into the wind, clouds racing and dragging their shadows over the fields; she splashes through a puddle and the mud climbs her hem |
+| 0:13 | On my mind: a sunset floods into her silhouette; tiny Darcy on the hill; her heart glows, then an indigo drop marbles through it |
+| 0:29 | Staring: two silhouettes face to face, a line of light between their eyes |
+| 0:36 | Rocks and mountains (ch. 27): on a gritstone edge the weather follows her heart: sun on "like", an indigo storm and rain on "hate", a rainbow on the second "like", violet dusk on "the art of making up my mind" |
+| 0:56 | The storm (ch. 34): the proposal in the rain; lightning on "rude" and "mean"; his words ("your inferiority", "a degradation") are lifted out of the sky, then run down the page |
+| 1:08 | Pemberley (ch. 43): golden hour, painted from his boots up as the camera tilts; on "strong", wind, sun rays and glitter on the lake |
+| 1:14 | Blossom: an orchard in April; she reaches up and the blossom bursts open outward from her hand |
+| 1:21 | The sisters: four oval silhouette portraits swing on their nails to whisper, and swing hard on "wrong" |
+| 1:25 | The gallery (ch. 43): his silhouette portrait; the gilt frame runs round from its bow; a sunbeam crosses the room |
+| 1:31 | The letter (ch. 35-36): in the bluebell grove at Rosings his handwriting blows off the page, rose then indigo then rose; "Till this moment I never knew myself" |
+| 1:52 | Oakham Mount: dusk and a murmuration of starlings that gathers, tears in two and rejoins; he is painted in beside her and the flock draws a heart |
+| 2:14 | Dawn: together in the mist as the sun rises; their colours meet in violet and the paint fades back into the paper |
 
 ## How it's made
 
@@ -54,8 +58,8 @@ watercolour engine.
 | `frame.html` | Renders any single moment (`frame.html?t=95`), for checks and for the final frame-by-frame video render. |
 | `js/engine.js` | Watercolour renderer: procedural cold-press paper, and washes with edge darkening, granulation, flow, wet-in-wet and marbled mixing, dry brush, lifting and soft reveals, combined subtractively. Paint can flood through a shape from seed points, keep flowing while wet, sway, drip, and morph into another shape or its mirror image. Also a light layer (glows, rays, glints), figure groups (a figure reserves the paper beneath it), ink and graphite layers, wet-edged scene transitions where the old painting runs, and the lyric overlay. |
 | `js/sdf.js`, `js/flood.js` | Turn any Canvas2D drawing into a signed distance field mask, and bake the flood field (how far paint travels inside the shape from its seed points). |
-| `js/figures.js`, `js/people.js` | Elizabeth and Darcy profiles, full-figure shapes and poses, the four sisters, and props (Pemberley, the temple, oak, chandeliers, roses). |
-| `js/cast.js` | Bakes each figure, in a pose, into whole painted silhouettes (one per colour) and paints them on: flooding in, swaying, turning, merging poses. |
+| `js/figures.js`, `js/people.js` | Elizabeth and Darcy profiles, full-figure shapes and poses, the four sisters, and props (Pemberley, the temple, oak). |
+| `js/cast.js` | Bakes each figure, in a pose, into one solid silhouette (plus wind-blown bonnet ribbons and coat tails) and paints it on: flooding in, moving in the wind. |
 | `js/film.js` | Scene schedule, transitions and the word-by-word lyric overlay. |
 | `js/scenes/*.js` | One file per scene, each timed to the lyrics and beats. |
 | `js/timing.js`, `timing/lyrics-timing.json` | Word-level lyric timings, song sections and the 264 detected beats (about 108 BPM, B♭ major, 2:31). |

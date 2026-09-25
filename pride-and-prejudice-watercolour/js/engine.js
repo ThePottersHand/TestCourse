@@ -89,6 +89,7 @@
   uniform vec3 uWet;        // wetness, flow amplitude px, flow scale px
   uniform vec4 uSway;       // amp px, y0, y1, exponent
   uniform vec4 uSway2;      // omega, wavelength px, phase, vertical amp px
+  uniform vec4 uSwayAxis;   // axis the motion grows along (unit), steady lean in the wind, 1/gust wavelength across
   uniform vec2 uDrip;       // length px, column scale px
   uniform vec3 uLightCol; uniform vec3 uStreak;   // light colour; streak angle, amount, length
   out vec4 o;
@@ -115,10 +116,12 @@
     vec2 lp = vLocal;
     // sway: fabric and hair move in the air (inverse warp, growing from y0 to y1)
     if (uSway.x != 0. || uSway2.w != 0.) {
-      float f = pow(clamp((lp.y - uSway.y) / max(1., uSway.z - uSway.y), 0., 1.), uSway.w);
-      float ph = uTime * uSway2.x - lp.y / uSway2.y + uSway2.z;
-      lp.x -= uSway.x * f * sin(ph);
-      lp.y -= uSway2.w * f * sin(ph * 1.3 + 1.1);
+      vec2 ax = uSwayAxis.xy, pp = vec2(ax.y, -ax.x);
+      float along = dot(lp, ax);
+      float f = pow(clamp((along - uSway.y) / max(1., uSway.z - uSway.y), 0., 1.), uSway.w);
+      float ph = uTime * uSway2.x - along / uSway2.y - dot(lp, pp) * uSwayAxis.w + uSway2.z;
+      lp -= pp * uSway.x * f * (sin(ph) + uSwayAxis.z);
+      lp -= ax * uSway2.w * f * sin(ph * 1.3 + 1.1);
     }
     vec2 w = vec2(fbm3(lp / uWarp.y + seed), fbm3(lp / uWarp.y + seed + 41.3)) * uWarp.x;
     w += vec2(gnoise(lp / 36. + uBoil * 7.13 + seed), gnoise(lp / 36. + uBoil * 3.71 + seed + 19.)) * uBoilAmp;
@@ -473,7 +476,7 @@
 
     // Like mask(), but finds the bounding box itself by drawing at low resolution first.
     maskAuto(draw, opts = {}) {
-      const area = opts.area || { x: -400, y: -400, w: this.W + 800, h: this.H + 800 };
+      const area = opts.area || { x: -1600, y: -1000, w: this.W + 3200, h: this.H + 2000 };
       const ss = 0.25;
       const W = Math.ceil(area.w * ss), H = Math.ceil(area.h * ss);
       if (!this._scan) this._scan = document.createElement('canvas');
@@ -584,8 +587,10 @@
       if (sw) {
         gl.uniform4f(u.uSway, sw.amp || 0, sw.y0 || 0, sw.y1 || 1, sw.k || 1.5);
         gl.uniform4f(u.uSway2, sw.omega || 2, sw.wave || 300, sw.phase || 0, sw.ampY || 0);
-        pad = Math.max(pad, Math.abs(sw.amp || 0) + Math.abs(sw.ampY || 0) + 4);
-      } else { gl.uniform4f(u.uSway, 0, 0, 1, 1); gl.uniform4f(u.uSway2, 1, 300, 0, 0); }
+        const ax = sw.axis || [0, 1], L = Math.hypot(ax[0], ax[1]) || 1;
+        gl.uniform4f(u.uSwayAxis, ax[0] / L, ax[1] / L, sw.lean || 0, sw.waveX ? 1 / sw.waveX : 0);
+        pad = Math.max(pad, Math.abs(sw.amp || 0) * (1 + Math.abs(sw.lean || 0)) + Math.abs(sw.ampY || 0) + 4);
+      } else { gl.uniform4f(u.uSway, 0, 0, 1, 1); gl.uniform4f(u.uSway2, 1, 300, 0, 0); gl.uniform4f(u.uSwayAxis, 0, 1, 0, 0); }
       const dp = o.drip;
       if (dp && dp.amp > 0) { gl.uniform2f(u.uDrip, dp.amp, dp.scale || 24); pad = Math.max(pad, dp.amp + 8); }
       else gl.uniform2f(u.uDrip, 0, 24);
@@ -667,11 +672,16 @@
     // A Canvas2D layer the size of the framebuffer, pre-scaled to design px, cleared to black.
     // Draw ink in '#f00' (red channel), graphite in '#0f0', coloured ink in '#00f', using
     // globalCompositeOperation 'lighter' so channels add up independently.
+    // Several ink passes can happen in one frame (a scene handover, or a scene inking in more than
+    // one colour). Each pass gets its own canvas and texture, in rotation, so an upload can never
+    // pick up a stale copy of the previous pass's drawing.
     layer() {
-      if (!this._layerCanvas) {
-        this._layerCanvas = document.createElement('canvas');
-        this._layerCanvas.width = this.rw; this._layerCanvas.height = this.rh;
-      }
+      if (!this._layers) this._layers = [];
+      this._layerIdx = ((this._layerIdx || 0) + 1) % 6;
+      let L = this._layers[this._layerIdx];
+      if (!L) L = this._layers[this._layerIdx] = { cv: document.createElement('canvas'), tex: this.gl.createTexture() };
+      if (L.cv.width !== this.rw || L.cv.height !== this.rh) { L.cv.width = this.rw; L.cv.height = this.rh; }
+      this._layerCanvas = L.cv; this.layerTex = L.tex;
       const g = this._layerCanvas.getContext('2d');
       g.setTransform(1, 0, 0, 1, 0, 0);
       g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1;

@@ -35,7 +35,7 @@
       B.mask('grass', (g) => { const r = WC.rng(6); g.lineCap = 'round'; for (let i = 0; i < 260; i++) { const x = -80 + r() * 2100, y = 925 + r() * 200, h = 16 + r() * 34; g.lineWidth = 2 + r() * 2; g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + 4, y - h * 0.6, x + 10 * (r() - 0.3), y - h); g.stroke(); } }, { maskScale: 0.6, margin: 20 });
       B.mask('trunk', (g) => { WC.props.oakTrunk(g, TREE.x, TREE.y, TREE.h); g.save(); g.globalCompositeOperation = 'destination-out'; g.translate(0, -TREE.h * 0.03); WC.props.oakCanopy(g, TREE.x, TREE.y, TREE.h, WC.rng(21)); g.restore(); }, { maskScale: 0.5, flood: { seeds: [[TREE.x, TREE.y]] } });
       B.mask('canopy', (g) => WC.props.oakCanopy(g, TREE.x, TREE.y, TREE.h, WC.rng(21)), { maskScale: 0.35, flood: { seeds: [[TREE.x, TREE.y - 0.55 * TREE.h]] } });
-      C.darcy(B, 'dc', { x: DC.x, y: DC.y, s: DC.s, dir: -1, pose: P.darcy.poses.still(), fromFeet: true });
+      C.darcy(B, 'dc', { x: DC.x, y: DC.y, s: DC.s, dir: -1, pose: P.darcy.poses.still(), seed: 'feet' });
     },
 
     render(eng, Mk, t) {
@@ -86,8 +86,7 @@
 
       // ---- Darcy, painted from the boots up
       W(Mk.dot, { pig: '#5a5a66', density: 0.4 * K.pp(t, 69.0, 0.8), soft: 16, warp: 5, seed: 16 }, M.mul(M.tr(DC.x + 40, DC.y + 2), M.sc(2.4, 0.22)));
-      C.paintDarcy(eng, Mk, 'dc', { cam, t, p: K.pp(t, 68.9, 2.7, (x) => x), wet: K.wet(t, 68.9, 71.6), sway: 3 + 16 * gust, omega: 2.6, seed: 3,
-        style: { coat: '#58689a', coatB: '#4a5886', face: '#9aa3c6', legs: '#b0b3c8', boots: '#2f3656' } });
+      C.paint(eng, Mk, 'dc', { cam, t, p: K.pp(t, 68.9, 2.7, (x) => x), wet: K.wet(t, 68.9, 71.6), sway: 3 + 14 * gust, omega: 2.6, wind: -0.5 * gust, seed: 3 });
 
       // leaves carried on the gust
       if (gust > 0) {
@@ -110,13 +109,10 @@
         K.glint(eng, cam, Mk.star, x + (y - LAKE) * (h(5) - 0.5) * 0.8, y, t, t - ph, 0.5, (8 + 14 * h(6)) * (0.6 + 0.9 * gust), '#fff1c8');
       }
 
-      // ---- ink: the pencil horizon and his eye
+      // ---- ink: the pencil horizon
       const g = K.ink(eng, cam);
       g.strokeStyle = '#0f0';
       C.pen(g, [[-40, LAKE + 2], [900, LAKE - 1], [1960, LAKE + 1]], K.pp(t, 68.5, 1.0, A.inOut), 1.1, 4);
-      g.fillStyle = g.strokeStyle = '#f00';
-      const DI = Mk.dcInfo;
-      if (t > 71.3) P.darcy.ink(g, { s: DI.s }, DI.X, {});
       eng.ink({ strength: [1.7, 0.5, 1.2], seed: 8 });
     },
   };

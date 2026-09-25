@@ -10,13 +10,6 @@
     constructor(eng) { this.eng = eng; this.jobs = []; this.M = {}; }
     mask(name, draw, opts = {}) { this.jobs.push(() => { this.M[name] = this.eng.maskAuto(draw, opts); }); }
     box(name, draw, bbox, opts = {}) { this.jobs.push(() => { this.M[name] = this.eng.mask(draw, bbox, opts); }); }
-    puppet(name, P, s, opts = {}) {
-      const obj = { s }; this.M[name] = obj;
-      const area = { x: -3 * s, y: -1.2 * s, w: 6 * s, h: 10.2 * s };
-      const ms = opts.maskScale || 1;
-      for (const k in P.parts) this.jobs.push(() => { obj[k] = this.eng.maskAuto((g) => P.parts[k].draw(g, s), { area, margin: 20, maskScale: ms }); });
-      if (P.fanStates) this.jobs.push(() => { obj.fan = P.fanStates.map((a) => this.eng.maskAuto(P.fanDraw(a), { area, margin: 16, maskScale: ms })); });
-    }
   }
   K.Builder = Builder;
 
@@ -40,15 +33,6 @@
       const a = r() * Math.PI * 2, d = Math.pow(r(), 1.6);
       WC.fillCircle(g, cx + Math.cos(a) * rx * d, cy + Math.sin(a) * ry * d, Math.max(rmin, rmax * Math.pow(r(), 2.4)));
     }
-  };
-  // an ink blot: central blob + satellite droplets + a few streaks
-  K.blot = (seed, r) => (g) => {
-    const q = WC.rng(seed);
-    const pts = [];
-    for (let i = 0; i < 14; i++) { const a = (i / 14) * Math.PI * 2; const rr = r * (0.75 + q() * 0.45); pts.push([Math.cos(a) * rr, Math.sin(a) * rr]); }
-    WC.fillSpline(g, pts, true, 1);
-    for (let i = 0; i < 16; i++) { const a = q() * Math.PI * 2, d = r * (1.1 + q() * 1.2); WC.fillCircle(g, Math.cos(a) * d, Math.sin(a) * d, r * (0.04 + q() * 0.12)); }
-    for (let i = 0; i < 5; i++) { const a = q() * Math.PI * 2; WC.fillLock(g, Math.cos(a) * r * 0.6, Math.sin(a) * r * 0.6, Math.cos(a) * r * (1.5 + q()), Math.sin(a) * r * (1.5 + q()), r * 0.18, 0.1, 0.2); }
   };
 
   // ---- petals ------------------------------------------------------------------------
@@ -127,12 +111,100 @@
     eng.light(star, { xf: WC.mat.mul(cam, [c, s, -s, c, x, y]), colour: colour || '#fff2d0', density: 0.9 * k, soft: 3, warp: 0, seed: 3 });
   };
 
+  // ---- v3: landscape pieces ------------------------------------------------------------
+  // A cumulus cloud: a row of billows on a flat base. (x, y) = middle of the base.
+  K.cloud = (g, x, y, w, h, rnd) => {
+    const n = 6 + Math.floor(rnd() * 3);
+    for (let i = 0; i < n; i++) {
+      const u = i / (n - 1), bump = Math.sin(Math.PI * (0.1 + 0.8 * u));
+      const r = h * (0.28 + 0.42 * bump) * (0.8 + 0.4 * rnd());
+      WC.fillCircle(g, x - w / 2 + w * u, y - r * 0.55 - h * 0.1 * bump, r);
+    }
+    WC.fillEllipse(g, x, y - h * 0.08, w * 0.56, h * 0.16, 0);
+  };
+  // A hedgerow along a line: a ragged band of bushes, with the odd tree standing out of it.
+  K.hedge = (g, pts, r, rnd, trees = 0) => {
+    const q = WC.sampleSpline(pts, false, 1, 24);
+    g.save(); g.strokeStyle = g.fillStyle; g.lineCap = 'round'; g.lineJoin = 'round'; g.lineWidth = r * 1.1;
+    g.beginPath(); q.forEach(([x, y], i) => (i ? g.lineTo(x, y - r * 0.4) : g.moveTo(x, y - r * 0.4))); g.stroke(); g.restore();
+    let acc = 0, next = r * (0.3 + rnd());
+    for (let i = 1; i < q.length; i++) {
+      acc += Math.hypot(q[i][0] - q[i - 1][0], q[i][1] - q[i - 1][1]);
+      if (acc < next) continue;
+      acc = 0; next = r * (0.3 + 1.4 * rnd());
+      const rr = r * (0.45 + 0.75 * rnd() * rnd() + 0.3 * rnd());
+      WC.fillCircle(g, q[i][0] + (rnd() - 0.5) * r, q[i][1] - rr * 0.7, rr);
+      if (rnd() < trees) {
+        const th = r * (2.2 + 2.5 * rnd()), x = q[i][0];
+        WC.fillLock(g, x, q[i][1], x + (rnd() - 0.5) * r * 0.6, q[i][1] - th, r * 0.28, 0.1, 0.6);
+        const n = 7 + Math.floor(rnd() * 5);
+        for (let k = 0; k < n; k++) { const a = rnd() * Math.PI * 2, d = Math.sqrt(rnd()) * r * 1.4; WC.fillCircle(g, x + Math.cos(a) * d * 1.2, q[i][1] - th - r * 0.4 + Math.sin(a) * d * 0.8, r * (0.45 + 0.5 * rnd())); }
+      }
+    }
+  };
+  // Grass in tufts rooted along a band (one sway band): x0..x1 at root line y, heights h0..h1.
+  K.grass = (g, x0, x1, y, n, h0, h1, rnd, lean = 0.3, skip = null) => {
+    g.lineCap = 'round';
+    const tufts = Math.max(1, Math.round(n / 7));
+    for (let k = 0; k < tufts; k++) {
+      const cx = x0 + rnd() * (x1 - x0), cy = y + (rnd() - 0.5) * 18, size = 0.4 + rnd() * rnd() * 1.4;
+      if (skip && skip(cx, cy)) continue;
+      const blades = 3 + Math.floor(rnd() * 8);
+      for (let i = 0; i < blades; i++) {
+        const x = cx + (rnd() - 0.5) * 22 * size, h = (h0 + rnd() * (h1 - h0)) * size;
+        g.lineWidth = 1.2 + rnd() * 1.8;
+        const tip = x + h * lean * (rnd() - 0.3) + (x - cx) * 0.6;
+        g.beginPath(); g.moveTo(x, cy); g.quadraticCurveTo(x + (tip - x) * 0.2, cy - h * 0.6, tip, cy - h); g.stroke();
+      }
+    }
+  };
+  // Birds as ink ticks, wings beating: list of [x, y, size, phase]
+  K.birds = (g, list, t) => {
+    g.lineCap = 'round'; g.lineJoin = 'round';
+    list.forEach(([x, y, sz, ph]) => {
+      const f = Math.sin(t * 9 + ph) * sz * 0.45;
+      g.lineWidth = Math.max(1, sz * 0.14);
+      g.beginPath(); g.moveTo(x - sz, y - f); g.quadraticCurveTo(x - sz * 0.35, y - sz * 0.35, x, y); g.quadraticCurveTo(x + sz * 0.35, y - sz * 0.35, x + sz, y - f); g.stroke();
+    });
+  };
+
+  // Draw `shape`, keeping only the part inside `clip` (both draw functions on the same context).
+  K.clipTo = (g, shape, clip) => {
+    shape(g);
+    const cv = K._clipCanvas || (K._clipCanvas = document.createElement('canvas'));
+    if (cv.width !== g.canvas.width || cv.height !== g.canvas.height) { cv.width = g.canvas.width; cv.height = g.canvas.height; }
+    const c2 = cv.getContext('2d');
+    c2.setTransform(1, 0, 0, 1, 0, 0); c2.globalCompositeOperation = 'source-over'; c2.clearRect(0, 0, cv.width, cv.height);
+    c2.setTransform(g.getTransform()); c2.fillStyle = c2.strokeStyle = '#fff'; clip(c2);
+    g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'destination-in'; g.drawImage(cv, 0, 0); g.restore();
+  };
+
   // mix two hex colours (as a painter would: multiplicatively, in log space)
   K.mixHex = (a, b, t) => {
     const c = WC.mixPig(a, b, A.clamp(t));
     return '#' + c.map((v) => Math.round(Math.min(1, v) * 255).toString(16).padStart(2, '0')).join('');
   };
-  K.mixStyle = (a, b, t) => { const o = {}; for (const k in a) o[k] = b[k] ? K.mixHex(a[k], b[k], t) : a[k]; return o; };
+
+  // Handwriting written along a moving path and then carried off by the wind.
+  // path(d) -> [x, y] at distance d along it. `written` = how much of the line the pen has
+  // written (px, from the start); `drift` = how far the whole line has blown along the path.
+  // Letters fade out once they are further than `fadeAt` along it.
+  K.textStream = (g, text, path, font, written, drift, colour, fadeAt = 1e9, fadeLen = 300, alpha = 1) => {
+    g.save(); g.font = font; g.fillStyle = colour; g.textBaseline = 'middle';
+    let off = 0;
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i], w = g.measureText(ch).width, mid = off + w / 2;
+      off += w;
+      if (mid > written) break;
+      const d = mid + drift;
+      g.globalAlpha = alpha * A.clamp((written - mid) / 24) * A.clamp(1 - (d - fadeAt) / fadeLen);
+      if (g.globalAlpha <= 0.01 || ch === ' ') continue;
+      const [x0, y0] = path(d - 2), [x1, y1] = path(d + 2);
+      g.save(); g.translate((x0 + x1) / 2, (y0 + y1) / 2); g.rotate(Math.atan2(y1 - y0, x1 - x0)); g.fillText(ch, -w / 2, 0); g.restore();
+    }
+    g.restore();
+    return off;
+  };
 
   // ---- text ---------------------------------------------------------------------------
   K.FONT_SCRIPT = "'Pinyon Script', 'PinyonLocal', cursive";

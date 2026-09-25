@@ -13,37 +13,37 @@
 <script src="../js/kit.js"></script>
 <script src="../js/cast.js"></script>
 <script>
+// Silhouette check sheet: cast-lab.html?mode=figures | busts  (&t= for the wind phase)
 (async function () {
   const q = new URLSearchParams(location.search);
-  const mode = q.get('mode') || 'turn';
+  const mode = q.get('mode') || 'figures', t = +(q.get('t') || 1.3);
   const eng = new WC.Engine(document.getElementById('c'), { scale: 1, paperSeed: 3 });
   const B = new WC.K.Builder(eng), C = WC.cast, P = WC.people;
-  const xs = [190, 560, 930, 1300, 1670];
-  if (mode === 'turn') {
-    xs.forEach((x, i) => C.lizzy(B, 'L' + i, { x, y: 1000, s: 100, dir: 1, pose: P.lizzy.poses.stand(0) }));
-  } else if (mode === 'fan') {
-    xs.forEach((x, i) => { C.lizzy(B, 'A' + i, { x, y: 1000, s: 100, dir: -1, pose: P.lizzy.poses.stand(0) }); C.lizzy(B, 'F' + i, { x, y: 1000, s: 100, dir: -1, pose: P.lizzy.poses.fan(0, 3, 0), fan: 3 }); });
+  if (mode === 'figures') {
+    C.lizzy(B, 'L0', { x: 230, y: 1000, s: 100, dir: 1, pose: P.lizzy.poses.stand(0) });
+    C.lizzy(B, 'L1', { x: 640, y: 1000, s: 100, dir: 1, pose: P.lizzy.poses.stand(0), bonnet: true, streamers: 1.2 });
+    C.lizzy(B, 'L2', { x: 1040, y: 1000, s: 100, dir: -1, pose: P.lizzy.poses.walk(0, 1.2), bonnet: true, streamers: 1.4 });
+    C.darcy(B, 'D0', { x: 1480, y: 1000, s: 108, dir: -1, pose: P.darcy.poses.still() });
   } else {
-    xs.forEach((x, i) => C.darcy(B, 'D' + i, { x, y: 1000, s: 108, dir: -1, pose: P.darcy.poses.stand(0), fromFeet: true }));
+    C.bust(B, 'b0', { kind: 'lizzy', x: 230, y: 120, s: 300, dir: 1 });
+    C.bust(B, 'b1', { kind: 'darcy', x: 1000, y: 120, s: 300, dir: -1 });
+    ['jane', 'mary', 'kitty', 'lydia'].forEach((k, i) => C.bust(B, 's' + i, { kind: k, x: 1200 + (i % 2) * 330, y: 90 + Math.floor(i / 2) * 470, s: 160, dir: 1 }));
   }
   const t0 = performance.now();
   B.jobs.forEach((j) => j());
   console.log('masks', B.jobs.length, 'ms', (performance.now() - t0).toFixed(0));
   const Mk = B.M, cam = [1, 0, 0, 1, 0, 0];
-  eng.setTime(1.3); eng.begin(0);
+  eng.setTime(t); eng.begin(0);
   const bg = eng.maskAuto((g) => g.fillRect(20, 20, 1880, 1040), { maskScale: 0.3, margin: 60 });
-  eng.wash(bg, { pig: '#efd29e', pigB: '#e9bfa8', mix: { dir: [0, 1], at: 500, width: 400, noise: 0.9 }, density: 0.6, soft: 4, warp: 20, warpScale: 240, flow: 0.5, seed: 1 });
-  xs.forEach((x, i) => {
-    const k = i / 4;
-    if (mode === 'turn') C.paintLizzy(eng, Mk, 'L' + i, { cam, t: 1.3, turn: k, sway: 6 });
-    else if (mode === 'fan') {
-      // morph pose A (arm down) -> pose F (fan raised): every layer morphs to its partner
-      const I = Mk['A' + i + 'Info'];
-      ['Body', 'Fan'].forEach(() => {});
-      C.paintLizzy(eng, Object.assign({}, Mk, morphPair(Mk, 'A' + i, 'F' + i)), 'A' + i, { cam, t: 1.3, sway: 6, morphTo: k });
-    } else C.paintDarcy(eng, Mk, 'D' + i, { cam, t: 1.3, p: [0.15, 0.35, 0.55, 0.8, 1][i], wet: 1, fromFeet: true });
-  });
-  function morphPair(Mk, a, b) { return {}; }
+  eng.wash(bg, { pig: '#f2dfb4', pigB: '#c9d3e6', mix: { dir: [1, 0], at: 960, width: 500, noise: 0.9 }, density: 0.5, soft: 4, warp: 20, warpScale: 240, flow: 0.5, seed: 1 });
+  if (mode === 'figures') {
+    C.paint(eng, Mk, 'L0', { cam, t, sway: 4 });
+    C.paint(eng, Mk, 'L1', { cam, t, sway: 8, wind: -0.6 });
+    C.paint(eng, Mk, 'L2', { cam, t, sway: 10, wind: 0.8, p: 0.7, wet: 1 });
+    C.paint(eng, Mk, 'D0', { cam, t, sway: 6, wind: 0.5 });
+  } else {
+    ['b0', 'b1', 's0', 's1', 's2', 's3'].forEach((n) => C.paintBust(eng, Mk, n, { cam, t }));
+  }
   eng.present({});
   eng.gl.finish();
   window.__done = true;
