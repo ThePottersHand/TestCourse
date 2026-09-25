@@ -84,6 +84,12 @@
       W(Mk.canopy, { pig: '#8fa46a', pigB: '#3f5a5a', mix: { dir: [1, 0.3], at: TREE.x - 60, width: 220, noise: 1, flow: 0.1 }, density: 0.9, edge: 1.1, edgeW: 5, soft: 2, warp: 10, warpScale: 60, rough: 4, roughScale: 10, flow: 0.6, flowScale: 50, gran: 0.5,
         flood: { at: K.pp(t, 68.8, 1.4), soft: 30, noise: 40 }, wet: 0.35 + 0.65 * gust, wetAmp: 10, wetScale: 50, seed: 15 }, treeXf);
 
+      // ---- ink: the pencil horizon (before he is painted, so it passes behind him)
+      const g = K.ink(eng, cam);
+      g.strokeStyle = '#0f0';
+      C.pen(g, [[-40, LAKE + 2], [900, LAKE - 1], [1960, LAKE + 1]], K.pp(t, 68.5, 1.0, A.inOut), 1.1, 4);
+      eng.ink({ strength: [1.7, 0.5, 1.2], seed: 8 });
+
       // ---- Darcy, painted from the boots up
       W(Mk.dot, { pig: '#5a5a66', density: 0.4 * K.pp(t, 69.0, 0.8), soft: 16, warp: 5, seed: 16 }, M.mul(M.tr(DC.x + 40, DC.y + 2), M.sc(2.4, 0.22)));
       C.paint(eng, Mk, 'dc', { cam, t, p: K.pp(t, 68.9, 2.7, (x) => x), wet: K.wet(t, 68.9, 71.6), sway: 3 + 14 * gust, omega: 2.6, wind: -0.5 * gust, seed: 3 });
@@ -108,12 +114,6 @@
         const x = SUN[0] + (h(3) - 0.5) * 300 * (0.4 + h(4)), y = LAKE + 10 + h(4) * 300;
         K.glint(eng, cam, Mk.star, x + (y - LAKE) * (h(5) - 0.5) * 0.8, y, t, t - ph, 0.5, (8 + 14 * h(6)) * (0.6 + 0.9 * gust), '#fff1c8');
       }
-
-      // ---- ink: the pencil horizon
-      const g = K.ink(eng, cam);
-      g.strokeStyle = '#0f0';
-      C.pen(g, [[-40, LAKE + 2], [900, LAKE - 1], [1960, LAKE + 1]], K.pp(t, 68.5, 1.0, A.inOut), 1.1, 4);
-      eng.ink({ strength: [1.7, 0.5, 1.2], seed: 8 });
     },
   };
 })(window.WC = window.WC || {});

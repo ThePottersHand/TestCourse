@@ -130,19 +130,8 @@
       W(Mk.tufts, { pig: '#7d8a55', density: 0.7 * pp(36.6, 0.8), edge: 0.9, edgeW: 2, soft: 1, warp: 1, rough: 0.5, gran: 0.4,
         sway: { amp: 5 + 10 * gust, y0: -712, y1: -656, k: 1.3, omega: 2.6, wave: 1e6, phase: 0, axis: [0, -1], lean: -(0.5 + 0.6 * gust), waveX: 200 }, seed: 54 });
 
-      // ---- Elizabeth, facing the valley, the wind in her skirts and ribbons
-      C.paint(eng, Mk, 'lz', { cam, t, p: pp(35.65, 1.2), wet: K.wet(t, 35.65, 36.9), sway: 5 + 9 * gust, omega: 2.2 + 1.2 * gust, wind: -(0.4 + 0.9 * gust), seed: 2 });
-
-      // ---- light: sunlight sweeping the valley on "like", rays, the rainbow's glow, dusk
-      Lt(Mk.glow, { colour: '#ffdca8', density: (0.14 + 0.2 * sun + 0.06 * dusk) * pp(35.8, 1.2), soft: 160, warp: 30, seed: 60 });
-      if (sun > 0.01) Lt(Mk.rays, { colour: '#ffe6b8', density: 0.2 * sun, soft: 40, warp: 20, streak: { angle: 2.3, amt: 0.6, len: 300 }, seed: 61 }, M.about(SUN[0], SUN[1], 0.03 * Math.sin(t * 0.5)));
-      [l1, l2].forEach((w, k) => {
-        const u = A.ramp(t, w - 0.2, w + 3.2); if (u <= 0 || u >= 1) return;
-        Lt(Mk.shade, { colour: '#ffe0b0', density: 0.22 * Math.sin(Math.PI * u), soft: 120, warp: 60, streak: { angle: 1.4, amt: 0.4, len: 300 }, seed: 62 + k,
-          radial: { x: A.lerp(2600, -200, u), y: 720, r: 380, soft: 220 } });
-      });
-      if (bow > 0) Lt(Mk.rainbowGlow, { colour: '#fff4dc', density: 0.14 * bow * bowFade, soft: 60, warp: 20, seed: 63 });
-      // swallows swoop past her on "I guess"
+      // ---- ink: the pencil horizon, and swallows swooping round her on "I guess" (inked before she
+      // is painted, so they pass behind her)
       const g = K.ink(eng, cam);
       g.strokeStyle = '#0f0';
       C.pen(g, [[-300, 548], [800, 530], [1800, 526], [2800, 520]], K.pp(t, 35.7, 1.0, A.inOut), 1.1, 4);
@@ -156,6 +145,19 @@
       for (let i = 0; i < 4; i++) { const u = t - 36 - i * 0.5; birds.push([2400 - u * 70 + i * 60, 260 + i * 24 + Math.sin(u + i) * 12, 7, i]); }
       K.birds(g, birds, t);
       eng.ink({ strength: [1.6, 0.5, 1.2], seed: 12 });
+
+      // ---- Elizabeth, facing the valley, the wind in her skirts and ribbons
+      C.paint(eng, Mk, 'lz', { cam, t, p: pp(35.65, 1.2), wet: K.wet(t, 35.65, 36.9), sway: 5 + 9 * gust, omega: 2.2 + 1.2 * gust, wind: -(0.4 + 0.9 * gust), seed: 2 });
+
+      // ---- light: sunlight sweeping the valley on "like", rays, the rainbow's glow, dusk
+      Lt(Mk.glow, { colour: '#ffdca8', density: (0.14 + 0.2 * sun + 0.06 * dusk) * pp(35.8, 1.2), soft: 160, warp: 30, seed: 60 });
+      if (sun > 0.01) Lt(Mk.rays, { colour: '#ffe6b8', density: 0.2 * sun, soft: 40, warp: 20, streak: { angle: 2.3, amt: 0.6, len: 300 }, seed: 61 }, M.about(SUN[0], SUN[1], 0.03 * Math.sin(t * 0.5)));
+      [l1, l2].forEach((w, k) => {
+        const u = A.ramp(t, w - 0.2, w + 3.2); if (u <= 0 || u >= 1) return;
+        Lt(Mk.shade, { colour: '#ffe0b0', density: 0.22 * Math.sin(Math.PI * u), soft: 120, warp: 60, streak: { angle: 1.4, amt: 0.4, len: 300 }, seed: 62 + k,
+          radial: { x: A.lerp(2600, -200, u), y: 720, r: 380, soft: 220 } });
+      });
+      if (bow > 0) Lt(Mk.rainbowGlow, { colour: '#fff4dc', density: 0.14 * bow * bowFade, soft: 60, warp: 20, seed: 63 });
     },
   };
 })(window.WC = window.WC || {});

@@ -89,8 +89,16 @@
       W(Mk.dot, { pig: '#46495f', density: 0.35 * K.pp(t, 58, 1), soft: 18, warp: 5, seed: 10 }, M.mul(M.tr(740, 1012), M.sc(2.0, 0.2)));
       W(Mk.dot, { pig: '#46495f', density: 0.35 * K.pp(t, 58.5, 1), soft: 18, warp: 5, seed: 11 }, M.mul(M.tr(1190, 1018), M.sc(2.0, 0.2)));
 
-      // ---- the two of them, soaked, turning away from each other
-      // no turning: she draws herself up on "rude", he leans in as he says what he shouldn't
+      // ---- ink: pencil horizon and temple (before the figures, so the line passes behind them)
+      const g = K.ink(eng, cam);
+      g.strokeStyle = '#0f0';
+      C.pen(g, [[-40, 702], [700, 690], [1960, 676]], K.pp(t, 55.8, 1.2, A.inOut), 1.1, 4);
+      const tp = K.pp(t, 56.0, 1.2, A.inOut), k = TEMPLE.w / 100;
+      C.pen(g, [[TEMPLE.x - 52 * k, TEMPLE.y + 2], [TEMPLE.x - 44 * k, TEMPLE.y - 82 * k], [TEMPLE.x, TEMPLE.y - 126 * k], [TEMPLE.x + 44 * k, TEMPLE.y - 82 * k], [TEMPLE.x + 52 * k, TEMPLE.y + 2]], tp, 1.2, 8);
+      eng.ink({ strength: [1.7, 0.5, 1.2], seed: 7 });
+
+      // ---- the two of them, soaked: she draws herself up on "rude", he leans in as he says what he
+      // shouldn't
       const lzLean = -0.035 * A.ease(t, rude - 0.1, rude + 0.6) * (1 - A.ease(t, 66, 68));
       const dcLean = 0.05 * A.keys(t, [[saysT - 0.6, 0], [saysT + 0.4, 1], [shouldnt + 0.4, 1], [68.4, 0.4]]);
       const wind = 7 + 6 * gust;
@@ -134,14 +142,6 @@
         Lt(Mk['bolt' + i], { colour: '#c7c9ff', density: 0.5 * f, soft: 60, warp: 10, seed: 64 + i });
       });
       if (flash > 0.01) Lt(Mk.flash, { colour: '#dfe2ff', density: 0.42 * Math.min(1, flash), soft: 30, warp: 0, seed: 66 });
-
-      // ---- ink: pencil horizon and temple, their eyes
-      const g = K.ink(eng, cam);
-      g.strokeStyle = '#0f0';
-      C.pen(g, [[-40, 702], [700, 690], [1960, 676]], K.pp(t, 55.8, 1.2, A.inOut), 1.1, 4);
-      const tp = K.pp(t, 56.0, 1.2, A.inOut), k = TEMPLE.w / 100;
-      C.pen(g, [[TEMPLE.x - 52 * k, TEMPLE.y + 2], [TEMPLE.x - 44 * k, TEMPLE.y - 82 * k], [TEMPLE.x, TEMPLE.y - 126 * k], [TEMPLE.x + 44 * k, TEMPLE.y - 82 * k], [TEMPLE.x + 52 * k, TEMPLE.y + 2]], tp, 1.2, 8);
-      eng.ink({ strength: [1.7, 0.5, 1.2], seed: 7 });
     },
   };
 })(window.WC = window.WC || {});

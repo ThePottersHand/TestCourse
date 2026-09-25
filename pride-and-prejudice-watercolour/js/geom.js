@@ -168,18 +168,6 @@
     WC.fillCircle(g, x0, y0, r0); WC.fillCircle(g, x1, y1, r1);
   };
 
-  // Heart outline (classic parametric curve), centred at (cx,cy), width ~2*r.
-  WC.heartPath = function (p, cx, cy, r) {
-    for (let i = 0; i <= 64; i++) {
-      const t = (i / 64) * Math.PI * 2;
-      const x = 16 * Math.pow(Math.sin(t), 3);
-      const y = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
-      const X = cx + (x / 16) * r, Y = cy + (y / 16) * r;
-      if (i) p.lineTo(X, Y); else p.moveTo(X, Y);
-    }
-    p.closePath(); return p;
-  };
-
   // Tapered brush stroke along a spline (pts in px), max width w; `taper` shapes the ends.
   WC.brushStroke = function (g, pts, w, per = 14, taper = 1.2) {
     const q = WC.sampleSpline(pts, false, 1, per);

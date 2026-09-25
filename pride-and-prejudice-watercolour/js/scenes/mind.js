@@ -1,22 +1,30 @@
 // Scene: On My Mind (verse 1, lines 3-5), painted on.
 // Her silhouette is sketched, then a sunset floods into it from the sun: her whole outline,
 // hair and all, becomes a window onto Pemberley's hills. On "on my mind" a tiny Darcy is
-// painted on the hilltop. "And in my heart": the camera drifts down as a heart floods open on
-// her breast, lit from within. "But I don't know if that's a crime": an indigo drop falls and
-// marbles through it.
+// painted on the hilltop. "And in my heart": the camera drifts down to a pool in the fields inside
+// her, the low sun's reflection glowing in it. "But I don't know if that's a crime": a drop of his
+// indigo falls into the pool; ripples spread, the reflection breaks up and the indigo marbles
+// through the rose.
 (function (WC) {
   'use strict';
   const A = WC.A, K = WC.K, M = WC.mat, F = WC.figures, P = WC.people, C = WC.cast;
   WC.scenes = WC.scenes || {};
 
   const LZ = { x: 560, y: 175, s: 500 };
-  const HEART = [655, 1010];
+  const POOL = { x: 560, y: 1012, rx: 175, ry: 50 };
+  const IMPACT = [585, 1014], REFL_X = 650;       // where the drop lands; the sun's reflection
   const SUN = [690, 552];
   // her silhouette: profile, hair, ribbon and flower as one outline
   const sil = (g) => { g.save(); g.translate(LZ.x, LZ.y); const L = F.lizzy; L.body(g, LZ.s); L.hair(g, LZ.s, WC.rng(7)); L.ribbon(g, LZ.s); L.flowerPetals(g, LZ.s); g.restore(); };
   const inSil = (shape) => (g) => K.clipTo(g, shape, sil);
   const hill = (pts) => inSil((g) => { g.beginPath(); WC.spline(g, pts, false, 1); g.lineTo(1400, 1500); g.lineTo(-200, 1500); g.closePath(); g.fill(); });
   const INFO = { kind: 'lizzy', x: LZ.x, y: LZ.y, s: LZ.s, dir: 1 };
+  // the pool: a flat, slightly irregular oval, well inside her outline
+  const poolShape = (g) => {
+    const pts = [];
+    for (let i = 0; i < 14; i++) { const a = (i / 14) * Math.PI * 2, k = 1 + 0.05 * Math.sin(3 * a + 1) + 0.03 * Math.sin(5 * a + 2); pts.push([POOL.x + POOL.rx * k * Math.cos(a), POOL.y + POOL.ry * k * Math.sin(a)]); }
+    WC.fillSpline(g, pts, true, 1);
+  };
 
   WC.scenes.mind = {
     build(B) {
@@ -35,9 +43,17 @@
       B.mask('house', inSil((g) => WC.props.pemberley(g, 440, 560, 110)), { margin: 20, flood: { seeds: [[440, 530]] } });
       B.mask('houseWin', inSil((g) => WC.props.pemberleyWindows(g, 440, 560, 110)), { margin: 10, maskScale: 2 });
       B.mask('crown', inSil((g) => { g.beginPath(); g.rect(-400, -400, 2800, 862); g.fill(); }), { maskScale: 0.6, margin: 20, flood: { seeds: [SUN] } });
-      B.box('heart', (g) => { g.fill(WC.heartPath(new Path2D(), 0, 0, 120)); }, { x: -140, y: -140, w: 280, h: 260 }, { margin: 60, flood: { seeds: [[0, -20]] } });
+      B.mask('pool', inSil(poolShape), { maskScale: 0.8, margin: 30, flood: { seeds: [[POOL.x, POOL.y]] } });
+      B.mask('glints', (g) => K.clipTo(g, (c) => {
+        const r = WC.rng(52);
+        for (let i = 0; i < 15; i++) { const u = i / 14, y = POOL.y - POOL.ry * 0.8 + u * POOL.ry * 1.6, w = (4 + 14 * r()) * (0.5 + Math.sin(Math.PI * u)); WC.fillEllipse(c, REFL_X + (r() - 0.5) * 14, y, w, 1.1 + 1.1 * r(), 0); }
+      }, poolShape), { maskScale: 1, margin: 12 });
+      B.mask('reeds', inSil((g) => {
+        const r = WC.rng(51); g.lineCap = 'round';
+        [[398, 1022, 8], [424, 1040, 6], [716, 1032, 7]].forEach(([x, y, n]) => { for (let i = 0; i < n; i++) { const h = 24 + r() * 44, x0 = x + (r() - 0.5) * 26, tip = x0 + (r() - 0.4) * 22; g.lineWidth = 1.4 + r() * 1.6; g.beginPath(); g.moveTo(x0, y); g.quadraticCurveTo(x0 + (tip - x0) * 0.2, y - h * 0.6, tip, y - h); g.stroke(); } });
+      }), { maskScale: 1, margin: 12 });
+      B.box('ring', (g) => { g.lineWidth = 4; g.beginPath(); g.ellipse(0, 0, 100, 25, 0, 0, Math.PI * 2); g.stroke(); }, { x: -108, y: -32, w: 216, h: 64 }, { margin: 14, maskScale: 1.2 });
       B.box('drop', (g) => { g.beginPath(); g.moveTo(0, -30); g.bezierCurveTo(12, -8, 16, 4, 0, 16); g.bezierCurveTo(-16, 4, -12, -8, 0, -30); g.fill(); }, { x: -20, y: -34, w: 40, h: 54 }, { margin: 20, maskScale: 2 });
-      B.mask('splash', K.splat(31, HEART[0], HEART[1] - 20, 150, 110, 40, 7), { margin: 16 });
       C.darcy(B, 'tiny', { x: 548, y: 611, s: 10, dir: 1, pose: P.darcy.poses.still() });
     },
 
@@ -83,30 +99,53 @@
         C.paint(eng, Mk, 'tiny', { cam, t, p: dp, wet: K.wet(t, mindT - 0.8, mindT + 0.4), sway: 1.2, pig: '#2a2f55', pigB: '#3a4270', lift: 0.7 });
       }
 
-      // the heart floods open, lit from within
-      const hx = M.tr(HEART[0], HEART[1]);
-      const hp = K.pp(t, heartT - 0.3, 1.3);
-      if (hp > 0) {
-        W(Mk.heart, { mode: 'lift', lift: 0.85, soft: 2, warp: 6, warpScale: 60, rough: 2, roughScale: 10, flood: { at: hp, soft: 24, noise: 30 }, seed: 20 }, hx);
-        W(Mk.heart, { pig: '#ef6f8e', pigB: '#d94a72', mix: { dir: [0, 1], at: 0, width: 80, noise: 0.8, flow: 0.12 }, density: 1.0, edge: 1.4, edgeW: 6, soft: 1.3, warp: 6, warpScale: 60, rough: 2, roughScale: 10, flow: 0.6, flowScale: 50, gran: 0.4,
-          flood: { at: hp, soft: 24, noise: 30, edge: 1.3, edgeW: 16 }, wet: K.wet(t, heartT - 0.3, heartT + 1.0), wetAmp: 6, seed: 21 }, hx);
-        const beat = A.pulse(t, 0.3);
-        Lt(Mk.heart, { colour: '#ffb3a8', density: (0.18 + 0.22 * beat) * hp * (1 - 0.6 * A.ramp(t, knowT, crimeT)), soft: 40, warp: 10, seed: 22 }, M.mul(hx, M.sc(1.25)));
+      // "And in my heart": a pool opens in the fields inside her, the sun's reflection glowing in it,
+      // brightening faintly with the beat
+      const poolP = K.pp(t, heartT - 0.7, 1.5, A.inOut);
+      const drop = A.ramp(t, knowT - 0.5, knowT);                         // the indigo drop falling
+      const hit = A.ramp(t, knowT, knowT + 2.6);
+      const stir = hit > 0 && hit < 1 ? Math.sin(Math.PI * Math.min(1, hit * 1.4)) : 0;   // how disturbed the water is
+      if (poolP > 0) {
+        W(Mk.pool, { mode: 'lift', lift: 0.85, soft: 1.5, warp: 4, warpScale: 60, rough: 1.5, roughScale: 12, flood: { at: poolP, soft: 20, noise: 24 }, seed: 20 });
+        W(Mk.pool, { pig: '#f4d2a6', pigB: '#d9a6c6', mix: { dir: [0, 1], at: POOL.y, width: 30, noise: 0.8, noiseScale: 60 }, density: 0.6, edge: 1.4, edgeW: 5, soft: 1.3, warp: 4, warpScale: 60, rough: 1.5, roughScale: 12, flow: 0.4, flowScale: 50, gran: 0.3,
+          flood: { at: poolP, soft: 20, noise: 24, edge: 1.2, edgeW: 12 }, wet: K.wet(t, heartT - 0.7, heartT + 0.8), wetAmp: 4, seed: 21 });
+        W(Mk.reeds, { pig: '#5e2a48', density: 0.85 * K.pp(t, heartT - 0.2, 0.8), edge: 1, edgeW: 2, soft: 1, warp: 1, rough: 0.5, gran: 0.4,
+          sway: { amp: 2 + 3 * stir, y0: -1040, y1: -980, k: 1.3, omega: 1.8, wave: 1e6, phase: 0, axis: [0, -1], lean: 0.2, waveX: 200 }, seed: 22 });
       }
-      // the indigo drop falls and marbles through it
-      const fall = A.ramp(t, knowT - 0.45, knowT);
-      if (fall > 0 && fall < 1) W(Mk.drop, { pig: '#4a5a90', density: 1.1, edge: 1.2, edgeW: 2, warp: 1, rough: 0.4, seed: 23 }, M.tr(HEART[0] + 10, A.lerp(700, HEART[1] - 30, fall * fall)));
+      // "But I don't know if that's a crime": a drop of his indigo falls into the pool...
+      if (drop > 0 && drop < 1) W(Mk.drop, { pig: '#4a5a90', density: 1.1, edge: 1.2, edgeW: 2, warp: 1, rough: 0.4, seed: 23 }, M.mul(M.tr(IMPACT[0], A.lerp(330, IMPACT[1] - 12, drop * drop)), M.sc(0.9)));
+      // ...and marbles through the rose
       const spread = K.pp(t, knowT, crimeT + 0.8 - knowT);
       if (spread > 0) {
-        W(Mk.splash, { pig: '#5d6b99', density: 0.9, edge: 1.4, edgeW: 2, warp: 1, rough: 0.5, seed: 24, radial: { x: HEART[0], y: HEART[1] - 20, r: 30 + 200 * K.pp(t, knowT, 0.3), soft: 20 } });
-        W(Mk.heart, { pig: '#6b6fb0', pigB: '#b06a9a', mix: { dir: [1, 1], at: 0, width: 70, noise: 1.3, noiseScale: 60, flow: 0.25, vein: 0.5 }, density: 0.85, edge: 1.2, edgeW: 5, soft: 2, warp: 10, warpScale: 50, rough: 3, roughScale: 9, flow: 0.8, flowScale: 40, gran: 0.6,
-          radial: { x: 10, y: -30, r: 10 + 210 * spread, soft: 30 }, wet: 1 - 0.7 * A.ramp(t, crimeT + 0.6, 30), wetAmp: 8, wetScale: 50, seed: 25 }, hx);
+        W(Mk.pool, { pig: '#4e5a9c', pigB: '#c0709c', mix: { dir: [1, 0.3], at: IMPACT[0], width: 60, noise: 1.6, noiseScale: 40, flow: 0.25, vein: 0.7 }, density: 0.9, edge: 1.2, edgeW: 4, soft: 2, warp: 8, warpScale: 40, rough: 2, roughScale: 9, flow: 0.8, flowScale: 40, gran: 0.6,
+          radial: { x: IMPACT[0], y: IMPACT[1], r: 6 + 200 * spread, soft: 24 }, wet: 1 - 0.7 * A.ramp(t, crimeT + 0.6, 30), wetAmp: 5, wetScale: 40, seed: 25 });
+      }
+      // ripples run out across the water, catching the light
+      [0, 0.28, 0.6].forEach((d, k) => {
+        const u = A.ramp(t, knowT + d, knowT + d + 1.9); if (u <= 0 || u >= 1) return;
+        const a = (1 - u) * (1 - 0.3 * k), xf = M.mul(M.tr(IMPACT[0], IMPACT[1]), M.sc(0.12 + 1.25 * A.out(u)));
+        W(Mk.ring, { pig: '#5f5a8e', density: 0.55 * a, soft: 1.5, edge: 0.6, warp: 1.5, warpScale: 30, rough: 0.6, seed: 24 + k }, xf);
+        Lt(Mk.ring, { colour: '#fff0d6', density: 0.45 * a, soft: 2, warp: 1.5, seed: 27 + k }, M.mul(xf, M.sc(0.95)));
+      });
+      // a few drops thrown up by the splash
+      for (let i = 0; i < 9; i++) {
+        const h = (k) => A.hash(i * 13 + k + 400), u = A.ramp(t, knowT, knowT + 0.45 + 0.25 * h(1));
+        if (u <= 0 || u >= 1) continue;
+        const x = IMPACT[0] + (h(2) - 0.5) * 110 * u, y = IMPACT[1] - (120 + 100 * h(3)) * u * (1 - u);
+        W(Mk.dot, { pig: h(4) < 0.6 ? '#4a5a90' : '#e0a0b8', density: 0.8, soft: 1, edge: 1.2, warp: 1, seed: 40 + i }, M.mul(M.tr(x, y), M.sc(0.04 + 0.04 * h(5))));
+      }
+      if (poolP > 0) {
+        const beat = A.pulse(t, 0.3);
+        const warm = poolP * (1 - 0.4 * A.ramp(t, knowT, crimeT));
+        Lt(Mk.pool, { colour: '#ffd9b4', density: (0.12 + 0.08 * beat) * warm, soft: 16, warp: 6, seed: 28 });
+        Lt(Mk.pool, { colour: '#ffc79a', density: (0.09 + 0.05 * beat) * warm, soft: 110, warp: 30, seed: 30 });   // its warmth spilling into the dark
+        Lt(Mk.glints, { colour: '#fff3d6', density: (0.6 + 0.2 * beat) * poolP * (1 - 0.7 * stir), soft: 2, warp: 1.5 + 4 * stir, seed: 29 }, M.tr((1.5 + 12 * stir) * Math.sin(t * 7), 0));
       }
       // light: the sun inside her head
       Lt(Mk.sunGlow, { colour: '#ffc98a', density: 0.2 * K.pp(t, 13.8, 1.4), soft: 90, warp: 20, seed: 26 }, M.tr(0, -18 * rise));
       K.paintPetals(eng, cam, Mk.petal, K.petalFlight(t, 13.2, [1300, 150], [1500, 900], 5, (i) => i % 2 === 0, 5, { stagger: 2.4, dur: 6, life: 12, arc: 80 }));
 
-      // ink: the sketch, the eye, birds, the question mark
+      // ink: the sketch, the horizon, birds
       const g = K.ink(eng, cam);
       g.strokeStyle = '#0f0';
       C.sketchBust(g, INFO, K.pp(t, 12.95, 1.3, A.inOut));
@@ -122,7 +161,6 @@
           g.globalAlpha = 1;
         });
       }
-      K.writeText(g, '?', 845, 1080, `210px ${K.FONT_SCRIPT}`, A.ramp(t, crimeT - 0.1, crimeT + 0.5), 'left', '#f00');
       eng.ink({ strength: [1.7, 0.5, 1.2], seed: 4 });
     },
   };

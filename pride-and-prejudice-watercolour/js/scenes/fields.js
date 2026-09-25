@@ -116,6 +116,20 @@
       const grass = (i) => { const [y, , h1] = GRASS[i]; W(Mk['grass' + i], { pig: ['#8aa06a', '#789660', '#62804f', '#526f45'][i], density: [0.5, 0.6, 0.72, 0.8][i] * pp(4.0 + i * 0.12, 0.8), edge: 0.9, edgeW: 2, soft: 1, warp: 1.5, warpScale: 30, rough: 0.6, gran: 0.4,
         sway: { amp: 5 + 12 * gust, y0: -(y + 10), y1: -(y - h1), k: 1.3, omega: 2.4, wave: 1e6, phase: i, axis: [0, -1], lean: 0.4 + 0.6 * gust, waveX: 260 }, seed: 50 + i }); };
       grass(0); grass(1);
+      // ---- ink: crows tumbling on the wind; the pencil horizon (inked before she is painted, so
+      // both pass behind her)
+      const g = K.ink(eng, cam);
+      g.strokeStyle = '#0f0';
+      C.pen(g, [[-200, 604], [900, 588], [2000, 590], [3200, 584]], K.pp(t, 2.95, 1.0, A.inOut), 1.1, 4);
+      g.strokeStyle = '#f00';
+      const crows = [];
+      for (let i = 0; i < 7; i++) {
+        const h = (k) => A.hash(i * 5 + k + 90), u = t - 4.0 - i * 0.35;
+        if (u < 0) continue;
+        crows.push([lx + 1150 - u * (150 + 60 * h(1)) - 130 * gust * u * 0.3, 240 + h(2) * 180 + Math.sin(u * 1.6 + i) * 30 - u * 6, 9 + 6 * h(3), i * 1.3]);
+      }
+      K.birds(g, crows, t);
+      eng.ink({ strength: [1.6, 0.5, 1.2], seed: 11 });
       // ---- Elizabeth, walking into the wind
       const bp = A.beatPhase(t);
       const bob = -S * 0.06 * Math.abs(Math.sin(Math.PI * bp));
@@ -145,20 +159,6 @@
       // ---- light: sun behind the clouds, patches of sunlight chasing over the grass
       Lt(Mk.glow, { colour: '#ffe2b0', density: 0.24 * pp(3.2, 1.4), soft: 160, warp: 30, seed: 60 });
       Lt(Mk.sheen, { colour: '#fff1c8', density: 0.16 * pp(4.2, 1.0) * (0.6 + 0.4 * gust), soft: 90, warp: 60, streak: { angle: 0, amt: 0.7, len: 200 }, seed: 61 }, M.tr(((t * -160) % 900) + 900, 0));
-
-      // ---- ink: crows tumbling on the wind; the pencil horizon
-      const g = K.ink(eng, cam);
-      g.strokeStyle = '#0f0';
-      C.pen(g, [[-200, 604], [900, 588], [2000, 590], [3200, 584]], K.pp(t, 2.95, 1.0, A.inOut), 1.1, 4);
-      g.strokeStyle = '#f00';
-      const crows = [];
-      for (let i = 0; i < 7; i++) {
-        const h = (k) => A.hash(i * 5 + k + 90), u = t - 4.0 - i * 0.35;
-        if (u < 0) continue;
-        crows.push([lx + 1150 - u * (150 + 60 * h(1)) - 130 * gust * u * 0.3, 240 + h(2) * 180 + Math.sin(u * 1.6 + i) * 30 - u * 6, 9 + 6 * h(3), i * 1.3]);
-      }
-      K.birds(g, crows, t);
-      eng.ink({ strength: [1.6, 0.5, 1.2], seed: 11 });
     },
   };
 })(window.WC = window.WC || {});

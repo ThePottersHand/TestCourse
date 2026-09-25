@@ -1,13 +1,13 @@
 // Scene: Dawn (outro). Mind made up. The dawn sky floods out from the sun, the misty fields are
-// laid in, and the two of them are painted into the mist, drifting together until their hands
-// meet. The sun rises between them, their rose and indigo merge into violet, the title is
-// inked in, and the whole painting dries and fades back into the paper.
+// laid in, and the two of them are painted into the mist, drifting together until they stand face
+// to face, heads inclined to each other. The sun rises between them, their rose and indigo merge
+// into violet, the title is inked in, and the whole painting dries and fades back into the paper.
 (function (WC) {
   'use strict';
   const A = WC.A, K = WC.K, M = WC.mat, P = WC.people, C = WC.cast;
   WC.scenes = WC.scenes || {};
   const SUN = [912, 600];
-  const LZ = { x: 860, y: 868, s: 40 }, DC = { x: 968, y: 870, s: 43 };
+  const LZ = { x: 862, y: 868, s: 40 }, DC = { x: 936, y: 870, s: 43 };
   // their silhouettes start in their own colours and meet in violet
   const VIOLET = ['#4f3a66', '#8e6fae'];
 
@@ -27,8 +27,8 @@
       B.mask('grass', (g) => { const r = WC.rng(33); g.lineCap = 'round'; for (let i = 0; i < 220; i++) { const x = r() * 1960 - 20, y = 900 + r() * 220, h = 16 + r() * 42; g.lineWidth = 2 + r() * 2.5; g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + 5, y - h * 0.6, x + 10 * (r() - 0.3), y - h); g.stroke(); } }, { maskScale: 0.7, margin: 12 });
       B.mask('flowers', K.splat(61, 960, 990, 980, 100, 120, 5, 2), { margin: 12 });
       B.mask('trees', (g) => { const r = WC.rng(8); [[240, 698], [320, 692], [1560, 706], [1640, 698], [1700, 704]].forEach(([x, y]) => { for (let k = 0; k < 6; k++) WC.fillCircle(g, x + (r() - 0.5) * 34, y - 24 - r() * 26, 12 + r() * 12); g.fillRect(x - 2.5, y - 20, 5, 22); }); }, { maskScale: 0.6, margin: 20, flood: { seeds: [[280, 700], [1640, 700]] } });
-      C.lizzy(B, 'lz', { x: LZ.x, y: LZ.y, s: LZ.s, dir: 1, pose: P.lizzy.poses.reach(0, 0.62) });
-      C.darcy(B, 'dc', { x: DC.x, y: DC.y, s: DC.s, dir: -1, pose: P.darcy.poses.reach(0, 0.62) });
+      C.lizzy(B, 'lz', { x: LZ.x, y: LZ.y, s: LZ.s, dir: 1, pose: { torso: -0.02, head: -0.12, upper: 0.06, fore: -0.5, skirt: 0.01 } });
+      C.darcy(B, 'dc', { x: DC.x, y: DC.y, s: DC.s, dir: -1, pose: Object.assign(P.darcy.poses.still(), { torso: 0.02, head: 0.12 }) });
     },
 
     render(eng, Mk, t) {
@@ -58,7 +58,7 @@
 
       // ---- the two of them, painted into the mist, drifting together; colours merging
       const come = A.ease(t, 136.6, 142.4);
-      const gap = 120 * (1 - come);
+      const gap = 130 * (1 - come);
       const merge = A.ease(t, 141.0, 146.0);
       const col = (who) => [K.mixHex(C.INK[who][0], VIOLET[0], merge), K.mixHex(C.INK[who][1], VIOLET[1], merge)];
       const lc = col('lizzy'), dcc = col('darcy');

@@ -3,10 +3,12 @@
 A painterly, heavily stylised watercolour animation for the song *The Art of Making Up My Mind*,
 which is Elizabeth Bennet's running argument with herself about Mr Darcy.
 
-**Status: code version 3 ready for review.** Version 3 moves the story outdoors and into the
+**Status: code version 4 ready for review.** Version 3 moved the story outdoors and into the
 novel: real silhouettes with no faces, no figures flipping back and forth, and landscapes that
-are always moving (wind, clouds, water, light, birds). Once the review is signed off, the same
-code will render the final video frame by frame.
+are always moving (wind, clouds, water, light, birds). Version 4 follows the notes on it: birds
+and pencil lines pass behind the figures, arms stay close to the body, the heart and its
+question mark are gone, and Darcy's coat tails hang against his legs. Once the review is signed
+off, the same code will render the final video frame by frame.
 
 ![Concept still](concept/concept-still.png)
 
@@ -14,8 +16,8 @@ code will render the final video frame by frame.
 
 - **Real silhouettes.** Every figure is one solid painted shape (hair, bonnet and ribbons
   included), like a Regency cut-paper silhouette laid in wet watercolour. No eyes, no lips, no
-  jointed limbs. Figures come to life through the air around them: hems, coat tails and bonnet
-  ribbons move in the wind.
+  jointed limbs, no outstretched arms. Figures come to life through the air around them: hems,
+  coat tails and bonnet ribbons move in the wind, and birds fly behind them.
 - **Painted on the page.** Each scene starts as bare paper and pencil, and the paint floods out
   from where the brush touches: a sunset from the sun, Darcy from his boots up, a gilt frame
   running round both ways from its bow.
@@ -35,17 +37,17 @@ code will render the final video frame by frame.
 | --- | --- |
 | 0:00 | Title: a drop of rose blooms on the bare sheet; light passes over as the title is inked in |
 | 0:03 | Across the fields (ch. 7): she walks to Netherfield into the wind, clouds racing and dragging their shadows over the fields; she splashes through a puddle and the mud climbs her hem |
-| 0:13 | On my mind: a sunset floods into her silhouette; tiny Darcy on the hill; her heart glows, then an indigo drop marbles through it |
+| 0:13 | On my mind: a sunset floods into her silhouette; tiny Darcy on the hill; a pool in the fields inside her glows with the sun's reflection, then a drop of his indigo falls in, ripples spread and it marbles through the rose |
 | 0:29 | Staring: two silhouettes face to face, a line of light between their eyes |
 | 0:36 | Rocks and mountains (ch. 27): on a gritstone edge the weather follows her heart: sun on "like", an indigo storm and rain on "hate", a rainbow on the second "like", violet dusk on "the art of making up my mind" |
 | 0:56 | The storm (ch. 34): the proposal in the rain; lightning on "rude" and "mean"; his words ("your inferiority", "a degradation") are lifted out of the sky, then run down the page |
 | 1:08 | Pemberley (ch. 43): golden hour, painted from his boots up as the camera tilts; on "strong", wind, sun rays and glitter on the lake |
-| 1:14 | Blossom: an orchard in April; she reaches up and the blossom bursts open outward from her hand |
+| 1:14 | Blossom: an orchard in April; she looks up as the blossom bursts open through the branches above her |
 | 1:21 | The sisters: four oval silhouette portraits swing on their nails to whisper, and swing hard on "wrong" |
 | 1:25 | The gallery (ch. 43): his silhouette portrait; the gilt frame runs round from its bow; a sunbeam crosses the room |
 | 1:31 | The letter (ch. 35-36): in the bluebell grove at Rosings his handwriting blows off the page, rose then indigo then rose; "Till this moment I never knew myself" |
 | 1:52 | Oakham Mount: dusk and a murmuration of starlings that gathers, tears in two and rejoins; he is painted in beside her and the flock draws a heart |
-| 2:14 | Dawn: together in the mist as the sun rises; their colours meet in violet and the paint fades back into the paper |
+| 2:14 | Dawn: they drift together in the mist until they stand face to face as the sun rises; their colours meet in violet and the paint fades back into the paper |
 
 ## How it's made
 

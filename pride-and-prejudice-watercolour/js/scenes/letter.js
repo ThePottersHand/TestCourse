@@ -38,7 +38,8 @@
       B.mask('bluebells', (g) => { const r = WC.rng(24); [[250, 900, 380, 90], [1500, 860, 420, 80], [1750, 1000, 300, 90], [60, 1040, 240, 90], [1250, 780, 240, 30], [560, 780, 260, 30]].forEach(([cx, cy, rx, ry]) => { for (let i = 0; i < 260; i++) { const a = r() * 6.28, d = Math.sqrt(r()); WC.fillCircle(g, cx + Math.cos(a) * rx * d, cy + Math.sin(a) * ry * d, 2 + r() * 3.5 * (cy / 900)); } }); }, { maskScale: 0.7, margin: 12 });
       B.mask('dapple', (g) => { const r = WC.rng(33); for (let i = 0; i < 60; i++) WC.fillEllipse(g, -100 + r() * 2200, 760 + r() * 360, 20 + r() * 50, 5 + r() * 12, 0); for (let i = 0; i < 30; i++) WC.fillEllipse(g, r() * 2000, 200 + r() * 560, 6 + r() * 10, 10 + r() * 16, 0); }, { maskScale: 0.4, margin: 30 });
       B.mask('rays', (g) => { for (let i = 0; i < 7; i++) { const x = 300 + i * 260 + (i % 2) * 60; g.beginPath(); g.moveTo(x, -200); g.lineTo(x + 70 + 30 * (i % 3), -200); g.lineTo(x - 180 + 30 * (i % 3), 1200); g.lineTo(x - 330, 1200); g.fill(); } }, { maskScale: 0.2, margin: 60 });
-      const I = C.lizzy(B, 'lz', { x: LZ.x, y: LZ.y, s: LZ.s, dir: 1, pose: { torso: 0.02, head: 0.16, upper: -0.25, fore: -1.9, skirt: 0.01 } });
+      // she holds the letter up close against her breast to read it, head bowed over it
+      const I = C.lizzy(B, 'lz', { x: LZ.x, y: LZ.y, s: LZ.s, dir: 1, pose: { torso: 0.02, head: 0.2, upper: 0.05, fore: -2.45, skirt: 0.01 } });
       const hand = M.apply(I.X.fore, 0, 4.05 * LZ.s);
       B.M.letterAt = hand;
       B.mask('letter', (g) => { g.save(); g.translate(hand[0] + 12, hand[1] - 16); g.rotate(-0.22); g.fillRect(-4, -34, 44, 56); g.restore(); }, { maskScale: 1.5, margin: 16 });

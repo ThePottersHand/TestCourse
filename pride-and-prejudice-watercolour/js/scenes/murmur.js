@@ -79,16 +79,8 @@
       W(Mk.grass, { pig: '#3f3d52', density: 0.8 * pp(113.4, 0.8), edge: 0.9, edgeW: 2, soft: 1, warp: 1, rough: 0.5, gran: 0.4,
         sway: { amp: 4 + 7 * wind, y0: -800, y1: -750, k: 1.3, omega: 2.2, wave: 1e6, phase: 0, axis: [0, -1], lean: 0.3 + 0.4 * wind, waveX: 240 }, seed: 10 });
 
-      // ---- the two of them: she watches the sky; he is painted in beside her on "I guess"
-      C.paint(eng, Mk, 'lz', { cam, t, p: pp(113.2, 1.4), wet: K.wet(t, 113.2, 114.6), sway: 3 + 4 * wind, omega: 1.5, wind: -0.3 - 0.4 * wind, seed: 7 });
-      C.paint(eng, Mk, 'dc', { cam, t, p: K.pp(t, gs - 0.5, 2.4, (x) => x), wet: K.wet(t, gs - 0.5, gs + 1.9), sway: 2 + 3 * wind, omega: 1.5, wind: -0.2 - 0.3 * wind, seed: 8 });
-
-      // ---- light: the low sun, village lights, the first stars
-      Lt(Mk.glow, { colour: '#ffcf96', density: 0.34 * pp(112.7, 1.6) * (1 - 0.3 * dusk), soft: 170, warp: 30, seed: 20 }, M.tr(0, 40 * dusk));
-      Lt(Mk.lights, { colour: '#ffd98a', density: 0.9 * A.ramp(t, 118, 124), soft: 2, warp: 0, seed: 21 });
-      Lt(Mk.stars, { colour: '#fff4dc', density: 0.8 * A.ramp(t, 124, 132) * (0.7 + 0.3 * Math.sin(t * 3)), soft: 1.5, warp: 0, seed: 22 });
-
-      // ---- the murmuration
+      // ---- the murmuration, inked before the figures so their silhouettes cover it: the flock
+      // flies behind them
       // shape weights: gathered ball, torn in two, rejoined, a long ribbon, then a heart
       const wSplit = A.keys(t, [[h1 - 0.6, 0], [h1 + 1.0, 1], [l2 - 0.5, 1], [l2 + 1.0, 0]]);
       const wRibbon = A.keys(t, [[gs - 0.4, 0], [gs + 1.2, 1], [artT - 1.6, 1], [artT - 0.4, 0]]);
@@ -123,6 +115,15 @@
         g.globalAlpha = 1;
       }
       eng.ink({ strength: [1.5, 0.5, 1.2], seed: 17 });
+
+      // ---- the two of them: she watches the sky; he is painted in beside her on "I guess"
+      C.paint(eng, Mk, 'lz', { cam, t, p: pp(113.2, 1.4), wet: K.wet(t, 113.2, 114.6), sway: 3 + 4 * wind, omega: 1.5, wind: -0.3 - 0.4 * wind, seed: 7 });
+      C.paint(eng, Mk, 'dc', { cam, t, p: K.pp(t, gs - 0.5, 2.4, (x) => x), wet: K.wet(t, gs - 0.5, gs + 1.9), sway: 2 + 3 * wind, omega: 1.5, wind: -0.2 - 0.3 * wind, seed: 8 });
+
+      // ---- light: the low sun, village lights, the first stars
+      Lt(Mk.glow, { colour: '#ffcf96', density: 0.34 * pp(112.7, 1.6) * (1 - 0.3 * dusk), soft: 170, warp: 30, seed: 20 }, M.tr(0, 40 * dusk));
+      Lt(Mk.lights, { colour: '#ffd98a', density: 0.9 * A.ramp(t, 118, 124), soft: 2, warp: 0, seed: 21 });
+      Lt(Mk.stars, { colour: '#fff4dc', density: 0.8 * A.ramp(t, 124, 132) * (0.7 + 0.3 * Math.sin(t * 3)), soft: 1.5, warp: 0, seed: 22 });
     },
   };
 })(window.WC = window.WC || {});

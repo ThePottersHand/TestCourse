@@ -1,7 +1,8 @@
 // Scene: Blossom (verse 2, line 4: "And he makes me feel a certain way").
-// An orchard in April. Elizabeth stands under the old tree and reaches up to a branch; on "feel"
-// the blossom bursts open outward from her hand across the whole tree, a gust lifts the petals
-// and swirls them round her, and warm light floods the grass. On "certain way" the petals rise.
+// An orchard in April. Elizabeth stands under the old tree looking up into its branches; on
+// "feel" the blossom bursts open outward from the branches above her across the whole tree, she
+// sways back as a gust lifts the petals and swirls them round her, and warm light floods the
+// grass. On "certain way" the petals rise.
 (function (WC) {
   'use strict';
   const A = WC.A, K = WC.K, M = WC.mat, P = WC.people, C = WC.cast;
@@ -10,6 +11,7 @@
   const SUN = [1560, 150];
   const LZ = { x: 900, y: 890, s: 60 };
   const TREE = { x: 640, y: 900 };
+  const BLOOM = [965, 370];                // the branches above her, where she is looking
   // Blossom trees, grown once: a trunk, limbs spreading up and out, branches, then twigs.
   // Each tree keeps its segments (for the wood) and twig ends (where the blossom clusters).
   const grow = (x, y, h, seed, spread = 1) => {
@@ -46,7 +48,7 @@
       B.mask('glow', (g) => WC.fillCircle(g, SUN[0], SUN[1], 380), { maskScale: 0.25, margin: 160 });
       B.mask('warmth', (g) => WC.fillEllipse(g, LZ.x + 60, 640, 900, 520, 0), { maskScale: 0.2, margin: 120, flood: { seeds: [[LZ.x + 80, 520]] } });
       B.mask('dapple', (g) => { const r = WC.rng(33); for (let i = 0; i < 40; i++) WC.fillEllipse(g, 200 + r() * 1300, 880 + r() * 140, 18 + r() * 30, 6 + r() * 8, 0); }, { maskScale: 0.4, margin: 30 });
-      C.lizzy(B, 'lz', { x: LZ.x, y: LZ.y, s: LZ.s, dir: 1, pose: { torso: -0.05, head: -0.28, upper: -2.4, fore: -0.3, skirt: 0.01 }, streamers: 0 });
+      C.lizzy(B, 'lz', { x: LZ.x, y: LZ.y, s: LZ.s, dir: 1, pose: { torso: -0.05, head: -0.3, upper: 0.08, fore: -0.4, skirt: 0.01 }, streamers: 0 });
     },
 
     render(eng, Mk, t) {
@@ -58,7 +60,6 @@
       const burst = K.pp(t, feel - 0.25, 1.8, A.inOut);
       const gust = A.env(t, feel, feel + 3.5, 0.3, 1.6);
       const breeze = 0.5 + 0.5 * Math.sin(t * 1.1);
-      const hand = M.apply(Mk.lzInfo.X.fore, 0, 4.1 * LZ.s);
 
       // ---- the orchard paints itself in
       W(Mk.sky, { pig: '#b9cbe2', pigB: '#f5e4c6', mix: { dir: [0, 1], at: 400, width: 300, noise: 0.8, noiseScale: 300 }, density: 0.55, edge: 0.4, edgeW: 16, soft: 4, warp: 30, warpScale: 260, rough: 4, flow: 0.45, flowScale: 220, gran: 0.15,
@@ -72,10 +73,10 @@
       const treeXf = (bx, by) => [1, 0, -bend, 1, bend * by, 0];
       W(Mk.trunks, { pig: '#6a5560', pigB: '#4a4458', mix: { dir: [0, 1], at: 600, width: 200, noise: 0.8 }, density: 0.85, edge: 1.2, edgeW: 3, soft: 1, warp: 2.5, warpScale: 40, rough: 1.5, gran: 0.6,
         flood: { at: pp(74.5, 1.4), soft: 20, noise: 20 }, wet: K.wet(t, 74.5, 75.9), seed: 6 }, treeXf(0, TREE.y));
-      // blossom: in bud at first, bursting open outward from her hand on "feel"
+      // blossom: in bud at first, bursting open outward from the branches above her on "feel"
       [[760, 360], [1580, 470], [150, 470]].forEach(([cx0, cy0], i) => {
         const c = { x: cx0, y: cy0, ry: i ? 140 : 250 };
-        const x0 = i === 0 ? hand[0] : c.x, y0 = i === 0 ? hand[1] : c.y;
+        const x0 = i === 0 ? BLOOM[0] : c.x, y0 = i === 0 ? BLOOM[1] : c.y;
         const open = i === 0 ? burst : K.pp(t, feel + 0.2 + 0.25 * i, 1.4, A.inOut);
         const sway = { amp: 3 + 6 * gust, y0: -1e5, y1: -1e5 + 1, k: 1, omega: 1.4, wave: 1e6, phase: i, axis: [0, -1], lean: -0.5 * gust, waveX: 300 };
         W(Mk['bloom' + i], { pig: '#b98a96', pigB: '#8fa06e', mix: { dir: [0, 1], at: c.y, width: c.ry, noise: 1.5 }, density: 0.5 * pp(74.8 + 0.2 * i, 1.0), soft: 2, edge: 0.9, edgeW: 3, warp: 3, warpScale: 30, rough: 2, gran: 0.4, sway, seed: 10 + i,
@@ -87,13 +88,14 @@
         sway: { amp: 3 + 8 * gust, y0: -1020, y1: -960, k: 1.3, omega: 2.2, wave: 1e6, phase: 0, axis: [0, -1], lean: 0.2 + 0.5 * gust, waveX: 260 }, seed: 30 });
       W(Mk.flowers, { pig: '#f2e4a0', pigB: '#e8a6b8', mix: { dir: [1, 0], at: 900, width: 40, noise: 3 }, density: 0.8 * pp(75.2, 1.0), edge: 1.4, edgeW: 2, warp: 1, rough: 0.5, seed: 31, radial: { x: LZ.x, y: 1000, r: 200 + 1400 * burst, soft: 80 } });
 
-      // ---- Elizabeth, reaching up into the branches
+      // ---- Elizabeth, looking up into the branches; she sways back a little as the blossom bursts
       W(Mk.dot, { pig: '#55664a', density: 0.35 * pp(75.0, 0.8), soft: 14, warp: 4, seed: 32 }, M.mul(M.tr(LZ.x + 10, LZ.y + 2), M.sc(1.5, 0.14)));
-      C.paint(eng, Mk, 'lz', { cam, t, p: pp(74.6, 1.4), wet: K.wet(t, 74.6, 76.0), sway: 3 + 5 * gust, omega: 1.8, wind: -0.3 * gust, seed: 4 });
+      const lean = -0.022 * A.env(t, feel - 0.4, feel + 3.2, 0.9, 1.8);
+      C.paint(eng, Mk, 'lz', { cam, xf: M.about(LZ.x, LZ.y, lean), t, p: pp(74.6, 1.4), wet: K.wet(t, 74.6, 76.0), sway: 3 + 5 * gust, omega: 1.8, wind: -0.3 * gust, seed: 4 });
 
       // petals: a few drifting down from the start, then the gust swirls them round her and up
       let petals = K.petalFlight(t, 74.6, [700, 300], [900, 950], 8, (i) => i % 3 !== 1, 5, { stagger: 0.7, dur: 4, life: 6, arc: 60, size: 30 });
-      for (let k = 0; k < 3; k++) petals = petals.concat(K.petalFlight(t, feel + k * 0.35, [hand[0] + 120 - k * 80, hand[1] - 40], [LZ.x - 600 + k * 300, 300 - k * 60], 9, (i) => (i + k) % 3 !== 1, 60 + k, { stagger: 0.09, dur: 3.0, life: 4.5, arc: -300 + k * 150, size: 34 }));
+      for (let k = 0; k < 3; k++) petals = petals.concat(K.petalFlight(t, feel + k * 0.35, [BLOOM[0] + 120 - k * 80, BLOOM[1] - 40], [LZ.x - 600 + k * 300, 300 - k * 60], 9, (i) => (i + k) % 3 !== 1, 60 + k, { stagger: 0.09, dur: 3.0, life: 4.5, arc: -300 + k * 150, size: 34 }));
       K.paintPetals(eng, cam, Mk.petal, petals, { rose: '#f2b3c2', indigo: '#fbe7ec' });
 
       // ---- light: sun, dappled light through the branches, warmth flooding out on "feel"
@@ -108,8 +110,6 @@
         const x = 1250 - u * 60 * sp + Math.sin(u * 2.3 + i) * 70, y = 760 - u * 18 + Math.sin(u * 3.1 + i * 2) * 40, f = 0.25 + 0.75 * Math.abs(Math.sin(t * 16 + i));
         [-1, 1].forEach((d) => W(Mk.petal, { pig: '#f2d770', density: 0.9, soft: 1, edge: 1.3, edgeW: 2, warp: 0.5, seed: 70 + i }, M.mul(M.tr(x, y), [0, -0.16 * d * f, 0.12, 0, 0, 0])));
       });
-      const g = K.ink(eng, cam);
-      eng.ink({ strength: [1.5, 0.5, 1.2], seed: 13 });
     },
   };
 })(window.WC = window.WC || {});
