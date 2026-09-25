@@ -83,7 +83,7 @@ the work by taking different frame ranges (`[first] [end]` after the fps):
 ```sh
 node pride-and-prejudice-watercolour/tools/render-frames.mjs http://localhost:8765/frame.html frames 24
 ffmpeg -framerate 24 -i frames/%05d.jpg -i pride-and-prejudice-watercolour/audio/the-art-of-making-up-my-mind.mp3 \
-  -map 0:v -map 1:a -vf "scale=in_range=full:out_range=tv:in_color_matrix=bt601:out_color_matrix=bt709,format=yuv420p" \
+  -map 0:v -map 1:a -vf "scale=in_range=full:out_range=tv:in_color_matrix=bt601:out_color_matrix=bt709:flags=accurate_rnd+full_chroma_int+full_chroma_inp,format=yuv420p" \
   -c:v libx264 -preset slow -crf 20 -tune film -colorspace bt709 -color_primaries bt709 -color_trc bt709 -color_range tv \
   -c:a aac -b:a 192k -shortest -movflags +faststart the-art-of-making-up-my-mind.mp4
 ```
