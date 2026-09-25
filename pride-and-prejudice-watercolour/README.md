@@ -3,12 +3,12 @@
 A painterly, heavily stylised watercolour animation for the song *The Art of Making Up My Mind*,
 which is Elizabeth Bennet's running argument with herself about Mr Darcy.
 
-**Status: code version 4 ready for review.** Version 3 moved the story outdoors and into the
+**Status: final video rendered from code version 4** (1920 × 1080, 24 fps, 2:31, H.264 with the
+song as AAC; see *Rendering the video* below). Version 3 moved the story outdoors and into the
 novel: real silhouettes with no faces, no figures flipping back and forth, and landscapes that
 are always moving (wind, clouds, water, light, birds). Version 4 follows the notes on it: birds
 and pencil lines pass behind the figures, arms stay close to the body, the heart and its
-question mark are gone, and Darcy's coat tails hang against his legs. Once the review is signed
-off, the same code will render the final video frame by frame.
+question mark are gone, and Darcy's coat tails hang against his legs.
 
 ![Concept still](concept/concept-still.png)
 
@@ -76,7 +76,9 @@ node pride-and-prejudice-watercolour/tools/render-still.mjs \
   "http://localhost:8765/frame.html?t=95&scale=2" still-4k.png 3840 2160 __done
 ```
 
-To render the video, paint every frame to disk, then encode them with the song. The frame renderer
+### Rendering the video
+
+Paint every frame to disk, then encode them with the song. The frame renderer
 skips frames that already exist, so an interrupted render resumes, and several processes can share
 the work by taking different frame ranges (`[first] [end]` after the fps):
 
