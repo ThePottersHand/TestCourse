@@ -174,6 +174,8 @@ function drawHouse(c, x, y, s, t, o = {}) {
 }
 function drawCliff(c, x, y, w, h, t) {
   c.save();
+  const [vx0, vy0, vx1, vy1] = viewRect(c);
+  const vis = (px, py, r) => px + r > vx0 && px - r < vx1 && py + r > vy0 && py - r < vy1;
   const rock = new Path2D();
   rock.moveTo(x + w, y + h);
   rock.lineTo(x + 90, y + h);
@@ -190,9 +192,20 @@ function drawCliff(c, x, y, w, h, t) {
   g.addColorStop(0, '#6c5ab4'); g.addColorStop(0.3, '#4a3d90'); g.addColorStop(1, '#241e58');
   cel(c, rock, g, { shadow: 'rgba(20,14,60,0.45)', d: 26, line: '#171040', lw: 6 });
   c.save(); c.clip(rock);
-  for (let k = 0; k < 46; k++) {
+  // soft strata bands
+  for (let k = 0; k < 4; k++) {
+    const sy = y + 330 + k * (h - 420) / 4;
+    if (!vis((vx0 + vx1) / 2, sy, 160)) continue;
+    c.beginPath(); c.moveTo(x, sy);
+    for (let xx = x; xx <= x + w; xx += 120) c.lineTo(xx, sy + Math.sin(xx / 170 + k * 2) * 26);
+    c.lineTo(x + w, sy + 90); for (let xx = x + w; xx >= x; xx -= 120) c.lineTo(xx, sy + 90 + Math.sin(xx / 150 + k) * 22);
+    c.closePath(); c.fillStyle = k % 2 ? 'rgba(20,12,60,0.18)' : 'rgba(150,130,230,0.1)'; c.fill();
+  }
+  const nStones = Math.round(w / 24);
+  for (let k = 0; k < nStones; k++) {
     const sx = x + 40 + rnd(k, 142) * (w - 60), sy = y + 90 + rnd(k, 143) * (h - 120);
     const r = 34 + rnd(k, 144) * 60;
+    if (!vis(sx, sy, r * 1.6)) continue;
     ellipse(c, sx, sy, r * 1.5, r, rnd(k, 145) * 0.6 - 0.3);
     c.fillStyle = ['rgba(130,110,210,0.3)', 'rgba(30,20,80,0.35)', 'rgba(160,140,240,0.18)'][k % 3]; c.fill();
     c.beginPath(); c.ellipse(sx, sy, r * 1.5, r, rnd(k, 145) * 0.6 - 0.3, Math.PI * 1.1, Math.PI * 1.7); c.lineWidth = 4; c.strokeStyle = 'rgba(200,190,255,0.25)'; c.stroke();
@@ -200,6 +213,23 @@ function drawCliff(c, x, y, w, h, t) {
   for (let k = 0; k < 18; k++) {
     const sx = x + 60 + rnd(k, 146) * 320, sy = DIO.sea + 80 + rnd(k, 147) * (y + h - DIO.sea - 200);
     circle(c, sx, sy, 8 + rnd(k, 148) * 8); fs(c, k % 3 ? '#b8a8ff' : '#ff9ecf', INK, 3);
+  }
+  for (let k = 0; k < Math.round(w / 110); k++) {
+    const rx = x + 220 + k * 110 + rnd(k, 151) * 50;
+    if (!vis(rx, y + 80, 140)) continue;
+    const len = 50 + rnd(k, 152) * 70, bend = (rnd(k, 153) - 0.5) * 70;
+    c.beginPath(); c.moveTo(rx, y + 10); c.bezierCurveTo(rx + bend, y + 40, rx - bend * 0.6, y + len * 0.7, rx + bend * 0.4, y + len);
+    c.moveTo(rx + bend * 0.2, y + len * 0.45); c.quadraticCurveTo(rx + bend + 30, y + len * 0.55, rx + bend + 36, y + len * 0.75);
+    c.lineWidth = 6; c.strokeStyle = 'rgba(34,18,64,0.22)'; c.lineCap = 'round'; c.stroke();
+    c.lineWidth = 2.5; c.strokeStyle = 'rgba(190,170,255,0.12)'; c.stroke();
+  }
+  for (const [fx, fy, fs2, fr] of [[1420, 1480, 1.1, 0.4], [2180, 980, 0.9, 2.1], [2760, 1720, 1.2, 4], [1880, 2050, 0.8, 1.2], [3150, 1180, 1.0, 5.2]]) {
+    if (fx > x + w - 60 || !vis(fx, fy, 90)) continue;
+    fossil(c, fx, fy, fs2, fr);
+  }
+  for (const [cx2, cy2, cs, col, ca] of [[1640, 1180, 1.0, '#ff9ecf', 0.2], [2420, 1560, 1.25, '#8fe8ff', -0.15], [1320, 1900, 0.9, '#b59cff', 0.35], [2960, 900, 1.05, '#ffe27a', -0.3], [2120, 1320, 0.7, '#8fe8ff', 0.5], [3300, 1950, 1.1, '#ff9ecf', 0.1]]) {
+    if (cx2 > x + w - 80 || !vis(cx2, cy2, 160)) continue;
+    crystalCluster(c, cx2, cy2, cs, col, ca, t);
   }
   // water haze on the submerged part
   const hz = c.createLinearGradient(0, DIO.sea, 0, y + h);
@@ -210,18 +240,86 @@ function drawCliff(c, x, y, w, h, t) {
   // grass cap with a moonlit edge
   const grass = new Path2D();
   grass.moveTo(x + 40, y + 36); grass.quadraticCurveTo(x + 60, y - 8, x + 160, y - 8); grass.lineTo(x + w, y - 8); grass.lineTo(x + w, y + 22);
-  for (let k = 0; k < 20; k++) grass.quadraticCurveTo(x + w - (k + 0.5) * (w - 40) / 20, y + 44, x + w - (k + 1) * (w - 40) / 20, y + 22);
+  const nScal = Math.round((w - 40) / 55);
+  for (let k = 0; k < nScal; k++) grass.quadraticCurveTo(x + w - (k + 0.5) * (w - 40) / nScal, y + 44, x + w - (k + 1) * (w - 40) / nScal, y + 22);
   grass.closePath();
   const gg = c.createLinearGradient(0, y - 8, 0, y + 44); gg.addColorStop(0, '#8ee8b0'); gg.addColorStop(1, '#4fb880');
   cel(c, grass, gg, { shadow: '#3f9f70', d: 6, line: '#1f5a40', lw: 5 });
   c.beginPath(); c.moveTo(x + 50, y + 30); c.quadraticCurveTo(x + 64, y - 4, x + 160, y - 5); c.lineWidth = 4; c.strokeStyle = 'rgba(230,255,240,0.6)'; c.stroke();
-  for (let k = 0; k < 8; k++) {
+  for (let k = 0; k < Math.round(w / 140); k++) {
     const fx = x + 200 + rnd(k, 61) * (w - 260), fy = y - 6;
+    if (!vis(fx, fy, 40)) continue;
     const bob = Math.sin(t * 3 + k) * 3;
     line(c, fx, fy, fx, fy - 20 + bob, '#2f8f5f', 3);
     circle(c, fx, fy - 24 + bob, 7); c.fillStyle = ['#ff9ecf', '#ffd166', '#fff'][k % 3]; c.fill();
   }
   c.restore();
+}
+
+/* an ammonite pressed into the rock */
+function fossil(c, x, y, s, rot) {
+  c.save(); c.translate(x, y); c.rotate(rot); c.scale(s, s);
+  const sp = (a) => 5 + a * 5.2;
+  c.beginPath();
+  for (let a = 0; a <= 4.6 * Math.PI; a += 0.15) c.lineTo(Math.cos(a) * sp(a), Math.sin(a) * sp(a));
+  c.lineWidth = 6; c.lineCap = 'round'; c.strokeStyle = 'rgba(24,14,60,0.35)'; c.stroke();
+  c.lineWidth = 3; c.strokeStyle = 'rgba(210,200,255,0.3)'; c.stroke();
+  c.beginPath();
+  for (let a = 2 * Math.PI; a <= 4.6 * Math.PI; a += 0.42) { c.moveTo(Math.cos(a) * sp(a - 2 * Math.PI), Math.sin(a) * sp(a - 2 * Math.PI)); c.lineTo(Math.cos(a) * sp(a), Math.sin(a) * sp(a)); }
+  c.lineWidth = 3; c.strokeStyle = 'rgba(210,200,255,0.22)'; c.stroke();
+  c.restore();
+}
+/* a glowing crystal cluster growing out of the cliff */
+function crystalCluster(c, x, y, s, col, rot, t) {
+  c.save(); c.translate(x, y); c.rotate(rot); c.scale(s, s);
+  glow(c, 0, -40, 170, rgba(col, 0.32 + 0.12 * Math.sin(t * 2 + x)));
+  ellipse(c, 0, 4, 64, 16); c.fillStyle = 'rgba(20,12,50,0.4)'; c.fill();
+  for (const [sx, a, len, wd] of [[-34, -0.55, 62, 12], [30, 0.5, 70, 13], [-12, -0.18, 104, 17], [14, 0.2, 88, 15], [-2, 0.02, 58, 11]]) {
+    c.save(); c.translate(sx, 0); c.rotate(a);
+    const p = new Path2D(); p.moveTo(-wd, 0); p.lineTo(-wd, -len + wd * 1.2); p.lineTo(0, -len); p.lineTo(wd, -len + wd * 1.2); p.lineTo(wd, 0); p.closePath();
+    cel(c, p, col, { shadow: darken(col, 0.25), d: wd * 0.7, hi: lighten(col, 0.55), line: lineOf(col), lw: 4 });
+    line(c, 0, -len + 6, 0, -8, 'rgba(255,255,255,0.35)', 2.5);
+    c.restore();
+  }
+  sparkle(c, 22, -96, 9 + 5 * Math.sin(t * 4 + x), '#fff');
+  c.restore();
+}
+/* clifftop greenery: a round tree and puffy bushes */
+function pCloud(x, y, w, h, bumps, seed) {
+  const p = new Path2D();
+  for (let k = 0; k < bumps; k++) {
+    const a0 = (k / bumps) * TAU, a1 = ((k + 1) / bumps) * TAU, am = (a0 + a1) / 2, bulge = 1.28 + rnd(k, seed) * 0.14;
+    if (!k) p.moveTo(x + Math.cos(a0) * w / 2, y + Math.sin(a0) * h / 2);
+    p.quadraticCurveTo(x + Math.cos(am) * w / 2 * bulge, y + Math.sin(am) * h / 2 * bulge, x + Math.cos(a1) * w / 2, y + Math.sin(a1) * h / 2);
+  }
+  p.closePath();
+  return p;
+}
+function drawTree(c, x, y, s, t, seed = 0) {
+  c.save(); c.translate(x, y); c.scale(s, s);
+  groundShadow(c, 0, 0, 130, 20, 0.3);
+  const trunk = new Path2D();
+  trunk.moveTo(-24, 0); trunk.quadraticCurveTo(-12, -100, -30, -190); trunk.lineTo(26, -190); trunk.quadraticCurveTo(10, -100, 24, 0); trunk.closePath();
+  cel(c, trunk, '#9a6a4a', { shadow: '#6e4630', d: 9, line: '#4a2a1a' });
+  c.rotate(Math.sin(t * 1.1 + seed) * 0.015);
+  const cg = c.createLinearGradient(0, -420, 0, -160); cg.addColorStop(0, '#8ee8b0'); cg.addColorStop(1, '#4fb880');
+  cel(c, pCloud(0, -280, 260, 210, 9, 70 + seed), cg, { shadow: '#3a9a6c', d: 18, hi: '#c4f7da', line: '#1f5a40', lw: 6 });
+  for (let k = 0; k < 6; k++) { circle(c, -80 + rnd(k, 71 + seed) * 160, -330 + rnd(k, 72 + seed) * 120, 9); fs(c, ['#ff9ecf', '#ffd166', '#fff'][k % 3], '#8a3a5a', 3); }
+  c.restore();
+}
+function drawBush(c, x, y, s, seed = 0) {
+  c.save(); c.translate(x, y); c.scale(s, s);
+  groundShadow(c, 0, 0, 90, 14, 0.28);
+  cel(c, pCloud(0, -46, 150, 80, 7, 80 + seed), '#5fcf8f', { shadow: '#3a9a6c', d: 12, hi: '#a8f0c8', line: '#1f5a40', lw: 5 });
+  for (let k = 0; k < 3; k++) { circle(c, -40 + k * 40, -60 + (k % 2) * 16, 7); fs(c, k % 2 ? '#fff' : '#ff9ecf', '#8a3a5a', 3); }
+  c.restore();
+}
+function landProps(c, t) {
+  const [vx0, , vx1] = viewRect(c);
+  for (const [kind, px, ps, sd] of [['bush', 2110, 0.9, 1], ['tree', 2290, 0.95, 2], ['bush', 2520, 1.0, 3], ['tree', 2800, 1.15, 4], ['bush', 3080, 0.85, 5], ['tree', 3350, 1.0, 6]]) {
+    if (px + 200 < vx0 || px - 200 > vx1) continue;
+    if (kind === 'tree') drawTree(c, px, DIO.cliffY - 4, ps, t, sd); else drawBush(c, px, DIO.cliffY - 4, ps, sd);
+  }
 }
 
 /* ---------------- underwater ---------------- */
@@ -384,7 +482,7 @@ function blanket(c, x, y, s, amt = 1, col = '#b59cff') {
 }
 
 /* the whole cross-section world: sky, cliff house, sea, sleeper. world height ~2400 */
-const DIO = { sea: 620, floor: 2250, houseX: 1450, cliffY: 470, cthX: 700 };
+const DIO = { sea: 620, floor: 2250, cliffX: 1080, cliffW: 2420, houseX: 1760, cliffY: 470, cthX: 700 };
 function viewRect(c) {
   const inv = c.getTransform().inverse();
   const a = inv.transformPoint({ x: 0, y: 0 }), b = inv.transformPoint({ x: c.canvas.width, y: c.canvas.height });
@@ -400,10 +498,11 @@ function diorama(c, t, o = {}) {
   }
   if (sea) diorama_sea(c, t, o, deep);
   if (cliff) {
-    drawCliff(c, 1080, DIO.cliffY, 1100, DIO.floor + 200 - DIO.cliffY, t);
+    drawCliff(c, DIO.cliffX, DIO.cliffY, DIO.cliffW, DIO.floor + 200 - DIO.cliffY, t);
     if (sky) {
-      drawHouse(c, DIO.houseX + 150, DIO.cliffY, 0.95, t, { porch: o.porch ?? 1, attic: o.attic });
-      fireflies(c, t, 14, 1150, 150, 900, 300, 31);
+      landProps(c, t);
+      drawHouse(c, DIO.houseX, DIO.cliffY, 0.95, t, { porch: o.porch ?? 1, attic: o.attic });
+      fireflies(c, t, 20, 1250, 110, 1500, 320, 31);
     }
   }
   if (vy0 < DIO.sea + 40 && vy1 > DIO.sea - 20) seaLine(c, t);
@@ -706,7 +805,7 @@ function brunchTable(c, x, y, s, t, o = {}) {
   c.save(); c.clip(top); for (let k = 0; k < 20; k++) { c.fillStyle = k % 2 ? '#ff9ecf' : '#fff'; c.fillRect(-500 + k * 50, -20, 50, 60); } c.fillStyle = 'rgba(120,20,70,0.15)'; c.fillRect(-500, 20, 1000, 20); c.restore();
   c.lineWidth = 6; c.strokeStyle = '#8a2a5a'; c.stroke(top);
   const hop2 = o.hop || 0;
-  c.save(); c.translate(-40, -20 + hop2);
+  c.save(); c.translate(o.plateX ?? -40, -20 + hop2);
   groundShadow(c, 0, 4, 190, 26, 0.25);
   cel(c, pEllipse(0, 0, 170, 34), '#ffffff', { shadow: '#e8e2f2', d: 6, line: '#8a7aa8' });
   for (let k = 0; k < 4; k++) {
@@ -761,13 +860,23 @@ function quilt(c, x, y, w, h, t) {
   c.restore();
 }
 
-/* thought bubble: runs fn() clipped inside a cloud */
-function thought(c, x, y, w, h, t, p, fn, tail = [0, 0]) {
+/* thought bubble: runs fn() clipped inside a cloud. tail is the point just off the thinker's head:
+   the bead trail shrinks toward it, and the bubble grows out of it as it pops in */
+function thought(c, x, y, w, h, t, p, fn, tail) {
   if (p <= 0) return;
+  const [tx, ty] = tail || [x - w * 0.45, y + h * 0.9];
+  const a = Math.atan2((ty - y) / h, (tx - x) / w);
+  const ex = x + Math.cos(a) * w * 0.55, ey = y + Math.sin(a) * h * 0.55;
+  const n = clamp(Math.round(Math.hypot(tx - ex, ty - ey) / 55), 3, 5);
+  const rs = clamp(Math.min(w, h) / 330, 0.85, 1.4);
+  const beads = [];
+  for (let k = 0; k < n; k++) beads.push([lerp(tx, ex, k / n), lerp(ty, ey, k / n) + Math.sin(t * 3 + k) * 3, lerp(8, 22, k / (n - 1)) * rs]);
   c.save();
-  c.translate(x, y); c.scale(p, p); c.translate(-x, -y);
-  c.save(); c.translate(10, 14); cloudPath(c, x, y, w, h, 11, 3); c.fillStyle = 'rgba(20,10,50,0.25)'; c.fill(); c.restore();
-  for (let k = 0; k < 3; k++) { circle(c, lerp(tail[0], x - w * 0.25, (k + 1) / 4), lerp(tail[1], y + h * 0.45, (k + 1) / 4), 14 + k * 10); fs(c, '#fff', '#6a5a9a', 5); }
+  c.translate(tx, ty); c.scale(p, p); c.translate(-tx, -ty);
+  c.save(); c.translate(10, 14); c.fillStyle = 'rgba(20,10,50,0.25)';
+  for (const [bx, by, r] of beads) { circle(c, bx, by, r); c.fill(); }
+  cloudPath(c, x, y, w, h, 11, 3); c.fill(); c.restore();
+  for (const [bx, by, r] of beads) { circle(c, bx, by, r); fs(c, '#fff', '#6a5a9a', 5); }
   cloudPath(c, x, y, w, h, 11, 3); fs(c, '#fff', null);
   c.save(); cloudPath(c, x, y, w * 0.97, h * 0.95, 11, 3); c.clip(); fn(); c.restore();
   cloudPath(c, x, y, w, h, 11, 3); fs(c, null, '#6a5a9a', 7);
@@ -830,9 +939,9 @@ function paperStack(c, x, y, s, t, fly = 0) {
   }
   c.restore();
 }
-function giftBox(c, x, y, s, t, lid = 0) {
+function giftBox(c, x, y, s, t, lid = 0, shadow = true) {
   c.save(); c.translate(x, y); c.scale(s, s);
-  groundShadow(c, 0, 0, 160, 24, 0.35);
+  if (shadow) groundShadow(c, 0, 0, 160, 24, 0.35);
   const bg = c.createLinearGradient(-130, 0, 130, 0); bg.addColorStop(0, '#8fcaff'); bg.addColorStop(1, '#4f98e8');
   cel(c, pRRect(-130, -180, 260, 180, 14), bg, { shadow: '#3f80d0', d: 12, line: '#1a3f7a' });
   cel(c, pRRect(-20, -180, 40, 180, 0), '#ff6f9f', { d: 0, lw: 4 });
@@ -849,8 +958,8 @@ function planBoard(c, x, y, s, t, reveal = 1) {
   cel(c, pRRect(-230, -480, 460, 330, 16), '#ffffff', { shadow: '#ece6f6', d: 8, line: '#6a5a8a' });
   txt(c, 'THE PLAN', 0, -440, { size: 44, font: DISPLAY, weight: 400, fill: '#ff6f9f', lw: 8, stroke: '#7a1f4a' });
   const steps = ['1. chant nicely', '2. wake the big guy', '3. ???'];
-  steps.forEach((st, k) => { if (reveal > k / 3) txt(c, st, -190, -380 + k * 70, { size: 38, align: 'left', fill: '#2a1b3d', stroke: false, weight: 600 }); });
-  if (reveal > 0.66) { c.save(); c.translate(150, -250); c.scale(0.28, 0.28); drawCthulhu(c, 0, 0, 1, { t, mood: 'sleep', noShadow: true }); c.restore(); }
+  steps.forEach((st, k) => { if (reveal > k / 3) txt(c, st, -196, -380 + k * 70, { size: 34, align: 'left', fill: '#2a1b3d', stroke: false, weight: 600 }); });
+  if (reveal > 0.66) { c.save(); c.translate(168, -172); c.scale(0.25, 0.25); drawCthulhu(c, 0, 0, 1, { t, mood: 'sleep', noShadow: true }); c.restore(); }
   c.restore();
 }
 function welcomeMat(c, x, y, s, t, kind = 'tentacle') {

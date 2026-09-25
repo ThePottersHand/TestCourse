@@ -9,12 +9,12 @@ function sBrunch(c, t) {
   const fr = easeOutBack(seg(t, WT(26, 3) - 0.1, WT(26, 5)));
   const hug = t > WT(26, 5) + 0.1;
   if (fr > 0) {
-    drawKid(c, lerp(-250, 560, fr), 760, 1.3, { t, air: hop(t, 12, 1, 0.3), colors: FRIEND_A, seed: 2, eyes: 'happy', sing: true, armR: hug ? 1.7 : 2.4, handR: 'open', armL: 0.5 });
-    drawKid(c, lerp(2170, 1360, fr), 760, 1.3, { t, air: hop(t, 12, 1, 0.6), colors: FRIEND_B, seed: 5, eyes: hug ? 'happy' : 'wink', sing: true, armL: hug ? 1.7 : 2.4, handL: 'open', armR: 0.5 });
+    drawKid(c, lerp(-250, 560, fr), 975, 1.3, { t, noShadow: true, air: hop(t, 12, 1, 0.3), colors: FRIEND_A, seed: 2, eyes: 'happy', sing: true, armR: hug ? 1.7 : 2.4, handR: 'open', armL: 0.5 });
+    drawKid(c, lerp(2170, 1360, fr), 975, 1.3, { t, noShadow: true, air: hop(t, 12, 1, 0.6), colors: FRIEND_B, seed: 5, eyes: hug ? 'happy' : 'wink', sing: true, armL: hug ? 1.7 : 2.4, handL: 'open', armR: 0.5 });
   }
-  drawKid(c, 960, 760, 1.35, { t, air: hop(t, 12), eyes: 'star', sing: true, armL: hug ? 1.7 : 2.5, armR: hug ? 1.7 : 2.5, handL: 'open', handR: 'open', sq: squash(t, 0.06) });
+  drawKid(c, 960, 975, 1.35, { t, noShadow: true, air: hop(t, 12), eyes: 'star', sing: true, armL: hug ? 1.7 : 2.5, armR: hug ? 1.7 : 2.5, handL: 'open', handR: 'open', sq: squash(t, 0.06) });
   const bb = beatInfo(t);
-  brunchTable(c, 960, 960, 1.05, t, { hop: t > WT(26, 1) ? -Math.abs(Math.sin(Math.PI * bb.f)) * 30 : 0, sq: t > WT(26, 1) ? squash(t, 0.1) : 1 });
+  brunchTable(c, 960, 960, 1.05, t, { plateX: -190, hop: t > WT(26, 1) ? -Math.abs(Math.sin(Math.PI * bb.f)) * 30 : 0, sq: t > WT(26, 1) ? squash(t, 0.1) : 1 });
   sfx(c, 'brunch!', 480, 230, t, WT(26, 2), { size: 110, fill: '#ffb347', rot: -0.15, dur: 1.3 });
   if (hug) { heartsFx(c, t, 10, 500, 250, 920, 500, 51, 1.3); sfx(c, 'friends!', 1450, 230, t, WT(26, 5), { size: 110, fill: '#ff6f9f', rot: 0.12, dur: 1.4 }); }
   c.restore();
@@ -291,33 +291,73 @@ function heartFirework(c, x, y, t, t0, col) {
 function sF6(c, t) {
   c.save();
   const k = easeInOut(seg(t, LS(35) - 0.3, LE(35) + 1.5));
-  const [cx, cy, z] = lerpCam(k, [1200, 420, 1.0], [960, 1150, 0.47]);
+  const [cx, cy, z] = lerpCam(k, [1420, 420, 1.0], [960, 1150, 0.47]);
   dioCam(c, cx, cy, z);
   diorama(c, t, { sign: 1, blanket: 1, porch: 1, moonX: 700, moonY: 100, cth: { mood: 'smile', hug: 'fish' } });
-  porchCast(c, t, [['mabel', 1150, { s: 0.6, face: 'happy', sing: true, armL: 2.4 }], ['friendA', 1250, { s: 0.6, eyes: 'happy', sing: true, armR: 2.5, handR: 'open' }], ['kid', 1350, { s: 0.62, eyes: 'happy', sing: true, armL: 2.5, armR: 2.5, handL: 'open', handR: 'open' }], ['friendB', 1450, { s: 0.6, eyes: 'happy', sing: true, armL: 2.5, handL: 'open' }], ['mail', 1550, { s: 0.6, face: 'happy', sing: true, armR: 2.4 }]]);
+  porchCast(c, t, [['mabel', 1300, { s: 0.6, face: 'happy', sing: true, armL: 2.4 }], ['friendA', 1400, { s: 0.6, eyes: 'happy', sing: true, armR: 2.5, handR: 'open' }], ['kid', 1500, { s: 0.62, eyes: 'happy', sing: true, armL: 2.5, armR: 2.5, handL: 'open', handR: 'open' }], ['friendB', 1600, { s: 0.6, eyes: 'happy', sing: true, armL: 2.5, handL: 'open' }], ['mail', 1700, { s: 0.6, face: 'happy', sing: true, armR: 2.4 }]]);
   const bt = LS(35) - 0.2;
-  heartFirework(c, 620, 180, t, bt, '#ff9ecf'); heartFirework(c, 980, 60, t, bt + 0.9, '#ffe27a'); heartFirework(c, 300, 120, t, bt + 1.8, '#8fe3b0'); heartFirework(c, 820, 300, t, bt + 2.7, '#b59cff'); heartFirework(c, 450, 20, t, bt + 3.6, '#8fd3ff');
+  heartFirework(c, 870, 180, t, bt, '#ff9ecf'); heartFirework(c, 1230, 40, t, bt + 0.9, '#ffe27a'); heartFirework(c, 520, 110, t, bt + 1.8, '#8fe3b0'); heartFirework(c, 1060, 280, t, bt + 2.7, '#b59cff'); heartFirework(c, 700, 10, t, bt + 3.6, '#8fd3ff');
   c.restore();
 }
 
 /* ================= THE POLITE NOTE ================= */
+/* the writing arm, drawn over the table: sleeve from the shoulder, hand, pen tip exactly at (tx, ty) */
+function penArm(c, sx, sy, tx, ty, s, t) {
+  const P = HERO;
+  const hx = tx - 20.3 * s, hy = ty - 29.7 * s;
+  const mx = (sx + hx) / 2 + 26 * s, my = Math.max(sy, hy) + 24 * s;
+  c.save();
+  c.lineCap = 'round'; c.lineJoin = 'round';
+  c.beginPath(); c.moveTo(sx, sy); c.quadraticCurveTo(mx, my, hx, hy);
+  c.lineWidth = 30 * s + 9; c.strokeStyle = lineOf(P.top); c.stroke();
+  c.lineWidth = 30 * s; c.strokeStyle = P.top; c.stroke();
+  const dx = hx - mx, dy = hy - my, dl = Math.hypot(dx, dy) || 1;
+  c.beginPath(); c.moveTo(hx - dx / dl * 16 * s, hy - dy / dl * 16 * s); c.lineTo(hx - dx / dl * 7 * s, hy - dy / dl * 7 * s);
+  c.lineWidth = 30 * s; c.strokeStyle = P.topDark; c.stroke();
+  c.translate(hx, hy); c.scale(s, s);
+  cel(c, pEllipse(0, 0, 12, 12), P.skin, { shadow: P.skinShade, d: 4, lw: 4, line: P.skinLine });
+  drawProp(c, 'pen', t);
+  c.restore();
+}
 function sNoteWrite(c, t) {
   c.save();
   kitchenBg(c, t);
-  kitchenLamp(c, 960, 200, t, { swing: false, bright: 0.6 });
-  groundShadow(c, 960, 830, 820, 40, 0.35);
-  cel(c, pRRect(200, 760, 1520, 60, 18), '#ffb3cf', { d: 8, hi: '#ffd6e6', line: '#8a2a5a' });
+  kitchenLamp(c, 960, 170, t, { swing: false, bright: 0.6 });
   const t0 = LE(35) + 0.2;
-  c.save(); c.translate(1150, 680); c.rotate(-0.05);
-  c.save(); c.translate(8, 10); rrect(c, -260, -170, 520, 300, 16); c.fillStyle = 'rgba(40,20,60,0.25)'; c.fill(); c.restore();
-  cel(c, pRRect(-260, -170, 520, 300, 16), '#fff8ec', { shadow: '#f0e2cc', d: 8, line: '#8a6a4a' });
   const w = seg(t, t0, t0 + 2.4);
+  // he leans along the page as the pen travels
+  const S = 1.3, kx = lerp(690, 930, easeInOut(seg(w, 0.02, 0.5))) - easeInOut(seg(w, 0.52, 0.62)) * 90 + easeInOut(seg(w, 0.8, 0.95)) * 150, ky = 790;
+  const tilt = 0.07 + Math.sin(t * 2.2) * 0.02;
+  drawKid(c, kx, ky, S, { t, tilt, eyes: 'open', look: 0.35, mouth: 'tongue', armL: 0.25, armR: 0.25, noShadow: true });
+  cel(c, pRRect(-60, 690, W + 120, 520, 46), '#ffb3cf', { d: 10, hi: '#ffd6e6', line: '#8a2a5a' });
+  cel(c, pEllipse(1600, 760, 70, 22), '#ffffff', { shadow: '#e6e0f4', d: 5, line: '#8a6a9a' });
+  for (let k = 0; k < 3; k++) { circle(c, 1570 + k * 30, 746 - (k % 2) * 8, 20); fs(c, '#e8b070', '#8a5020', 4); for (let j = 0; j < 3; j++) { circle(c, 1562 + k * 30 + j * 7, 740 - (k % 2) * 8 + (j % 2) * 8, 3); c.fillStyle = '#5a3020'; c.fill(); } }
+  // the note lies on the table in front of him
+  const nx = 960, ny = 852, rot = -0.035;
+  c.save(); c.translate(nx, ny); c.rotate(rot);
+  c.save(); c.translate(10, 12); rrect(c, -380, -150, 760, 300, 18); c.fillStyle = 'rgba(90,20,60,0.25)'; c.fill(); c.restore();
+  cel(c, pRRect(-380, -150, 760, 300, 18), '#fff8ec', { shadow: '#f0e2cc', d: 8, line: '#8a6a4a' });
+  for (let i = 0; i < 3; i++) line(c, -340, -28 + i * 54, 340, -28 + i * 54, 'rgba(180,160,220,0.35)', 3);
   const msg = 'Dear Ancient One,';
-  txt(c, msg.slice(0, Math.floor(w * 1.6 * msg.length)), -220, -100, { size: 44, fill: '#6b3fc9', stroke: false, align: 'left', font: DISPLAY, weight: 400, shadow: false });
-  if (w > 0.7) { heartPath(c, 150, 30, 40 * easeOutBack(seg(w, 0.7, 1))); fs(c, '#ff6f9f', '#8a1a4a', 4); }
-  for (let k = 0; k < 3; k++) if (w > 0.6 + k * 0.1) line(c, -220, -30 + k * 40, -20 + k * 30, -30 + k * 40, '#b9a8e0', 5);
+  const shown = msg.slice(0, Math.floor(clamp(w / 0.55) * msg.length));
+  txt(c, shown, -330, -84, { size: 46, fill: '#6b3fc9', stroke: false, align: 'left', font: DISPLAY, weight: 400, shadow: false });
+  c.font = `400 46px ${DISPLAY}`;
+  let px = -330 + c.measureText(shown).width, py = -70, lift = w <= 0 ? 1 : 0;
+  const LW = [380, 440, 280];
+  for (let k = 0; k < 3; k++) {
+    const u = seg(w, 0.56 + k * 0.09, 0.64 + k * 0.09);
+    if (u <= 0) continue;
+    line(c, -330, -28 + k * 54 - 10, -330 + LW[k] * u, -28 + k * 54 - 10, '#b9a8e0', 5);
+    if (u < 1 || k === 2) { px = -330 + LW[k] * u; py = -28 + k * 54 - 10; }
+  }
+  const hp = easeOutBack(seg(w, 0.84, 1));
+  if (hp > 0) { heartPath(c, 250, 44, 44 * hp); fs(c, '#ff6f9f', '#8a1a4a', 4); px = lerp(px, 250, easeInOut(seg(w, 0.82, 0.9))); py = lerp(py, 56, easeInOut(seg(w, 0.82, 0.9))); }
+  if (w >= 1) lift = easeOutCubic(seg(t, t0 + 2.4, t0 + 2.7));
   c.restore();
-  drawKid(c, 760, 900, 1.4, { t, eyes: 'open', look: 1, mouth: 'tongue', armR: 1.4 + Math.sin(t * 18) * 0.1, holdR: 'pen' });
+  const tipX = nx + px * Math.cos(rot) - py * Math.sin(rot) + Math.sin(t * 26) * 3 * (1 - lift);
+  const tipY = ny + px * Math.sin(rot) + py * Math.cos(rot) - lift * 40;
+  const shX = kx + (30 * Math.cos(tilt) + 92 * Math.sin(tilt)) * S, shY = ky + (30 * Math.sin(tilt) - 92 * Math.cos(tilt)) * S;
+  penArm(c, shX, shY + 6, tipX, tipY, S, t);
   c.restore();
 }
 function sNoteSend(c, t) {
@@ -326,7 +366,7 @@ function sNoteSend(c, t) {
   diorama(c, t, { porch: 1, moonX: 700, moonY: 60 });
   const throwT = LS(36) + 0.5;
   const k = seg(t, throwT, throwT + 1.2);
-  drawKid(c, 1280, PORCH, 0.66, { t, air: hop(t, 6, 2), eyes: k > 0 ? 'happy' : 'open', sing: true, armR: k > 0 ? 2.8 : 1.2, armL: 0.4, holdR: k > 0 ? undefined : 'bottle', flip: true });
+  drawKid(c, 1300, PORCH, 0.66, { t, air: hop(t, 6, 2), eyes: k > 0 ? 'happy' : 'open', sing: true, armR: k > 0 ? 2.8 : 1.2, armL: 0.4, holdR: k > 0 ? undefined : 'bottle', flip: true });
   if (k > 0 && k < 1) {
     const bx = lerp(1250, 800, k), by = lerp(330, DIO.sea, k) - Math.sin(k * Math.PI) * 260;
     c.save(); c.translate(bx, by); c.rotate(k * 9); glow(c, 0, 0, 60, 'rgba(200,255,240,0.5)'); drawBottle(c, 0, 0, 0.5, t); c.restore();
@@ -366,52 +406,61 @@ function sOutro1(c, t) {
   c.save();
   const k = easeInOut(seg(t, LE(37), LS(39)));
   dioCam(c, DIO.cthX + 30, DIO.floor - 330, 1.6 + k * 0.6);
-  diorama(c, t, { sign: 1, blanket: 1, cth: { mood: 'smile', hug: 'bottle' } });
+  diorama(c, t, { sign: 1, blanket: 1, cth: { mood: 'smile', hug: 'bottle', heartBubble: true } });
   c.restore();
   glow(c, W / 2, H / 2, 900, 'rgba(255,190,230,0.2)');
   notesFx(c, t, 6, 200, 100, 1500, 700, 101, '#ffffff');
-  const hb = 0.5 + 0.5 * Math.sin(t * 1.6);
-  c.save(); c.globalAlpha = 0.85;
-  glow(c, 1340, 360 - hb * 20, 120, 'rgba(255,180,220,0.45)');
-  heartPath(c, 1340, 360 - hb * 20, 40 + hb * 30); c.fillStyle = 'rgba(255,190,230,0.4)'; c.fill(); c.lineWidth = 4; c.strokeStyle = '#fff'; c.stroke();
-  c.restore();
 }
+const PARTY_CAM = [1585, 320, 1.45];
 function sOutro2(c, t) {
   const up = LS(40) - 0.4;
   if (t < up) {
     c.save();
     const k = easeInOut(seg(t, LS(39) - 0.2, up));
-    dioCam(c, lerp(DIO.cthX, 1300, k), lerp(DIO.floor - 350, 350, k), lerp(1.3, 1.45, k) - Math.sin(k * Math.PI) * 0.6);
-    diorama(c, t, { sign: 1, blanket: 1, porch: 1, moonX: 900, moonY: 80, cth: { mood: 'smile', hug: 'bottle' } });
-    porchCast(c, t, [['kid', 1290, { s: 0.62, eyes: 'happy', sing: true, armL: 2.5, armR: 2.5, handL: 'open', handR: 'open' }]]);
+    dioCam(c, lerp(DIO.cthX, PARTY_CAM[0], k), lerp(DIO.floor - 350, PARTY_CAM[1], k), lerp(1.3, PARTY_CAM[2], k) - Math.sin(k * Math.PI) * 0.6);
+    diorama(c, t, { sign: 1, blanket: 1, porch: 1, moonX: 1150, moonY: 60, moonShades: k > 0.9, cth: { mood: 'smile', hug: 'bottle' } });
+    porchCast(c, t, [['kid', 1580, { s: 0.62, eyes: 'happy', sing: true, armL: 2.5, armR: 2.5, handL: 'open', handR: 'open' }]]);
     c.restore();
     c.save(); c.globalAlpha = Math.sin(k * Math.PI); bubblesFx(c, t * 3, 30, 0, 0, W, H, { speed: 300, r: 22 }); c.restore();
     return;
   }
-  c.save();
-  beatZoom(c, t, 0.02);
-  dioCam(c, 1300, 320, 1.45);
-  diorama(c, t, { porch: 1, moonX: 900, moonY: 60, moonShades: true });
-  const b = beatInfo(t);
-  const al = (i) => ((b.i + i) % 2 ? 2.6 : 0.8), ar = (i) => ((b.i + i) % 2 ? 0.8 : 2.6);
-  porchCast(c, t, [
-    ['cat', 1000, { s: 0.52 }],
-    ['mabel', 1100, { s: 0.56, face: 'happy', sing: true, cup: false, armL: 2.3 }],
-    ['friendA', 1200, { s: 0.56, eyes: 'happy', sing: true, armL: al(1), armR: ar(1), handL: 'open', handR: 'open' }],
-    ['kid', 1305, { s: 0.62, eyes: 'happy', sing: true, armL: al(2), armR: ar(2), handL: 'open', handR: 'open' }],
-    ['friendB', 1410, { s: 0.56, eyes: 'happy', sing: true, armL: al(3), armR: ar(3), handL: 'open', handR: 'open' }],
-    ['mail', 1510, { s: 0.56, face: 'happy', sing: true, armL: 2.3, armR: 2.3 }],
-    ['clock', 1610, { s: 0.5, face: 'happy', armL: 2.3, armR: 2.3 }],
-  ]);
-  fireflies(c, t, 20, 900, 150, 900, 260, 9);
-  c.restore();
-  dreamBubble(c, 420, 330, 600, 420, t, pop(t, up + 0.3, 0.5), () => {
-    fillGrad(c, 0, 120, 0, 540, [[0, '#3a78cc'], [1, '#1b3a82']], 100, 100, 700, 500);
-    bubblesFx(c, t, 10, 120, 120, 600, 420, { r: 10 });
-    c.save(); c.translate(360, 470 + hop(t, 30)); c.scale(0.48, 0.48); drawCthulhu(c, 0, 0, 1, { t, mood: 'happy', armsUp: 1, cap: true, tilt: Math.sin(t * 6) * 0.15, noShadow: true }); c.restore();
-    drawKid(c, 560, 470, 0.5, { t, air: hop(t, 24, 1, 0.5), eyes: 'happy', sing: true, armL: 2.5, armR: 2.5, handL: 'open', handR: 'open', noShadow: true });
-  });
-  sfx(c, '♪ everyone! ♪', 1360, 900, t, WT(40, 1), { size: 90, fill: '#ffe27a', dur: 3 });
+  const sp = easeInOut(seg(t, WT(40, 1) - 0.15, WT(40, 1) + 0.45));
+  const party = () => {
+    c.save();
+    beatZoom(c, t, 0.02);
+    dioCam(c, lerp(PARTY_CAM[0], 1222, sp), PARTY_CAM[1], lerp(PARTY_CAM[2], 1.35, sp));
+    diorama(c, t, { porch: 1, moonX: 1150, moonY: 60, moonShades: true });
+    const b = beatInfo(t);
+    const al = (i) => ((b.i + i) % 2 ? 2.6 : 0.8), ar = (i) => ((b.i + i) % 2 ? 0.8 : 2.6);
+    const cast = [
+      ['cat', 1290, { s: 0.52 }],
+      ['mabel', 1385, { s: 0.56, face: 'happy', sing: true, cup: false, armL: 2.3 }],
+      ['friendA', 1480, { s: 0.56, eyes: 'happy', sing: true, armL: al(1), armR: ar(1), handL: 'open', handR: 'open' }],
+      ['kid', 1580, { s: 0.62, eyes: 'happy', sing: true, armL: al(2), armR: ar(2), handL: 'open', handR: 'open' }],
+      ['friendB', 1680, { s: 0.56, eyes: 'happy', sing: true, armL: al(3), armR: ar(3), handL: 'open', handR: 'open' }],
+      ['mail', 1780, { s: 0.56, face: 'happy', sing: true, armL: 2.3, armR: 2.3 }],
+      ['clock', 1880, { s: 0.5, face: 'happy', armL: 2.3, armR: 2.3 }],
+    ];
+    // the gang pops in around him, nearest first
+    porchCast(c, t, cast.map(([kd, x, o], i) => [kd, x, Object.assign({}, o, { s: o.s * (kd === 'kid' ? 1 : clamp(pop(t, up + Math.abs(i - 3) * 0.08, 0.35), 0, 2)) })]).filter((e) => e[2].s > 0.01));
+    fireflies(c, t, 20, 1250, 120, 900, 280, 9);
+    c.restore();
+  };
+  if (sp <= 0) party();
+  else {
+    split(c, () => cthDream(c, t, pop(t, WT(40, 1) + 0.35, 0.5), { sign: 1, blanket: 1, cth: { mood: 'smile', hug: 'bottle' } }, () => {
+      c.beginPath(); for (let k = 0; k < 9; k++) { const u = k / 8; c.lineTo(-230 + u * 460, -118 + Math.sin(u * Math.PI) * 26); }
+      c.lineWidth = 3; c.strokeStyle = '#6a5a9a'; c.stroke();
+      for (let k = 0; k < 9; k++) {
+        const u = k / 8, col = ['#ffe27a', '#ff9ecf', '#8fe3b0'][k % 3], lx = -230 + u * 460, ly = -110 + Math.sin(u * Math.PI) * 26;
+        glow(c, lx, ly, 30, rgba(col, 0.85)); circle(c, lx, ly, 7); fs(c, col, '#6a5a9a', 3);
+      }
+      c.save(); c.translate(-100, 140 + hop(t, 30)); c.scale(0.42, 0.42); drawCthulhu(c, 0, 0, 1, { t, mood: 'happy', armsUp: 1, cap: true, tilt: Math.sin(t * 6) * 0.15, noShadow: true }); c.restore();
+      drawKid(c, 110, 140, 0.44, { t, air: hop(t, 24, 1, 0.5), eyes: 'happy', sing: true, armL: 2.5, armR: 2.5, handL: 'open', handR: 'open', noShadow: true });
+      for (let k = 0; k < 4; k++) sparkle(c, -200 + k * 130, -40 + Math.sin(t * 3 + k) * 16, 10, '#fff');
+    }), party, lerp(-420, 1130, sp), lerp(-760, 790, sp));
+  }
+  sfx(c, '♪ everyone! ♪', 1400, 880, t, WT(40, 1), { size: 90, fill: '#ffe27a', dur: 3 });
 }
 function sEnd(c, t) {
   c.save();

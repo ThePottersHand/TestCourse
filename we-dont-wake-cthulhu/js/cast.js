@@ -178,7 +178,7 @@ function drawProp(c, name, t, o = {}) {
       c.beginPath(); c.moveTo(-22, -8); c.lineTo(22, -8); c.quadraticCurveTo(20, 14, 0, 14); c.quadraticCurveTo(-20, 14, -22, -8); fs(c, '#fff', INK, 4);
       line(c, -16, 0, 16, 0, '#ff8fc7', 4);
       c.beginPath(); c.arc(24, 0, 8, -1.3, 1.3); fs(c, null, '#8a7fa8', 4); break;
-    case 'pointer': line(c, 0, 0, 0, -120, '#a8744a', 7); circle(c, 0, -122, 7); fs(c, '#ff6f6f', INK, 3); break;
+    case 'pointer': c.save(); c.rotate(0.45); line(c, 0, 0, 0, -120, '#a8744a', 7); circle(c, 0, -122, 7); fs(c, '#ff6f6f', INK, 3); c.restore(); break;
     case 'letters':
       for (let k = 0; k < 3; k++) { c.save(); c.rotate(-0.25 + k * 0.2); drawEnvelope(c, 0, -10 - k * 4, 0.55, k === 1 ? '#ffe7f1' : '#fff'); c.restore(); }
       break;
@@ -710,9 +710,17 @@ function drawCthulhu(c, x, y, s, o = {}) {
       const r = 8 + 26 * b, bx = 58, by = -150 + b * 6;
       const bgr = c.createRadialGradient(bx - r * 0.4, by - r * 0.4, 1, bx, by, r);
       bgr.addColorStop(0, 'rgba(255,255,255,0.55)'); bgr.addColorStop(0.5, 'rgba(190,240,255,0.18)'); bgr.addColorStop(1, 'rgba(160,230,255,0.4)');
-      circle(c, bx, by, r); c.fillStyle = bgr; c.fill();
-      c.lineWidth = 3; c.strokeStyle = 'rgba(235,252,255,0.9)'; c.stroke();
-      c.beginPath(); c.arc(bx, by, r * 0.7, Math.PI * 1.1, Math.PI * 1.45); c.lineWidth = 3.5; c.strokeStyle = '#fff'; c.stroke();
+      if (o.heartBubble) {
+        const hs = r * 1.35;
+        glow(c, bx, by, hs * 2.2, 'rgba(255,170,215,0.4)');
+        heartPath(c, bx, by + hs * 0.35, hs); c.fillStyle = 'rgba(255,190,225,0.45)'; c.fill();
+        c.lineWidth = 3.5; c.strokeStyle = '#fff'; c.stroke();
+        c.beginPath(); c.arc(bx - hs * 0.32, by - hs * 0.25, hs * 0.22, Math.PI * 1.05, Math.PI * 1.6); c.lineWidth = 3.5; c.stroke();
+      } else {
+        circle(c, bx, by, r); c.fillStyle = bgr; c.fill();
+        c.lineWidth = 3; c.strokeStyle = 'rgba(235,252,255,0.9)'; c.stroke();
+        c.beginPath(); c.arc(bx, by, r * 0.7, Math.PI * 1.1, Math.PI * 1.45); c.lineWidth = 3.5; c.strokeStyle = '#fff'; c.stroke();
+      }
     }
   }
   c.restore();

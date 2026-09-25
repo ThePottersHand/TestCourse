@@ -58,9 +58,9 @@ function sIntro(c, t) {
   const kDive = easeInOut(seg(t, 0, 4.6));
   const kRise = easeInOut(seg(t, 4.7, 8.8));
   const kZoom = easeInCubic(seg(t, 8.8, 9.95));
-  let cx = lerp(680, 1560, kRise), cy = lerp(lerp(1600, 1790, kDive), 250, kRise);
+  let cx = lerp(680, 1720, kRise), cy = lerp(lerp(1600, 1790, kDive), 250, kRise);
   let z = lerp(1.2, 1.05, kRise) - 0.5 * Math.sin(kRise * Math.PI);
-  cx = lerp(cx, 1600, kZoom); cy = lerp(cy, 137, kZoom); z = lerp(z, 5.2, kZoom);
+  cx = lerp(cx, DIO.houseX, kZoom); cy = lerp(cy, 137, kZoom); z = lerp(z, 5.2, kZoom);
   c.save();
   dioCam(c, cx, cy, z);
   diorama(c, t, { attic: true, porch: 0.9, moonX: 1000, moonY: 120 });
@@ -227,18 +227,18 @@ function sTentacle(c, t) {
   roomBg(c, t, { wall1: '#35287a', wall2: '#5646a6' });
   const gulp = t > WT(3, 8);
   const tp = pop(t, LS(3) - 0.2, 0.5);
-  thought(c, 1130, 450, 1380, 720, t, tp, () => {
-    fillGrad(c, 0, 80, 0, 820, [[0, '#ff8fc0'], [0.6, '#ffc49a'], [1, '#ffe2a8']], 400, 60, 1500, 800);
-    glow(c, 1400, 300, 300, 'rgba(255,240,200,0.7)');
-    for (let k = 0; k < 3; k++) { cloudPath(c, 600 + k * 420 + Math.sin(t + k) * 20, 200 + k * 30, 180, 60, 7, k); fs(c, 'rgba(255,255,255,0.9)', null); }
+  thought(c, 1150, 400, 1280, 640, t, tp, () => {
+    fillGrad(c, 0, 60, 0, 760, [[0, '#ff8fc0'], [0.6, '#ffc49a'], [1, '#ffe2a8']], 400, 40, 1600, 760);
+    glow(c, 1450, 250, 300, 'rgba(255,240,200,0.7)');
+    for (let k = 0; k < 3; k++) { cloudPath(c, 700 + k * 380 + Math.sin(t + k) * 20, 180 + k * 26, 170, 56, 7, k); fs(c, 'rgba(255,255,255,0.9)', null); }
     const rise = easeOutBack(seg(t, WT(3, 3) - 0.2, WT(3, 4)));
     const gone = seg(t, WT(3, 5), WT(3, 8) + 0.1);
-    neighborhood(c, 1130, 760, 1.05, t, { gone: gone * 1.8 });
-    bigTentacle(c, 1150 + Math.sin(t * 2) * 30, 860, 620, t, rise, { curl: gone * 0.9 });
-    if (gulp) sfx(c, 'GULP!', 1130, 380, t, WT(3, 8), { size: 150, fill: '#8fe3b0', rot: -0.1, dur: 1.5 });
-  }, [420, 720]);
+    bigTentacle(c, 1170 + Math.sin(t * 2) * 30, 700, 560, t, rise, { curl: gone * 0.9 });
+    neighborhood(c, 1150, 625, 0.9, t, { gone: gone * 1.8 });
+    if (gulp) sfx(c, 'GULP!', 1150, 330, t, WT(3, 8), { size: 140, fill: '#8fe3b0', rot: -0.1, dur: 1.5 });
+  }, [372, 700]);
   const shocked = t > WT(3, 3);
-  drawKid(c, 330, 1000, 1.35, { t, eyes: gulp ? 'shock' : 'open', sing: !shocked, mouth: gulp ? 'O' : shocked ? 'o' : undefined, gloom: gulp, sweat: shocked, armL: gulp ? 2.9 : 0.3, armR: gulp ? 2.9 : 0.3, handL: 'open', handR: 'open', look: 0.8 });
+  drawKid(c, 250, 1060, 1.15, { t, eyes: gulp ? 'shock' : 'open', sing: !shocked, mouth: gulp ? 'O' : shocked ? 'o' : undefined, gloom: gulp, sweat: shocked, armL: gulp ? 2.9 : 0.3, armR: gulp ? 2.9 : 0.3, handL: 'open', handR: 'open', look: 0.8 });
   c.restore();
 }
 
@@ -313,17 +313,17 @@ function sHands(c, t) {
   roomBg(c, t, { wall1: '#35287e', wall2: '#5442a4' });
   const raised = seg(t, WT(6, 3), WT(6, 4) + 0.1);
   const onDoor = seg(t, WT(6, 6), WT(6, 8));
-  c.save(); c.translate(430, 380);
+  c.save(); c.translate(560, 380);
   glow(c, 0, 0, 380, `rgba(180,140,255,${0.3 + raised * 0.45})`);
   c.rotate(t * 0.8);
   for (let k = 0; k < 3; k++) { circle(c, 0, 0, 170 - k * 45); c.lineWidth = 16 - k * 3; c.strokeStyle = `rgba(190,160,255,${0.2 + raised * 0.2})`; c.stroke(); c.lineWidth = 6 - k; c.strokeStyle = `rgba(240,230,255,${0.55 + raised * 0.45})`; c.stroke(); }
   softStar(c, 0, 0, 120, 7, t, 0.55); c.lineWidth = 5; c.stroke();
   c.restore();
-  txt(c, 'summon?', 430, 640, { size: 48, font: DISPLAY, weight: 400, fill: '#e2d6ff', lw: 8, stroke: '#2a1a6a' });
-  drawDoor(c, 1520, 930, 1.35, t, { open: 0.25 + onDoor * 0.35, sign: true });
+  txt(c, 'summon?', 560, 640, { size: 48, font: DISPLAY, weight: 400, fill: '#e2d6ff', lw: 8, stroke: '#2a1a6a' });
+  drawDoor(c, 1300, 930, 1.45, t, { open: 0.25 + onDoor * 0.35, sign: true });
   const tug = Math.sin(t * 4.4) * 0.12;
-  drawKid(c, 960, 930, 1.45, { t, tilt: tug, eyes: 'open', brows: 'worry', sing: true, armL: 0.3 + raised * 2.5, handL: 'open', armR: 0.3 + onDoor * 1.25, look: Math.sin(t * 2.2), sweat: onDoor > 0.5 });
-  if (raised > 0) for (let k = 0; k < 6; k++) sparkle(c, 680 + Math.cos(t * 3 + k) * 80, 520 + Math.sin(t * 4 + k) * 80, 10 + 6 * Math.sin(t * 8 + k), '#efe6ff');
+  drawKid(c, 1070, 930, 1.45, { t, tilt: tug * 0.6, eyes: 'open', brows: 'worry', sing: true, armL: 0.3 + raised * 2.5, handL: 'open', armR: 0.3 + onDoor * 1.25, look: Math.sin(t * 2.2), sweat: onDoor > 0.5 });
+  if (raised > 0) for (let k = 0; k < 6; k++) sparkle(c, 800 + Math.cos(t * 3 + k) * 80, 520 + Math.sin(t * 4 + k) * 80, 10 + 6 * Math.sin(t * 8 + k), '#efe6ff');
   c.restore();
 }
 
@@ -396,13 +396,13 @@ function sC1a(c, t) {
   c.save();
   beatZoom(c, t);
   const z = lerp(1.45, 1.62, easeOutCubic(seg(t, LS(8) - 0.5, LS(8) + 1)));
-  dioCam(c, 1360, 300, z);
-  diorama(c, t, { porch: 1, moonX: 1020, moonY: 60, moonFace: t > WT(8, 2) ? 'shh' : 'smile' });
+  dioCam(c, 1500, 300, z);
+  diorama(c, t, { porch: 1, moonX: 1160, moonY: 60, moonFace: t > WT(8, 2) ? 'shh' : 'smile' });
   const shh = t > WT(8, 1) - 0.2 && t < WT(8, 4);
   porchCast(c, t, [
-    ['book', 1160, { face: 'grin', noHop: !shh, s: 0.6 }],
-    ['kid', 1290, Object.assign({ s: 0.68 }, shh ? SHH : { eyes: 'happy', sing: true })],
-    ['clock', 1440, { face: shh ? 'wise' : 'happy', wag: shh, armR: shh ? 2.6 : 0.4, s: 0.6, sing: !shh }],
+    ['book', 1300, { face: 'grin', noHop: !shh, s: 0.6 }],
+    ['kid', 1430, Object.assign({ s: 0.68 }, shh ? SHH : { eyes: 'happy', sing: true })],
+    ['clock', 1580, { face: shh ? 'wise' : 'happy', wag: shh, armR: shh ? 2.6 : 0.4, s: 0.6, sing: !shh }],
   ]);
   c.restore();
   sfx(c, 'shhh…', 660, 300, t, WT(8, 2), { size: 150, fill: '#b8f0d4', rot: -0.12, dur: 2.2 });
@@ -414,7 +414,7 @@ function kelpCurtain(c, x, y, h, t, side) {
 function sC1b(c, t) {
   c.save();
   const pan = seg(t, LS(9) - 0.3, LS(9) + 0.9);
-  const [cx, cy, z] = lerpCam(pan, [1360, 300, 1.6], [DIO.cthX + 20, DIO.floor - 250, 1.25]);
+  const [cx, cy, z] = lerpCam(pan, [1500, 300, 1.6], [DIO.cthX + 20, DIO.floor - 250, 1.25]);
   if (pan > 0 && pan < 1 && !REDUCED_MOTION) c.translate(0, Math.sin(pan * Math.PI) * 10);
   dioCam(c, cx, cy, z);
   const sign = easeOutBack(seg(t, WT(9, 5) - 0.1, WT(9, 5) + 0.3));
@@ -425,34 +425,41 @@ function sC1b(c, t) {
   c.restore();
   if (pan > 0 && pan < 1) { c.save(); c.globalAlpha = Math.sin(pan * Math.PI); bubblesFx(c, t * 4, 26, 0, 0, W, H, { speed: 300, r: 20 }); c.restore(); }
 }
-function dreamBubble(c, x, y, w, h, t, p, fn) {
+function dreamBubble(c, x, y, w, h, t, p, tail, fn) {
   thought(c, x, y, w, h, t, p, () => {
     fillGrad(c, 0, y - h / 2, 0, y + h / 2, [[0, '#ffd9ee'], [1, '#d8caff']], x - w, y - h, w * 2, h * 2);
     twinkles(c, t, 20, x - w / 2, y - h / 2, w, h, 13);
-    fn();
-  }, [x - w * 0.55, y + h * 0.75]);
+    c.save(); c.translate(x, y); fn(); c.restore();
+  }, tail);
+}
+/* the sleeper on the sea floor, framed low-right so his dream can float above him, tied to his head */
+const DREAM_CAM = [1037, 1824, 1.2];
+function cthDream(c, t, p, dio, fn) {
+  const [cx, cy, z] = DREAM_CAM;
+  c.save();
+  dioCam(c, cx, cy, z);
+  diorama(c, t, dio);
+  c.restore();
+  const head = [(DIO.cthX + 20 - 98 - cx) * z + W / 2, (DIO.floor - 110 - 336 - cy) * z + H / 2];
+  dreamBubble(c, 400, 212, 560, 330, t, p, head, fn);
 }
 function sC1c(c, t) {
   const bright = easeOutCubic(seg(t, WT(10, 10) - 0.1, WT(10, 12)));
   split(c, () => {
-    c.save();
-    dioCam(c, DIO.cthX + 180, DIO.floor - 330, 1.25);
-    diorama(c, t, { sign: 1, cth: { mood: 'smile', hug: 'fish' } });
-    c.restore();
-    dreamBubble(c, 520, 280, 560, 330, t, pop(t, WT(10, 2) - 0.1, 0.5), () => {
+    cthDream(c, t, pop(t, WT(10, 2) - 0.1, 0.5), { sign: 1, cth: { mood: 'smile', hug: 'fish' } }, () => {
       for (let k = 0; k < 4; k++) {
         const ph = (t * 0.6 + k / 4) % 1;
-        drawFish(c, 300 + ph * 460, 330 - Math.sin(ph * Math.PI) * 140, 0.9, t, { color: ['#ffb347', '#8fe3b0', '#ff9ecf', '#8fd3ff'][k], seed: k });
+        drawFish(c, -220 + ph * 460, 50 - Math.sin(ph * Math.PI) * 140, 0.9, t, { color: ['#ffb347', '#8fe3b0', '#ff9ecf', '#8fd3ff'][k], seed: k });
       }
-      cel(c, pRRect(470, 340, 100, 30, 14), '#ff9ecf', { d: 3, lw: 4 });
-      txt(c, 'counting fish…', 520, 170, { size: 34, fill: '#6b3fc9', stroke: false, weight: 600, shadow: false });
+      cel(c, pRRect(-50, 60, 100, 30, 14), '#ff9ecf', { d: 3, lw: 4 });
+      txt(c, 'counting fish…', 0, -110, { size: 34, fill: '#6b3fc9', stroke: false, weight: 600, shadow: false });
     });
   }, () => {
     c.save();
-    dioCam(c, 1500, 330, 1.7);
+    dioCam(c, 1600, 330, 1.7);
     diorama(c, t, { porch: 0.25 + bright * 0.95, moonX: 1100, moonY: 80 });
-    porchCast(c, t, [['kid', 1560, { s: 0.7, eyes: 'happy', sing: true, armR: 2.4 + Math.sin(t * 9) * 0.3, handR: 'open' }]]);
-    fireflies(c, t, 16, 1250, 150, 500, 260, 5);
+    porchCast(c, t, [['kid', 1660, { s: 0.7, eyes: 'happy', sing: true, armR: 2.4 + Math.sin(t * 9) * 0.3, handR: 'open' }]]);
+    fireflies(c, t, 16, 1450, 120, 700, 260, 5);
     c.restore();
     sfx(c, 'click!', 1500, 820, t, WT(10, 10), { size: 70, fill: '#ffe27a', rot: 0.15 });
   });
@@ -460,16 +467,16 @@ function sC1c(c, t) {
 function sC1d(c, t) {
   c.save();
   beatZoom(c, t, 0.025);
-  dioCam(c, 1330, 290, 1.55);
-  diorama(c, t, { porch: 0.8 + 0.2 * beatInfo(t).pulse, moonX: 1030, moonY: 70, moonShades: true });
+  dioCam(c, 1480, 290, 1.55);
+  diorama(c, t, { porch: 0.8 + 0.2 * beatInfo(t).pulse, moonX: 1180, moonY: 70, moonShades: true });
   const b = beatInfo(t);
   const side = b.i % 2 ? 1 : -1;
   porchCast(c, t, [
-    ['book', 1110, { s: 0.6, face: 'grin', open: 0.3, tilt: side * 0.12 }],
-    ['kid', 1260, { s: 0.68, eyes: 'happy', sing: true, tilt: side * 0.1, armL: b.i % 2 ? 2.7 : 0.6, armR: b.i % 2 ? 0.6 : 2.7, handL: 'open', handR: 'open' }],
-    ['clock', 1410, { s: 0.6, face: 'happy', sing: true, tilt: -side * 0.12, armL: 2.4, armR: 2.4 }],
+    ['book', 1290, { s: 0.6, face: 'grin', open: 0.3, tilt: side * 0.12 }],
+    ['kid', 1430, { s: 0.68, eyes: 'happy', sing: true, tilt: side * 0.1, armL: b.i % 2 ? 2.7 : 0.6, armR: b.i % 2 ? 0.6 : 2.7, handL: 'open', handR: 'open' }],
+    ['clock', 1570, { s: 0.6, face: 'happy', sing: true, tilt: -side * 0.12, armL: 2.4, armR: 2.4 }],
   ]);
-  notesFx(c, t, 8, 1000, 0, 700, 450, 17, '#ffe9a0');
+  notesFx(c, t, 8, 1150, 0, 700, 450, 17, '#ffe9a0');
   c.restore();
 }
 function sC1e(c, t) {
@@ -478,29 +485,43 @@ function sC1e(c, t) {
   const [cx, cy, z] = lerpCam(k, [960, 1150, 0.47], [DIO.cthX + 60, DIO.floor - 380, 0.9]);
   dioCam(c, cx, cy, z);
   diorama(c, t, { sign: 1, porch: 1, moonX: 700, moonY: 140, cth: { mood: 'smile', hug: 'fish' } });
-  porchCast(c, t, [['kid', 1290, { s: 0.62, eyes: 'happy', sing: true, armL: 2.5, armR: 2.5, handL: 'open', handR: 'open' }], ['clock', 1420, { s: 0.6, face: 'happy', armL: 2.3, armR: 2.3 }], ['book', 1170, { s: 0.6 }]]);
+  porchCast(c, t, [['book', 1300, { s: 0.6 }], ['kid', 1430, { s: 0.62, eyes: 'happy', sing: true, armL: 2.5, armR: 2.5, handL: 'open', handR: 'open' }], ['clock', 1560, { s: 0.6, face: 'happy', armL: 2.3, armR: 2.3 }]]);
   heartsFx(c, t, 10, DIO.cthX - 300, DIO.floor - 900, 600, 600, 21, 2);
   c.restore();
 }
 
 /* ================= VERSE 2 ================= */
+function daySea(c, t) {
+  fillGrad(c, 0, DIO.sea, 0, DIO.sea + 900, [[0, '#8fdcff'], [0.35, '#4aa8e8'], [1, '#2266b8']], -1200, DIO.sea - 20, 4800, 1800);
+  for (let k = 0; k < 16; k++) sparkle(c, 700 + rnd(k, 331) * 420, DIO.sea + 24 + rnd(k, 332) * 140, 5 + 5 * Math.max(0, Math.sin(t * 4 + k * 1.3)), 'rgba(255,255,255,0.9)');
+  seaLine(c, t);
+}
+function heldHands(c, x, y, s, skin, skinLine) {
+  for (const sd of [-1, 1]) cel(c, pEllipse(x + sd * 44 * s, y, 13 * s, 13 * s), skin, { d: 3, lw: 3.5, line: skinLine });
+}
 function sDelivery(c, t) {
   c.save();
   daySky(c, t);
-  c.save(); dioCam(c, 1520, 250, 1.5);
-  drawCliff(c, 1080, DIO.cliffY, 1100, 1400, t);
-  drawHouse(c, DIO.houseX + 150, DIO.cliffY, 0.95, t, { porch: 0.2 });
+  c.save(); dioCam(c, 1700, 330, 1.45);
+  daySea(c, t);
+  drawCliff(c, DIO.cliffX, DIO.cliffY, DIO.cliffW, 1400, t);
+  landProps(c, t);
+  drawHouse(c, DIO.houseX, DIO.cliffY, 0.95, t, { porch: 0.2 });
   const t0 = 58.7;
   const wk = seg(t, t0, t0 + 1.4);
-  const mx = lerp(1060, 1380, wk);
-  drawMailman(c, mx, PORCH, 0.62, { t, air: wk < 1 ? -Math.abs(Math.sin(t * 9)) * 8 : hop(t, 6), hold: null, armL: 0.3, armR: wk >= 1 ? 2.4 : 0.3, face: 'happy', walk: wk < 1 ? t * 9 : undefined });
-  const box = t < t0 + 2.3;
-  if (box) giftBox(c, mx - 60, PORCH - 50, 0.32, t);
+  const mx = lerp(1290, 1630, wk);
+  const give = seg(t, t0 + 2.2, t0 + 2.55), gv = easeInOut(give);
+  const mair = wk < 1 ? -Math.abs(Math.sin(t * 9)) * 8 : hop(t, 6);
+  drawMailman(c, mx, PORCH, 0.62, { t, air: mair, hold: null, armL: 0.3, armR: give < 1 ? 0.3 : 2.4, face: 'happy', walk: wk < 1 ? t * 9 : undefined });
   const door = pop(t, t0 + 1.9, 0.3);
-  if (door > 0) drawKid(c, 1600, PORCH, 0.62 * door, { t, eyes: 'star', mouth: 'open', armL: 2.5, armR: 2.5, handL: 'open', handR: 'open' });
-  if (!box) giftBox(c, 1600, PORCH - 120, 0.3, t);
+  const kx = DIO.houseX;
+  if (door > 0) drawKid(c, kx, PORCH, 0.62 * door, { t, eyes: 'star', mouth: 'open', armL: 0.3, armR: 0.3 });
+  const bx = lerp(mx, kx, gv), by = PORCH - 6 + (give < 1 ? mair : 0) * (1 - gv) - Math.sin(gv * Math.PI) * 18;
+  giftBox(c, bx, by, 0.2, t, 0, false);
+  if (give < 0.5) heldHands(c, mx, by - 20, 0.5, PAL.skin, '#a8604f');
+  else if (door >= 1) heldHands(c, bx, by - 20, 0.5, HERO.skin, HERO.skinLine);
   c.restore();
-  sfx(c, 'ding dong!', 1250, 250, t, t0 + 1.4, { size: 90, fill: '#ffe27a', rot: -0.1 });
+  sfx(c, 'ding dong!', 1330, 330, t, t0 + 1.4, { size: 90, fill: '#ffe27a', rot: -0.1 });
   c.restore();
 }
 
@@ -580,34 +601,34 @@ function sPlan(c, t) {
   drift(c, t, 68.5, 72, 1.0, 1.08, 1100, 520);
   roomBg(c, t, { wall1: '#3a2c80', wall2: '#5a47aa' });
   const tp = pop(t, LS(15) - 0.1, 0.5);
-  thought(c, 1150, 440, 1300, 760, t, tp, () => {
-    fillGrad(c, 0, 60, 0, 820, [[0, '#fff8ec'], [1, '#ffe4f0']], 400, 40, 1500, 900);
+  thought(c, 1120, 400, 1200, 640, t, tp, () => {
+    fillGrad(c, 0, 60, 0, 760, [[0, '#fff8ec'], [1, '#ffe4f0']], 400, 40, 1600, 760);
     const rev = seg(t, WT(15, 3) - 0.1, WT(15, 6) + 0.2);
-    planBoard(c, 1300, 800, 1.1, t, rev * 1.01);
+    planBoard(c, 1350, 690, 0.95, t, rev * 1.01);
     const pointAt = [WT(15, 3), WT(15, 4), WT(15, 6)].filter((x) => t > x).length;
-    drawKid(c, 820, 790, 0.95, { t, air: hop(t, 6), outfit: 'robe', hood: 0, eyes: 'happy', sing: true, armR: 1.9 + pointAt * 0.12, holdR: 'pointer' });
-  }, [360, 780]);
-  drawKid(c, 330, 1060, 1.3, { t, outfit: 'robe', hood: 0, eyes: 'open', sing: true, armR: 2.4, look: 0.8 });
+    drawKid(c, 1050, 690, 0.85, { t, air: hop(t, 6), outfit: 'robe', hood: 0, eyes: 'happy', sing: true, armR: 1.9 + pointAt * 0.12, holdR: 'pointer' });
+  }, [372, 700]);
+  drawKid(c, 250, 1060, 1.15, { t, outfit: 'robe', hood: 0, eyes: 'open', sing: true, armR: 2.4, look: 0.8 });
   c.restore();
 }
 
 function sMabel(c, t) {
   c.save();
-  drift(c, t, 72, 75.7, 1.04, 1.16, 1000, 720);
+  drift(c, t, 72, 75.7, 1.04, 1.14, 960, 720);
   roomBg(c, t, { wall1: '#ff9ecb', wall2: '#ffbcd9', floorY: 860, floor1: '#b07a5a', floor2: '#d09a78', base: '#a05a80', panel2: 'rgba(120,20,70,0.14)' });
-  glow(c, 1650, 250, 360, 'rgba(255,245,210,0.55)');
-  groundShadow(c, 1210, 850, 540, 40, 0.4);
-  cel(c, pRRect(760, 560, 900, 200, 60), '#6fb7ff', { shadow: '#4f98e8', d: 14, hi: '#a8d4ff', line: '#1a4a8a' });
-  cel(c, pRRect(700, 700, 1020, 150, 50), '#8fcaff', { shadow: '#6aaef0', d: 12, hi: '#c0e2ff', line: '#1a4a8a' });
+  glow(c, 1500, 250, 360, 'rgba(255,245,210,0.55)');
+  groundShadow(c, 1330, 850, 520, 40, 0.4);
+  cel(c, pRRect(900, 560, 860, 200, 60), '#6fb7ff', { shadow: '#4f98e8', d: 14, hi: '#a8d4ff', line: '#1a4a8a' });
+  cel(c, pRRect(840, 700, 980, 150, 50), '#8fcaff', { shadow: '#6aaef0', d: 12, hi: '#c0e2ff', line: '#1a4a8a' });
   const blankM = t > WT(16, 3) - 0.05, blankP = t > WT(16, 7) - 0.05;
-  drawMabel(c, 1000, 800, 1.2, { t, noShadow: true, face: blankM ? 'blank' : 'smile', spill: blankM ? seg(t, WT(16, 4), WT(16, 4) + 0.4) * 1.1 : 0 });
-  drawMailman(c, 1400, 800, 1.2, { t, noShadow: true, face: blankP ? 'blank' : 'smile', hold: blankP ? null : 'letters', armL: blankP ? 0.1 : 0.9 });
-  if (blankP) for (let k = 0; k < 3; k++) { const d = seg(t, WT(16, 7), WT(16, 7) + 0.6); c.save(); c.translate(1300 + k * 40, 700 + d * 180); c.rotate(d * 3 + k); drawEnvelope(c, 0, 0, 0.5); c.restore(); }
-  planBoard(c, 1780, 1180, 0.9, t, 1);
-  drawKid(c, 360, 1010, 1.5, { t, outfit: 'robe', hood: 0, eyes: blankP ? 'dot' : 'happy', sing: !blankP, mouth: blankP ? 'flat' : undefined, sweat: blankM, armR: 1.9, holdR: 'pointer' });
+  drawMabel(c, 1130, 800, 1.2, { t, noShadow: true, face: blankM ? 'blank' : 'smile', spill: blankM ? seg(t, WT(16, 4), WT(16, 4) + 0.4) * 1.1 : 0 });
+  drawMailman(c, 1530, 800, 1.2, { t, noShadow: true, face: blankP ? 'blank' : 'smile', hold: blankP ? null : 'letters', armL: blankP ? 0.1 : 0.9 });
+  if (blankP) for (let k = 0; k < 3; k++) { const d = seg(t, WT(16, 7), WT(16, 7) + 0.6); c.save(); c.translate(1430 + k * 40, 700 + d * 180); c.rotate(d * 3 + k); drawEnvelope(c, 0, 0, 0.5); c.restore(); }
+  planBoard(c, 590, 1010, 0.85, t, 1);
+  drawKid(c, 260, 1010, 1.4, { t, outfit: 'robe', hood: 0, eyes: blankP ? 'dot' : 'happy', sing: !blankP, mouth: blankP ? 'flat' : undefined, sweat: blankM, armR: 1.9, holdR: 'pointer' });
   const dots = seg(t, WT(16, 7) + 0.2, WT(16, 7) + 0.9);
-  if (dots > 0) { c.save(); c.translate(1200, 300); bubble(c, 0, 0, 280, 120, -80, 140, { fill: '#fff' }); for (let k = 0; k < 3; k++) if (dots > k / 3) { circle(c, -60 + k * 60, 0, 13); c.fillStyle = '#3a2a55'; c.fill(); } c.restore(); }
-  sfx(c, 'chirp…', 1600, 460, t, WT(16, 7) + 0.4, { size: 56, fill: '#8fe3b0', rot: 0.1, dur: 1.2 });
+  if (dots > 0) { c.save(); c.translate(1300, 300); bubble(c, 0, 0, 280, 120, -150, 130, { fill: '#fff' }); for (let k = 0; k < 3; k++) if (dots > k / 3) { circle(c, -60 + k * 60, 0, 13); c.fillStyle = '#3a2a55'; c.fill(); } c.restore(); }
+  sfx(c, 'chirp…', 1700, 440, t, WT(16, 7) + 0.4, { size: 56, fill: '#8fe3b0', rot: 0.1, dur: 1.2 });
   c.restore();
 }
 
@@ -714,15 +735,15 @@ function sPaperweight(c, t) {
 function sC2a(c, t) {
   c.save();
   beatZoom(c, t);
-  dioCam(c, 1330, 290, 1.5);
-  diorama(c, t, { porch: 1, moonX: 1000, moonY: 70, moonFace: 'shh' });
+  dioCam(c, 1480, 290, 1.5);
+  diorama(c, t, { porch: 1, moonX: 1150, moonY: 70, moonFace: 'shh' });
   const shh = t > WT(21, 1) - 0.25 && t < WT(21, 4);
   const S2 = shh ? SHH : { eyes: 'happy', sing: true };
   porchCast(c, t, [
-    ['mabel', 1060, { s: 0.6, face: 'smile', cup: true, sing: !shh }],
-    ['kid', 1190, Object.assign({ s: 0.66, outfit: 'robe', hood: 0 }, S2)],
-    ['mail', 1320, { s: 0.6, face: 'happy', sing: !shh }],
-    ['clock', 1450, { s: 0.58, face: 'wise', wag: shh, armR: shh ? 2.6 : 0.4 }],
+    ['mabel', 1300, { s: 0.6, face: 'smile', cup: true, sing: !shh }],
+    ['kid', 1425, Object.assign({ s: 0.66, outfit: 'robe', hood: 0 }, S2)],
+    ['mail', 1550, { s: 0.6, face: 'happy', sing: !shh }],
+    ['clock', 1675, { s: 0.58, face: 'wise', wag: shh, armR: shh ? 2.6 : 0.4 }],
   ]);
   c.restore();
   sfx(c, 'shhh…', 620, 280, t, WT(21, 2), { size: 150, fill: '#b8f0d4', rot: -0.12, dur: 2.2 });
@@ -743,20 +764,16 @@ function sC2b(c, t) {
 function sC2c(c, t) {
   const lights = seg(t, WT(23, 10) - 0.2, WT(23, 12) + 0.1);
   split(c, () => {
-    c.save();
-    dioCam(c, DIO.cthX + 180, DIO.floor - 330, 1.25);
-    diorama(c, t, { sign: 1, blanket: 1, cth: { mood: 'smile', hug: 'fish' } });
-    c.restore();
-    dreamBubble(c, 520, 280, 580, 340, t, pop(t, WT(23, 2) - 0.1, 0.5), () => {
-      cloudPath(c, 520, 380, 360, 90, 8, 9); fs(c, '#fff', '#8aa8d0', 4);
-      c.save(); c.translate(520, 330 + hop(t, 50)); c.scale(0.42, 0.42); drawCthulhu(c, 0, 0, 1, { t, mood: 'happy', armsUp: 1, cap: true, noShadow: true }); c.restore();
-      for (let k = 0; k < 5; k++) sparkle(c, 330 + k * 95, 180 + Math.sin(t * 3 + k) * 20, 12, '#fff');
+    cthDream(c, t, pop(t, WT(23, 2) - 0.1, 0.5), { sign: 1, blanket: 1, cth: { mood: 'smile', hug: 'fish' } }, () => {
+      cloudPath(c, 0, 100, 360, 90, 8, 9); fs(c, '#fff', '#8aa8d0', 4);
+      c.save(); c.translate(0, 50 + hop(t, 50)); c.scale(0.42, 0.42); drawCthulhu(c, 0, 0, 1, { t, mood: 'happy', armsUp: 1, cap: true, noShadow: true }); c.restore();
+      for (let k = 0; k < 5; k++) sparkle(c, -190 + k * 95, -100 + Math.sin(t * 3 + k) * 20, 12, '#fff');
     });
   }, () => {
     c.save();
-    dioCam(c, 1480, 300, 1.6);
+    dioCam(c, 1570, 300, 1.6);
     diorama(c, t, { porch: 1, moonX: 1100, moonY: 60 });
-    const hx = DIO.houseX + 150;
+    const hx = DIO.houseX;
     c.beginPath(); for (let k = 0; k < 12; k++) { const u = k / 11; c.lineTo(hx - 270 + u * 540, DIO.cliffY - 262 + Math.sin(u * Math.PI) * 30); } c.lineWidth = 3; c.strokeStyle = '#3a2a55'; c.stroke();
     for (let k = 0; k < 12; k++) {
       const u = k / 11, lx = hx - 270 + u * 540, ly = DIO.cliffY - 262 + Math.sin(u * Math.PI) * 30;
@@ -765,7 +782,7 @@ function sC2c(c, t) {
       if (on) glow(c, lx, ly, 46, rgba(col, 0.85));
       circle(c, lx, ly + 6, 9); fs(c, on ? col : '#6a6a8a', '#3a2a55', 3);
     }
-    porchCast(c, t, [['mabel', 1260, { s: 0.6, face: 'happy', sing: true }], ['kid', 1380, { s: 0.64, outfit: 'robe', hood: 0, eyes: 'happy', sing: true, armR: 2.4, handR: 'open' }]]);
+    porchCast(c, t, [['mabel', 1655, { s: 0.6, face: 'happy', sing: true }], ['kid', 1775, { s: 0.64, outfit: 'robe', hood: 0, eyes: 'happy', sing: true, armR: 2.4, handR: 'open' }]]);
     c.restore();
   });
 }
@@ -773,13 +790,13 @@ function sC2d(c, t) {
   c.save();
   beatZoom(c, t, 0.025);
   const pan = (t - LS(24) + 0.3) * 60;
-  dioCam(c, 1280 + pan, 290, 1.45);
-  diorama(c, t, { porch: 1, moonX: 1100, moonY: 60, moonShades: true });
-  const base = 980 + (t - LS(24)) * 120;
+  dioCam(c, 1440 + pan, 290, 1.45);
+  diorama(c, t, { porch: 1, moonX: 1250, moonY: 60, moonShades: true });
+  const base = 1300 + (t - LS(24)) * 100;
   const order = [['cat', {}], ['clock', { face: 'happy', sing: true, armL: 2.2, armR: 0.5 }], ['book', { open: 0.4 }], ['mail', { face: 'happy', sing: true, armL: 1.2, armR: 1.2 }], ['mabel', { face: 'happy', sing: true, cup: false, armL: 1.3 }], ['kid', { outfit: 'robe', hood: 0, eyes: 'happy', sing: true, armL: 1.3, armR: 1.3 }]];
   porchCast(c, t, order.map(([k, o], i) => [k, base + i * 115, Object.assign({ s: 0.58, off: i * 0.25, tilt: Math.sin(t * 6 + i) * 0.1, walk: t * 8 + i }, o)]));
-  sfx(c, 'conga!', 960, 180, t, LS(24) + 0.2, { size: 100, fill: '#ffd166', rot: -0.08, dur: 1.6 });
   c.restore();
+  sfx(c, 'conga!', 620, 250, t, LS(24) + 0.2, { size: 110, fill: '#ffd166', rot: -0.08, dur: 1.6 });
 }
 function sC2e(c, t) {
   c.save();
@@ -792,6 +809,6 @@ function sC2e(c, t) {
     const hx = 16 * Math.pow(Math.sin(a), 3), hy = -(13 * Math.cos(a) - 5 * Math.cos(2 * a) - 2 * Math.cos(3 * a) - Math.cos(4 * a));
     drawFish(c, DIO.cthX + hx * 26, DIO.floor - 520 + hy * 24, 1.1, t, { color: ['#ff9ecf', '#ffb347', '#ffe27a'][i % 3], flip: Math.cos(a) < 0, seed: i });
   }
-  porchCast(c, t, [['mabel', 1180, { s: 0.6, face: 'happy', sing: true, armL: 2.4 }], ['kid', 1300, { s: 0.62, outfit: 'robe', hood: 0, eyes: 'happy', sing: true, armL: 2.5, armR: 2.5, handL: 'open', handR: 'open' }], ['mail', 1420, { s: 0.6, face: 'happy', sing: true, armR: 2.4, armL: 2.4 }]]);
+  porchCast(c, t, [['mabel', 1300, { s: 0.6, face: 'happy', sing: true, armL: 2.4 }], ['kid', 1420, { s: 0.62, outfit: 'robe', hood: 0, eyes: 'happy', sing: true, armL: 2.5, armR: 2.5, handL: 'open', handR: 'open' }], ['mail', 1540, { s: 0.6, face: 'happy', sing: true, armR: 2.4, armL: 2.4 }]]);
   c.restore();
 }
