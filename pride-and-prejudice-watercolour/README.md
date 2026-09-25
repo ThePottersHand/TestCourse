@@ -76,4 +76,19 @@ node pride-and-prejudice-watercolour/tools/render-still.mjs \
   "http://localhost:8765/frame.html?t=95&scale=2" still-4k.png 3840 2160 __done
 ```
 
+To render the video, paint every frame to disk, then encode them with the song. The frame renderer
+skips frames that already exist, so an interrupted render resumes, and several processes can share
+the work by taking different frame ranges (`[first] [end]` after the fps):
+
+```sh
+node pride-and-prejudice-watercolour/tools/render-frames.mjs http://localhost:8765/frame.html frames 24
+ffmpeg -framerate 24 -i frames/%05d.jpg -i pride-and-prejudice-watercolour/audio/the-art-of-making-up-my-mind.mp3 \
+  -map 0:v -map 1:a -vf "scale=in_range=full:out_range=tv:in_color_matrix=bt601:out_color_matrix=bt709,format=yuv420p" \
+  -c:v libx264 -preset slow -crf 20 -tune film -colorspace bt709 -color_primaries bt709 -color_trc bt709 -color_range tv \
+  -c:a aac -b:a 192k -shortest -movflags +faststart the-art-of-making-up-my-mind.mp4
+```
+
+Without a GPU (headless Chromium then paints with SwiftShader on the CPU) a 1080p frame takes about
+3 seconds, so the 3,632 frames take about three hours.
+
 Fonts: Pinyon Script and IM Fell English are used under the SIL Open Font License (see `fonts/`).
