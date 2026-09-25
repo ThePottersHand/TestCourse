@@ -1,6 +1,6 @@
 # We Don't Wake Cthulhu — animated music video
 
-A chibi-style animation that plays in sync with the song. A kid preps a summoning (polished altar, seven black candles, a very long scroll), gets talked out of it by a tiny alarm clock, and lets a sleepy little Cthulhu keep dreaming while everyone dances in the kitchen.
+A chibi-style animation that plays in sync with the song. Our hero preps a summoning (polished altar, seven black candles, a very long scroll), gets talked out of it by a tiny alarm clock, and lets a sleepy little Cthulhu keep dreaming while everyone dances in the kitchen. He sings along: his mouth follows the vocal word timings.
 
 ## Watch it
 
@@ -21,10 +21,10 @@ The animation is drawn on a 1920×1080 canvas, and every frame is a pure functio
 
 - `js/data.js` holds timing measured from the recording: 392 beat times (about 132.5 BPM) and the start time of every sung word. Characters bounce, squash and switch poses on those beats, and each shot cuts on the word it illustrates.
 - `js/kit.js`: easing, beat helpers, shapes, particles.
-- `js/cast.js`: the characters (the kid, Cthulhu, Tikk the alarm clock, the moon, the spellbook, Aunt Mabel, the mail carrier, the tailor cat, sea critters).
+- `js/cast.js`: the characters (our hero, his friends, Cthulhu, Tikk the alarm clock, the moon, the spellbook, Aunt Mabel, the mail carrier, the tailor cat, sea critters), cel-shaded with colour-matched line art.
 - `js/sets.js`: locations and props (the cliff house and sunken temple cross-section, the ritual room, the kitchen, the café).
 - `js/scenes-a.js`, `js/scenes-b.js`: one function per shot.
-- `js/timeline.js`: the shot list, transitions and karaoke captions.
+- `js/timeline.js`: the shot list, transitions, karaoke captions, and the finishing pass (soft bloom around lights, a colour grade per location, vignette).
 - `js/player.js`: audio clock, controls, and the `?render` export mode.
 
 ## Render an MP4
