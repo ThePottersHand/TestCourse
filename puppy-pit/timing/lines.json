@@ -1,0 +1,2328 @@
+[
+ {
+  "i": 0,
+  "text": "I was seventy-two when I fell into the puppy pit.",
+  "start": 0.0,
+  "end": 3.86,
+  "words": [
+   {
+    "w": "i",
+    "s": 0.0,
+    "e": 0.18,
+    "matched": true
+   },
+   {
+    "w": "was",
+    "s": 0.18,
+    "e": 0.3,
+    "matched": true
+   },
+   {
+    "w": "seventytwo",
+    "s": 0.66,
+    "e": 0.66,
+    "matched": false
+   },
+   {
+    "w": "when",
+    "s": 1.02,
+    "e": 2.62,
+    "matched": true
+   },
+   {
+    "w": "i",
+    "s": 2.62,
+    "e": 2.76,
+    "matched": true
+   },
+   {
+    "w": "fell",
+    "s": 2.76,
+    "e": 2.96,
+    "matched": true
+   },
+   {
+    "w": "into",
+    "s": 2.96,
+    "e": 3.16,
+    "matched": true
+   },
+   {
+    "w": "the",
+    "s": 3.16,
+    "e": 3.34,
+    "matched": true
+   },
+   {
+    "w": "puppy",
+    "s": 3.34,
+    "e": 3.56,
+    "matched": true
+   },
+   {
+    "w": "pit",
+    "s": 3.56,
+    "e": 3.86,
+    "matched": true
+   }
+  ]
+ },
+ {
+  "i": 1,
+  "text": "Not a metaphorical pit.",
+  "start": 5.74,
+  "end": 7.1,
+  "words": [
+   {
+    "w": "not",
+    "s": 5.74,
+    "e": 5.98,
+    "matched": true
+   },
+   {
+    "w": "a",
+    "s": 5.98,
+    "e": 6.14,
+    "matched": true
+   },
+   {
+    "w": "metaphorical",
+    "s": 6.14,
+    "e": 6.72,
+    "matched": true
+   },
+   {
+    "w": "pit",
+    "s": 6.72,
+    "e": 7.1,
+    "matched": true
+   }
+  ]
+ },
+ {
+  "i": 2,
+  "text": "Not a difficult period in my life.",
+  "start": 8.02,
+  "end": 9.96,
+  "words": [
+   {
+    "w": "not",
+    "s": 8.02,
+    "e": 8.34,
+    "matched": true
+   },
+   {
+    "w": "a",
+    "s": 8.34,
+    "e": 8.46,
+    "matched": true
+   },
+   {
+    "w": "difficult",
+    "s": 8.46,
+    "e": 8.76,
+    "matched": true
+   },
+   {
+    "w": "period",
+    "s": 8.76,
+    "e": 9.12,
+    "matched": true
+   },
+   {
+    "w": "in",
+    "s": 9.12,
+    "e": 9.38,
+    "matched": true
+   },
+   {
+    "w": "my",
+    "s": 9.38,
+    "e": 9.56,
+    "matched": true
+   },
+   {
+    "w": "life",
+    "s": 9.56,
+    "e": 9.96,
+    "matched": true
+   }
+  ]
+ },
+ {
+  "i": 3,
+  "text": "An actual hole in the ground, containing puppies.",
+  "start": 11.02,
+  "end": 13.5,
+  "words": [
+   {
+    "w": "an",
+    "s": 11.02,
+    "e": 11.22,
+    "matched": true
+   },
+   {
+    "w": "actual",
+    "s": 11.22,
+    "e": 11.6,
+    "matched": true
+   },
+   {
+    "w": "hole",
+    "s": 11.6,
+    "e": 11.9,
+    "matched": true
+   },
+   {
+    "w": "in",
+    "s": 11.9,
+    "e": 12.1,
+    "matched": true
+   },
+   {
+    "w": "the",
+    "s": 12.1,
+    "e": 12.22,
+    "matched": true
+   },
+   {
+    "w": "ground",
+    "s": 12.22,
+    "e": 12.5,
+    "matched": true
+   },
+   {
+    "w": "containing",
+    "s": 12.5,
+    "e": 13.06,
+    "matched": true
+   },
+   {
+    "w": "puppies",
+    "s": 13.06,
+    "e": 13.5,
+    "matched": true
+   }
+  ]
+ },
+ {
+  "i": 4,
+  "text": "There were nine of them, all golden and enthusiastic,",
+  "start": 14.92,
+  "end": 18.18,
+  "words": [
+   {
+    "w": "there",
+    "s": 14.92,
+    "e": 15.22,
+    "matched": true
+   },
+   {
+    "w": "were",
+    "s": 15.22,
+    "e": 15.34,
+    "matched": true
+   },
+   {
+    "w": "nine",
+    "s": 15.34,
+    "e": 15.54,
+    "matched": true
+   },
+   {
+    "w": "of",
+    "s": 15.54,
+    "e": 15.7,
+    "matched": true
+   },
+   {
+    "w": "them",
+    "s": 15.7,
+    "e": 16.0,
+    "matched": true
+   },
+   {
+    "w": "all",
+    "s": 16.5,
+    "e": 16.82,
+    "matched": true
+   },
+   {
+    "w": "golden",
+    "s": 16.82,
+    "e": 17.28,
+    "matched": true
+   },
+   {
+    "w": "and",
+    "s": 17.28,
+    "e": 17.48,
+    "matched": true
+   },
+   {
+    "w": "enthusiastic",
+    "s": 17.48,
+    "e": 18.18,
+    "matched": true
+   }
+  ]
+ },
+ {
+  "i": 5,
+  "text": "and I had been warned about the hole by a laminated sign which said:",
+  "start": 18.7,
+  "end": 22.42,
+  "words": [
+   {
+    "w": "and",
+    "s": 18.7,
+    "e": 19.1,
+    "matched": true
+   },
+   {
+    "w": "i",
+    "s": 19.1,
+    "e": 19.32,
+    "matched": true
+   },
+   {
+    "w": "had",
+    "s": 19.1,
+    "e": 19.32,
+    "matched": true
+   },
+   {
+    "w": "been",
+    "s": 19.32,
+    "e": 19.46,
+    "matched": true
+   },
+   {
+    "w": "warned",
+    "s": 19.46,
+    "e": 19.8,
+    "matched": true
+   },
+   {
+    "w": "about",
+    "s": 19.8,
+    "e": 20.12,
+    "matched": true
+   },
+   {
+    "w": "the",
+    "s": 20.12,
+    "e": 20.3,
+    "matched": true
+   },
+   {
+    "w": "hole",
+    "s": 20.3,
+    "e": 20.58,
+    "matched": true
+   },
+   {
+    "w": "by",
+    "s": 20.58,
+    "e": 20.86,
+    "matched": true
+   },
+   {
+    "w": "a",
+    "s": 20.86,
+    "e": 20.98,
+    "matched": true
+   },
+   {
+    "w": "laminated",
+    "s": 20.98,
+    "e": 21.4,
+    "matched": true
+   },
+   {
+    "w": "sign",
+    "s": 21.4,
+    "e": 21.88,
+    "matched": true
+   },
+   {
+    "w": "which",
+    "s": 21.88,
+    "e": 22.12,
+    "matched": true
+   },
+   {
+    "w": "said",
+    "s": 22.12,
+    "e": 22.42,
+    "matched": true
+   }
+  ]
+ },
+ {
+  "i": 6,
+  "text": "PLEASE DO NOT FALL INTO THE PUPPY PIT.",
+  "start": 23.34,
+  "end": 26.3,
+  "words": [
+   {
+    "w": "please",
+    "s": 23.34,
+    "e": 23.76,
+    "matched": true
+   },
+   {
+    "w": "do",
+    "s": 23.76,
+    "e": 24.34,
+    "matched": true
+   },
+   {
+    "w": "not",
+    "s": 24.34,
+    "e": 24.64,
+    "matched": true
+   },
+   {
+    "w": "fall",
+    "s": 24.64,
+    "e": 25.16,
+    "matched": true
+   },
+   {
+    "w": "into",
+    "s": 25.16,
+    "e": 25.46,
+    "matched": true
+   },
+   {
+    "w": "the",
+    "s": 25.46,
+    "e": 25.68,
+    "matched": true
+   },
+   {
+    "w": "puppy",
+    "s": 25.68,
+    "e": 25.94,
+    "matched": true
+   },
+   {
+    "w": "pit",
+    "s": 25.94,
+    "e": 26.3,
+    "matched": true
+   }
+  ]
+ },
+ {
+  "i": 7,
+  "text": "I thought, \u201cWell, that seems oddly specific.\u201d",
+  "start": 27.76,
+  "end": 31.14,
+  "words": [
+   {
+    "w": "i",
+    "s": 27.76,
+    "e": 28.04,
+    "matched": true
+   },
+   {
+    "w": "thought",
+    "s": 28.04,
+    "e": 28.18,
+    "matched": true
+   },
+   {
+    "w": "well",
+    "s": 28.98,
+    "e": 29.14,
+    "matched": true
+   },
+   {
+    "w": "that",
+    "s": 29.64,
+    "e": 29.86,
+    "matched": true
+   },
+   {
+    "w": "seems",
+    "s": 29.86,
+    "e": 30.14,
+    "matched": true
+   },
+   {
+    "w": "oddly",
+    "s": 30.14,
+    "e": 30.62,
+    "matched": true
+   },
+   {
+    "w": "specific",
+    "s": 30.62,
+    "e": 31.14,
+    "matched": true
+   }
+  ]
+ },
+ {
+  "i": 8,
+  "text": "Then I stepped backward.",
+  "start": 33.08,
+  "end": 34.36,
+  "words": [
+   {
+    "w": "then",
+    "s": 33.08,
+    "e": 33.52,
+    "matched": true
+   },
+   {
+    "w": "i",
+    "s": 33.52,
+    "e": 33.66,
+    "matched": true
+   },
+   {
+    "w": "stepped",
+    "s": 33.66,
+    "e": 33.88,
+    "matched": true
+   },
+   {
+    "w": "backward",
+    "s": 33.88,
+    "e": 34.36,
+    "matched": true
+   }
+  ]
+ },
+ {
+  "i": 9,
+  "text": "The first thing I noticed was the smell.",
+  "start": 35.8,
+  "end": 37.68,
+  "words": [
+   {
+    "w": "the",
+    "s": 35.8,
+    "e": 35.98,
+    "matched": true
+   },
+   {
+    "w": "first",
+    "s": 35.98,
+    "e": 36.18,
+    "matched": true
+   },
+   {
+    "w": "thing",
+    "s": 36.18,
+    "e": 36.42,
+    "matched": true
+   },
+   {
+    "w": "i",
+    "s": 36.42,
+    "e": 36.56,
+    "matched": true
+   },
+   {
+    "w": "noticed",
+    "s": 36.56,
+    "e": 36.88,
+    "matched": true
+   },
+   {
+    "w": "was",
+    "s": 36.88,
+    "e": 37.14,
+    "matched": true
+   },
+   {
+    "w": "the",
+    "s": 37.14,
+    "e": 37.32,
+    "matched": true
+   },
+   {
+    "w": "smell",
+    "s": 37.32,
+    "e": 37.68,
+    "matched": true
+   }
+  ]
+ },
+ {
+  "i": 10,
+  "text": "Warm biscuits, wet towels,",
+  "start": 37.86,
+  "end": 39.78,
+  "words": [
+   {
+    "w": "warm",
+    "s": 37.86,
+    "e": 38.24,
+    "matched": true
+   },
+   {
+    "w": "biscuits",
+    "s": 38.24,
+    "e": 38.76,
+    "matched": true
+   },
+   {
+    "w": "wet",
+    "s": 39.12,
+    "e": 39.24,
+    "matched": true
+   },
+   {
+    "w": "towels",
+    "s": 39.24,
+    "e": 39.78,
+    "matched": true
+   }
+  ]
+ },
+ {
+  "i": 11,
+  "text": "and the faint electrical scent of a household appliance being licked.",
+  "start": 39.78,
+  "end": 43.38,
+  "words": [
+   {
+    "w": "and",
+    "s": 39.78,
+    "e": 40.1,
+    "matched": true
+   },
+   {
+    "w": "the",
+    "s": 40.1,
+    "e": 40.22,
+    "matched": true
+   },
+   {
+    "w": "faint",
+    "s": 40.22,
+    "e": 40.52,
+    "matched": true
+   },
+   {
+    "w": "electrical",
+    "s": 40.52,
+    "e": 41.04,
+    "matched": true
+   },
+   {
+    "w": "scent",
+    "s": 41.04,
+    "e": 41.48,
+    "matched": true
+   },
+   {
+    "w": "of",
+    "s": 41.48,
+    "e": 41.68,
+    "matched": true
+   },
+   {
+    "w": "a",
+    "s": 41.68,
+    "e": 41.82,
+    "matched": true
+   },
+   {
+    "w": "household",
+    "s": 41.82,
+    "e": 42.22,
+    "matched": true
+   },
+   {
+    "w": "appliance",
+    "s": 42.22,
+    "e": 42.78,
+    "matched": true
+   },
+   {
+    "w": "being",
+    "s": 42.78,
+    "e": 43.04,
+    "matched": true
+   },
+   {
+    "w": "licked",
+    "s": 43.04,
+    "e": 43.38,
+    "matched": true
+   }
+  ]
+ },
+ {
+  "i": 12,
+  "text": "The second thing I noticed was that the puppies had no interest in rescuing me.",
+  "start": 44.96,
+  "end": 48.6,
+  "words": [
+   {
+    "w": "the",
+    "s": 44.96,
+    "e": 45.1,
+    "matched": true
+   },
+   {
+    "w": "second",
+    "s": 45.1,
+    "e": 45.3,
+    "matched": true
+   },
+   {
+    "w": "thing",
+    "s": 45.3,
+    "e": 45.56,
+    "matched": true
+   },
+   {
+    "w": "i",
+    "s": 45.56,
+    "e": 45.7,
+    "matched": true
+   },
+   {
+    "w": "noticed",
+    "s": 45.7,
+    "e": 45.98,
+    "matched": true
+   },
+   {
+    "w": "was",
+    "s": 45.98,
+    "e": 46.22,
+    "matched": true
+   },
+   {
+    "w": "that",
+    "s": 46.22,
+    "e": 46.36,
+    "matched": true
+   },
+   {
+    "w": "the",
+    "s": 46.36,
+    "e": 46.52,
+    "matched": true
+   },
+   {
+    "w": "puppies",
+    "s": 46.52,
+    "e": 46.78,
+    "matched": true
+   },
+   {
+    "w": "had",
+    "s": 46.78,
+    "e": 47.0,
+    "matched": true
+   },
+   {
+    "w": "no",
+    "s": 47.0,
+    "e": 47.2,
+    "matched": true
+   },
+   {
+    "w": "interest",
+    "s": 47.2,
+    "e": 47.56,
+    "matched": true
+   },
+   {
+    "w": "in",
+    "s": 47.56,
+    "e": 47.8,
+    "matched": true
+   },
+   {
+    "w": "rescuing",
+    "s": 47.8,
+    "e": 48.2,
+    "matched": true
+   },
+   {
+    "w": "me",
+    "s": 48.2,
+    "e": 48.6,
+    "matched": true
+   }
+  ]
+ },
+ {
+  "i": 13,
+  "text": "They regarded my arrival as an entertainment package.",
+  "start": 49.44,
+  "end": 52.82,
+  "words": [
+   {
+    "w": "they",
+    "s": 49.44,
+    "e": 49.66,
+    "matched": true
+   },
+   {
+    "w": "regarded",
+    "s": 49.66,
+    "e": 50.04,
+    "matched": true
+   },
+   {
+    "w": "my",
+    "s": 50.04,
+    "e": 50.34,
+    "matched": true
+   },
+   {
+    "w": "arrival",
+    "s": 50.34,
+    "e": 50.84,
+    "matched": true
+   },
+   {
+    "w": "as",
+    "s": 50.84,
+    "e": 51.4,
+    "matched": true
+   },
+   {
+    "w": "an",
+    "s": 51.4,
+    "e": 51.56,
+    "matched": true
+   },
+   {
+    "w": "entertainment",
+    "s": 51.56,
+    "e": 52.1,
+    "matched": true
+   },
+   {
+    "w": "package",
+    "s": 52.1,
+    "e": 52.82,
+    "matched": true
+   }
+  ]
+ },
+ {
+  "i": 14,
+  "text": "One climbed into my coat.",
+  "start": 54.4,
+  "end": 55.86,
+  "words": [
+   {
+    "w": "one",
+    "s": 54.4,
+    "e": 54.64,
+    "matched": true
+   },
+   {
+    "w": "climbed",
+    "s": 54.64,
+    "e": 55.0,
+    "matched": true
+   },
+   {
+    "w": "into",
+    "s": 55.0,
+    "e": 55.28,
+    "matched": true
+   },
+   {
+    "w": "my",
+    "s": 55.28,
+    "e": 55.46,
+    "matched": true
+   },
+   {
+    "w": "coat",
+    "s": 55.46,
+    "e": 55.86,
+    "matched": true
+   }
+  ]
+ },
+ {
+  "i": 15,
+  "text": "Another removed my left shoe.",
+  "start": 56.58,
+  "end": 58.16,
+  "words": [
+   {
+    "w": "another",
+    "s": 56.58,
+    "e": 56.8,
+    "matched": true
+   },
+   {
+    "w": "removed",
+    "s": 56.8,
+    "e": 57.24,
+    "matched": true
+   },
+   {
+    "w": "my",
+    "s": 57.24,
+    "e": 57.54,
+    "matched": true
+   },
+   {
+    "w": "left",
+    "s": 57.54,
+    "e": 57.74,
+    "matched": true
+   },
+   {
+    "w": "shoe",
+    "s": 57.74,
+    "e": 58.16,
+    "matched": true
+   }
+  ]
+ },
+ {
+  "i": 16,
+  "text": "A third sat on my head and began barking directly into the future.",
+  "start": 59.16,
+  "end": 63.1,
+  "words": [
+   {
+    "w": "a",
+    "s": 59.16,
+    "e": 59.3,
+    "matched": true
+   },
+   {
+    "w": "third",
+    "s": 59.3,
+    "e": 59.64,
+    "matched": true
+   },
+   {
+    "w": "sat",
+    "s": 59.64,
+    "e": 59.94,
+    "matched": true
+   },
+   {
+    "w": "on",
+    "s": 59.94,
+    "e": 60.14,
+    "matched": true
+   },
+   {
+    "w": "my",
+    "s": 60.14,
+    "e": 60.32,
+    "matched": true
+   },
+   {
+    "w": "head",
+    "s": 60.32,
+    "e": 60.62,
+    "matched": true
+   },
+   {
+    "w": "and",
+    "s": 60.62,
+    "e": 60.78,
+    "matched": true
+   },
+   {
+    "w": "began",
+    "s": 60.78,
+    "e": 61.08,
+    "matched": true
+   },
+   {
+    "w": "barking",
+    "s": 61.08,
+    "e": 61.64,
+    "matched": true
+   },
+   {
+    "w": "directly",
+    "s": 61.64,
+    "e": 62.06,
+    "matched": true
+   },
+   {
+    "w": "into",
+    "s": 62.06,
+    "e": 62.56,
+    "matched": true
+   },
+   {
+    "w": "the",
+    "s": 62.56,
+    "e": 62.74,
+    "matched": true
+   },
+   {
+    "w": "future",
+    "s": 62.74,
+    "e": 63.1,
+    "matched": true
+   }
+  ]
+ },
+ {
+  "i": 17,
+  "text": "I shouted for help.",
+  "start": 64.3,
+  "end": 65.48,
+  "words": [
+   {
+    "w": "i",
+    "s": 64.3,
+    "e": 64.76,
+    "matched": true
+   },
+   {
+    "w": "shouted",
+    "s": 64.76,
+    "e": 64.96,
+    "matched": true
+   },
+   {
+    "w": "for",
+    "s": 64.96,
+    "e": 65.22,
+    "matched": true
+   },
+   {
+    "w": "help",
+    "s": 65.22,
+    "e": 65.48,
+    "matched": true
+   }
+  ]
+ },
+ {
+  "i": 18,
+  "text": "My neighbor, Colin, looked over the fence and said, \u201cAre you all right?\u201d",
+  "start": 67.04,
+  "end": 70.92,
+  "words": [
+   {
+    "w": "my",
+    "s": 67.04,
+    "e": 67.24,
+    "matched": true
+   },
+   {
+    "w": "neighbor",
+    "s": 67.24,
+    "e": 67.48,
+    "matched": true
+   },
+   {
+    "w": "colin",
+    "s": 67.86,
+    "e": 67.86,
+    "matched": true
+   },
+   {
+    "w": "looked",
+    "s": 68.04,
+    "e": 68.26,
+    "matched": true
+   },
+   {
+    "w": "over",
+    "s": 68.26,
+    "e": 68.5,
+    "matched": true
+   },
+   {
+    "w": "the",
+    "s": 68.5,
+    "e": 68.66,
+    "matched": true
+   },
+   {
+    "w": "fence",
+    "s": 68.66,
+    "e": 68.9,
+    "matched": true
+   },
+   {
+    "w": "and",
+    "s": 68.9,
+    "e": 69.12,
+    "matched": true
+   },
+   {
+    "w": "said",
+    "s": 69.12,
+    "e": 69.38,
+    "matched": true
+   },
+   {
+    "w": "are",
+    "s": 70.12,
+    "e": 70.34,
+    "matched": true
+   },
+   {
+    "w": "you",
+    "s": 70.34,
+    "e": 70.46,
+    "matched": true
+   },
+   {
+    "w": "all",
+    "s": 70.46,
+    "e": 70.66,
+    "matched": true
+   },
+   {
+    "w": "right",
+    "s": 70.66,
+    "e": 70.92,
+    "matched": true
+   }
+  ]
+ },
+ {
+  "i": 19,
+  "text": "I said, \u201cNo, Colin. I\u2019m in a puppy pit.\u201d",
+  "start": 71.72,
+  "end": 74.56,
+  "words": [
+   {
+    "w": "i",
+    "s": 71.72,
+    "e": 72.22,
+    "matched": true
+   },
+   {
+    "w": "said",
+    "s": 72.22,
+    "e": 72.36,
+    "matched": true
+   },
+   {
+    "w": "no",
+    "s": 72.44,
+    "e": 72.64,
+    "matched": true
+   },
+   {
+    "w": "colin",
+    "s": 73.1,
+    "e": 73.26,
+    "matched": true
+   },
+   {
+    "w": "i'm",
+    "s": 73.6,
+    "e": 73.74,
+    "matched": true
+   },
+   {
+    "w": "in",
+    "s": 73.74,
+    "e": 73.8,
+    "matched": true
+   },
+   {
+    "w": "a",
+    "s": 73.8,
+    "e": 73.9,
+    "matched": true
+   },
+   {
+    "w": "puppy",
+    "s": 73.9,
+    "e": 74.22,
+    "matched": true
+   },
+   {
+    "w": "pit",
+    "s": 74.22,
+    "e": 74.56,
+    "matched": true
+   }
+  ]
+ },
+ {
+  "i": 20,
+  "text": "He said, \u201cYes, I can see that.\u201d",
+  "start": 75.36,
+  "end": 77.02,
+  "words": [
+   {
+    "w": "he",
+    "s": 75.36,
+    "e": 75.76,
+    "matched": true
+   },
+   {
+    "w": "said",
+    "s": 75.76,
+    "e": 75.94,
+    "matched": true
+   },
+   {
+    "w": "yes",
+    "s": 76.04,
+    "e": 76.22,
+    "matched": true
+   },
+   {
+    "w": "i",
+    "s": 76.22,
+    "e": 76.42,
+    "matched": true
+   },
+   {
+    "w": "can",
+    "s": 76.42,
+    "e": 76.52,
+    "matched": true
+   },
+   {
+    "w": "see",
+    "s": 76.52,
+    "e": 76.74,
+    "matched": true
+   },
+   {
+    "w": "that",
+    "s": 76.74,
+    "e": 77.02,
+    "matched": true
+   }
+  ]
+ },
+ {
+  "i": 21,
+  "text": "Then he went inside to get his phone.",
+  "start": 78.26,
+  "end": 79.9,
+  "words": [
+   {
+    "w": "then",
+    "s": 78.26,
+    "e": 78.46,
+    "matched": true
+   },
+   {
+    "w": "he",
+    "s": 78.46,
+    "e": 78.56,
+    "matched": true
+   },
+   {
+    "w": "went",
+    "s": 78.56,
+    "e": 78.7,
+    "matched": true
+   },
+   {
+    "w": "inside",
+    "s": 78.7,
+    "e": 79.12,
+    "matched": true
+   },
+   {
+    "w": "to",
+    "s": 79.12,
+    "e": 79.32,
+    "matched": true
+   },
+   {
+    "w": "get",
+    "s": 79.32,
+    "e": 79.42,
+    "matched": true
+   },
+   {
+    "w": "his",
+    "s": 79.42,
+    "e": 79.58,
+    "matched": true
+   },
+   {
+    "w": "phone",
+    "s": 79.58,
+    "e": 79.9,
+    "matched": true
+   }
+  ]
+ },
+ {
+  "i": 22,
+  "text": "Not a rope.",
+  "start": 80.78,
+  "end": 81.44,
+  "words": [
+   {
+    "w": "not",
+    "s": 80.78,
+    "e": 81.02,
+    "matched": true
+   },
+   {
+    "w": "a",
+    "s": 81.02,
+    "e": 81.14,
+    "matched": true
+   },
+   {
+    "w": "rope",
+    "s": 81.14,
+    "e": 81.44,
+    "matched": true
+   }
+  ]
+ },
+ {
+  "i": 23,
+  "text": "Not a ladder.",
+  "start": 81.8,
+  "end": 82.28,
+  "words": [
+   {
+    "w": "not",
+    "s": 81.8,
+    "e": 81.9,
+    "matched": true
+   },
+   {
+    "w": "a",
+    "s": 81.9,
+    "e": 82.06,
+    "matched": true
+   },
+   {
+    "w": "ladder",
+    "s": 82.06,
+    "e": 82.28,
+    "matched": true
+   }
+  ]
+ },
+ {
+  "i": 24,
+  "text": "His phone.",
+  "start": 82.38,
+  "end": 82.86,
+  "words": [
+   {
+    "w": "his",
+    "s": 82.38,
+    "e": 82.52,
+    "matched": true
+   },
+   {
+    "w": "phone",
+    "s": 82.52,
+    "e": 82.86,
+    "matched": true
+   }
+  ]
+ },
+ {
+  "i": 25,
+  "text": "For twenty minutes I remained down there,",
+  "start": 83.6,
+  "end": 85.74,
+  "words": [
+   {
+    "w": "for",
+    "s": 83.6,
+    "e": 83.76,
+    "matched": true
+   },
+   {
+    "w": "twenty",
+    "s": 83.76,
+    "e": 83.98,
+    "matched": true
+   },
+   {
+    "w": "minutes",
+    "s": 83.98,
+    "e": 84.38,
+    "matched": true
+   },
+   {
+    "w": "i",
+    "s": 84.38,
+    "e": 84.54,
+    "matched": true
+   },
+   {
+    "w": "remained",
+    "s": 84.54,
+    "e": 84.74,
+    "matched": true
+   },
+   {
+    "w": "down",
+    "s": 84.74,
+    "e": 85.08,
+    "matched": true
+   },
+   {
+    "w": "there",
+    "s": 85.08,
+    "e": 85.74,
+    "matched": true
+   }
+  ]
+ },
+ {
+  "i": 26,
+  "text": "trying to maintain dignity while being climbed by creatures with the confidence of small landlords.",
+  "start": 86.22,
+  "end": 91.84,
+  "words": [
+   {
+    "w": "trying",
+    "s": 86.22,
+    "e": 86.58,
+    "matched": true
+   },
+   {
+    "w": "to",
+    "s": 86.58,
+    "e": 86.68,
+    "matched": true
+   },
+   {
+    "w": "maintain",
+    "s": 86.68,
+    "e": 87.12,
+    "matched": true
+   },
+   {
+    "w": "dignity",
+    "s": 87.12,
+    "e": 87.68,
+    "matched": true
+   },
+   {
+    "w": "while",
+    "s": 87.68,
+    "e": 88.36,
+    "matched": true
+   },
+   {
+    "w": "being",
+    "s": 88.36,
+    "e": 88.6,
+    "matched": true
+   },
+   {
+    "w": "climbed",
+    "s": 88.6,
+    "e": 88.98,
+    "matched": true
+   },
+   {
+    "w": "by",
+    "s": 88.98,
+    "e": 89.32,
+    "matched": true
+   },
+   {
+    "w": "creatures",
+    "s": 89.32,
+    "e": 89.74,
+    "matched": true
+   },
+   {
+    "w": "with",
+    "s": 89.74,
+    "e": 90.04,
+    "matched": true
+   },
+   {
+    "w": "the",
+    "s": 90.04,
+    "e": 90.16,
+    "matched": true
+   },
+   {
+    "w": "confidence",
+    "s": 90.16,
+    "e": 90.58,
+    "matched": true
+   },
+   {
+    "w": "of",
+    "s": 90.58,
+    "e": 90.9,
+    "matched": true
+   },
+   {
+    "w": "small",
+    "s": 90.9,
+    "e": 91.32,
+    "matched": true
+   },
+   {
+    "w": "landlords",
+    "s": 91.32,
+    "e": 91.84,
+    "matched": true
+   }
+  ]
+ },
+ {
+  "i": 27,
+  "text": "Eventually, Colin returned with a ladder, a blanket, and his daughter,",
+  "start": 93.88,
+  "end": 98.28,
+  "words": [
+   {
+    "w": "eventually",
+    "s": 93.88,
+    "e": 94.44,
+    "matched": true
+   },
+   {
+    "w": "colin",
+    "s": 94.62,
+    "e": 94.74,
+    "matched": true
+   },
+   {
+    "w": "returned",
+    "s": 94.74,
+    "e": 95.2,
+    "matched": true
+   },
+   {
+    "w": "with",
+    "s": 95.2,
+    "e": 95.46,
+    "matched": true
+   },
+   {
+    "w": "a",
+    "s": 95.46,
+    "e": 95.58,
+    "matched": true
+   },
+   {
+    "w": "ladder",
+    "s": 95.58,
+    "e": 95.88,
+    "matched": true
+   },
+   {
+    "w": "a",
+    "s": 96.56,
+    "e": 96.58,
+    "matched": true
+   },
+   {
+    "w": "blanket",
+    "s": 96.58,
+    "e": 96.92,
+    "matched": true
+   },
+   {
+    "w": "and",
+    "s": 97.4,
+    "e": 97.8,
+    "matched": true
+   },
+   {
+    "w": "his",
+    "s": 97.8,
+    "e": 97.94,
+    "matched": true
+   },
+   {
+    "w": "daughter",
+    "s": 97.94,
+    "e": 98.28,
+    "matched": true
+   }
+  ]
+ },
+ {
+  "i": 28,
+  "text": "who said I was \u201cthe funniest thing she\u2019d ever seen.\u201d",
+  "start": 98.94,
+  "end": 102.74,
+  "words": [
+   {
+    "w": "who",
+    "s": 98.94,
+    "e": 99.38,
+    "matched": true
+   },
+   {
+    "w": "said",
+    "s": 99.38,
+    "e": 99.54,
+    "matched": true
+   },
+   {
+    "w": "i",
+    "s": 99.54,
+    "e": 99.7,
+    "matched": true
+   },
+   {
+    "w": "was",
+    "s": 99.7,
+    "e": 99.88,
+    "matched": true
+   },
+   {
+    "w": "the",
+    "s": 99.88,
+    "e": 101.18,
+    "matched": true
+   },
+   {
+    "w": "funniest",
+    "s": 101.18,
+    "e": 101.56,
+    "matched": true
+   },
+   {
+    "w": "thing",
+    "s": 101.56,
+    "e": 101.88,
+    "matched": true
+   },
+   {
+    "w": "she'd",
+    "s": 101.88,
+    "e": 102.18,
+    "matched": true
+   },
+   {
+    "w": "ever",
+    "s": 102.18,
+    "e": 102.34,
+    "matched": true
+   },
+   {
+    "w": "seen",
+    "s": 102.34,
+    "e": 102.74,
+    "matched": true
+   }
+  ]
+ },
+ {
+  "i": 29,
+  "text": "I told her that, at my age, comedy was mostly a matter of losing balance in public.",
+  "start": 104.44,
+  "end": 110.16,
+  "words": [
+   {
+    "w": "i",
+    "s": 104.44,
+    "e": 104.64,
+    "matched": true
+   },
+   {
+    "w": "told",
+    "s": 104.64,
+    "e": 104.84,
+    "matched": true
+   },
+   {
+    "w": "her",
+    "s": 104.84,
+    "e": 105.0,
+    "matched": true
+   },
+   {
+    "w": "that",
+    "s": 105.0,
+    "e": 105.18,
+    "matched": true
+   },
+   {
+    "w": "at",
+    "s": 105.18,
+    "e": 106.06,
+    "matched": true
+   },
+   {
+    "w": "my",
+    "s": 106.06,
+    "e": 106.26,
+    "matched": true
+   },
+   {
+    "w": "age",
+    "s": 106.26,
+    "e": 106.7,
+    "matched": true
+   },
+   {
+    "w": "comedy",
+    "s": 106.92,
+    "e": 107.14,
+    "matched": true
+   },
+   {
+    "w": "was",
+    "s": 107.14,
+    "e": 107.94,
+    "matched": true
+   },
+   {
+    "w": "mostly",
+    "s": 107.94,
+    "e": 108.32,
+    "matched": true
+   },
+   {
+    "w": "a",
+    "s": 108.32,
+    "e": 108.44,
+    "matched": true
+   },
+   {
+    "w": "matter",
+    "s": 108.44,
+    "e": 108.56,
+    "matched": true
+   },
+   {
+    "w": "of",
+    "s": 108.56,
+    "e": 108.74,
+    "matched": true
+   },
+   {
+    "w": "losing",
+    "s": 108.74,
+    "e": 109.04,
+    "matched": true
+   },
+   {
+    "w": "balance",
+    "s": 109.04,
+    "e": 109.5,
+    "matched": true
+   },
+   {
+    "w": "in",
+    "s": 109.5,
+    "e": 109.82,
+    "matched": true
+   },
+   {
+    "w": "public",
+    "s": 109.82,
+    "e": 110.16,
+    "matched": true
+   }
+  ]
+ },
+ {
+  "i": 30,
+  "text": "They lifted me out.",
+  "start": 111.34,
+  "end": 112.18,
+  "words": [
+   {
+    "w": "they",
+    "s": 111.34,
+    "e": 111.58,
+    "matched": true
+   },
+   {
+    "w": "lifted",
+    "s": 111.58,
+    "e": 111.78,
+    "matched": true
+   },
+   {
+    "w": "me",
+    "s": 111.78,
+    "e": 112.0,
+    "matched": true
+   },
+   {
+    "w": "out",
+    "s": 112.0,
+    "e": 112.18,
+    "matched": true
+   }
+  ]
+ },
+ {
+  "i": 31,
+  "text": "I was missing one shoe, three buttons,",
+  "start": 112.32,
+  "end": 114.48,
+  "words": [
+   {
+    "w": "i",
+    "s": 112.32,
+    "e": 112.32,
+    "matched": true
+   },
+   {
+    "w": "was",
+    "s": 112.32,
+    "e": 112.44,
+    "matched": true
+   },
+   {
+    "w": "missing",
+    "s": 112.44,
+    "e": 112.76,
+    "matched": true
+   },
+   {
+    "w": "one",
+    "s": 112.76,
+    "e": 113.0,
+    "matched": true
+   },
+   {
+    "w": "shoe",
+    "s": 113.0,
+    "e": 113.46,
+    "matched": true
+   },
+   {
+    "w": "three",
+    "s": 113.82,
+    "e": 114.08,
+    "matched": true
+   },
+   {
+    "w": "buttons",
+    "s": 114.08,
+    "e": 114.48,
+    "matched": true
+   }
+  ]
+ },
+ {
+  "i": 32,
+  "text": "and every shred of authority I had built over seventy-two years.",
+  "start": 114.48,
+  "end": 119.04,
+  "words": [
+   {
+    "w": "and",
+    "s": 114.48,
+    "e": 115.34,
+    "matched": true
+   },
+   {
+    "w": "every",
+    "s": 115.34,
+    "e": 115.58,
+    "matched": true
+   },
+   {
+    "w": "shred",
+    "s": 115.58,
+    "e": 115.88,
+    "matched": true
+   },
+   {
+    "w": "of",
+    "s": 115.88,
+    "e": 116.02,
+    "matched": true
+   },
+   {
+    "w": "authority",
+    "s": 116.02,
+    "e": 116.58,
+    "matched": true
+   },
+   {
+    "w": "i",
+    "s": 116.58,
+    "e": 117.38,
+    "matched": true
+   },
+   {
+    "w": "had",
+    "s": 117.38,
+    "e": 117.48,
+    "matched": true
+   },
+   {
+    "w": "built",
+    "s": 117.48,
+    "e": 117.68,
+    "matched": true
+   },
+   {
+    "w": "over",
+    "s": 117.68,
+    "e": 117.96,
+    "matched": true
+   },
+   {
+    "w": "seventytwo",
+    "s": 118.28,
+    "e": 118.28,
+    "matched": false
+   },
+   {
+    "w": "years",
+    "s": 118.6,
+    "e": 119.04,
+    "matched": true
+   }
+  ]
+ },
+ {
+  "i": 33,
+  "text": "The puppies were unharmed.",
+  "start": 120.34,
+  "end": 121.76,
+  "words": [
+   {
+    "w": "the",
+    "s": 120.34,
+    "e": 120.56,
+    "matched": true
+   },
+   {
+    "w": "puppies",
+    "s": 120.56,
+    "e": 120.82,
+    "matched": true
+   },
+   {
+    "w": "were",
+    "s": 120.82,
+    "e": 121.08,
+    "matched": true
+   },
+   {
+    "w": "unharmed",
+    "s": 121.08,
+    "e": 121.76,
+    "matched": true
+   }
+  ]
+ },
+ {
+  "i": 34,
+  "text": "Colin\u2019s daughter kept one.",
+  "start": 121.96,
+  "end": 123.14,
+  "words": [
+   {
+    "w": "colin's",
+    "s": 121.96,
+    "e": 122.24,
+    "matched": true
+   },
+   {
+    "w": "daughter",
+    "s": 122.24,
+    "e": 122.5,
+    "matched": true
+   },
+   {
+    "w": "kept",
+    "s": 122.5,
+    "e": 122.8,
+    "matched": true
+   },
+   {
+    "w": "one",
+    "s": 122.8,
+    "e": 123.14,
+    "matched": true
+   }
+  ]
+ },
+ {
+  "i": 35,
+  "text": "She named it Harold.",
+  "start": 124.2,
+  "end": 125.08,
+  "words": [
+   {
+    "w": "she",
+    "s": 124.2,
+    "e": 124.38,
+    "matched": true
+   },
+   {
+    "w": "named",
+    "s": 124.38,
+    "e": 124.58,
+    "matched": true
+   },
+   {
+    "w": "it",
+    "s": 124.58,
+    "e": 124.76,
+    "matched": true
+   },
+   {
+    "w": "harold",
+    "s": 124.76,
+    "e": 125.08,
+    "matched": true
+   }
+  ]
+ },
+ {
+  "i": 36,
+  "text": "I objected, but the puppy had already accepted the position.",
+  "start": 126.48,
+  "end": 130.74,
+  "words": [
+   {
+    "w": "i",
+    "s": 126.48,
+    "e": 126.74,
+    "matched": true
+   },
+   {
+    "w": "objected",
+    "s": 126.74,
+    "e": 127.16,
+    "matched": true
+   },
+   {
+    "w": "but",
+    "s": 127.94,
+    "e": 128.8,
+    "matched": true
+   },
+   {
+    "w": "the",
+    "s": 128.8,
+    "e": 128.92,
+    "matched": true
+   },
+   {
+    "w": "puppy",
+    "s": 128.92,
+    "e": 129.16,
+    "matched": true
+   },
+   {
+    "w": "had",
+    "s": 129.16,
+    "e": 129.32,
+    "matched": true
+   },
+   {
+    "w": "already",
+    "s": 129.32,
+    "e": 129.56,
+    "matched": true
+   },
+   {
+    "w": "accepted",
+    "s": 129.56,
+    "e": 130.1,
+    "matched": true
+   },
+   {
+    "w": "the",
+    "s": 130.1,
+    "e": 130.28,
+    "matched": true
+   },
+   {
+    "w": "position",
+    "s": 130.28,
+    "e": 130.74,
+    "matched": true
+   }
+  ]
+ },
+ {
+  "i": 37,
+  "text": "I still visit them sometimes.",
+  "start": 132.52,
+  "end": 133.96,
+  "words": [
+   {
+    "w": "i",
+    "s": 132.52,
+    "e": 132.94,
+    "matched": true
+   },
+   {
+    "w": "still",
+    "s": 132.94,
+    "e": 133.12,
+    "matched": true
+   },
+   {
+    "w": "visit",
+    "s": 133.12,
+    "e": 133.36,
+    "matched": true
+   },
+   {
+    "w": "them",
+    "s": 133.36,
+    "e": 133.56,
+    "matched": true
+   },
+   {
+    "w": "sometimes",
+    "s": 133.56,
+    "e": 133.96,
+    "matched": true
+   }
+  ]
+ },
+ {
+  "i": 38,
+  "text": "I stand beside the sign now, very carefully,",
+  "start": 134.9,
+  "end": 137.72,
+  "words": [
+   {
+    "w": "i",
+    "s": 134.9,
+    "e": 134.92,
+    "matched": true
+   },
+   {
+    "w": "stand",
+    "s": 134.92,
+    "e": 135.16,
+    "matched": true
+   },
+   {
+    "w": "beside",
+    "s": 135.16,
+    "e": 135.48,
+    "matched": true
+   },
+   {
+    "w": "the",
+    "s": 135.48,
+    "e": 135.68,
+    "matched": true
+   },
+   {
+    "w": "sign",
+    "s": 135.68,
+    "e": 135.94,
+    "matched": true
+   },
+   {
+    "w": "now",
+    "s": 135.94,
+    "e": 136.3,
+    "matched": true
+   },
+   {
+    "w": "very",
+    "s": 136.78,
+    "e": 137.24,
+    "matched": true
+   },
+   {
+    "w": "carefully",
+    "s": 137.24,
+    "e": 137.72,
+    "matched": true
+   }
+  ]
+ },
+ {
+  "i": 39,
+  "text": "and watch the puppies playing below.",
+  "start": 138.66,
+  "end": 140.22,
+  "words": [
+   {
+    "w": "and",
+    "s": 138.66,
+    "e": 138.84,
+    "matched": true
+   },
+   {
+    "w": "watch",
+    "s": 138.84,
+    "e": 138.98,
+    "matched": true
+   },
+   {
+    "w": "the",
+    "s": 138.98,
+    "e": 139.2,
+    "matched": true
+   },
+   {
+    "w": "puppies",
+    "s": 139.2,
+    "e": 139.5,
+    "matched": true
+   },
+   {
+    "w": "playing",
+    "s": 139.5,
+    "e": 139.86,
+    "matched": true
+   },
+   {
+    "w": "below",
+    "s": 139.86,
+    "e": 140.22,
+    "matched": true
+   }
+  ]
+ },
+ {
+  "i": 40,
+  "text": "They remember me.",
+  "start": 141.48,
+  "end": 142.34,
+  "words": [
+   {
+    "w": "they",
+    "s": 141.48,
+    "e": 141.76,
+    "matched": true
+   },
+   {
+    "w": "remember",
+    "s": 141.76,
+    "e": 142.0,
+    "matched": true
+   },
+   {
+    "w": "me",
+    "s": 142.0,
+    "e": 142.34,
+    "matched": true
+   }
+  ]
+ },
+ {
+  "i": 41,
+  "text": "Whenever I arrive, they look up with that same bright expression.",
+  "start": 143.38,
+  "end": 147.28,
+  "words": [
+   {
+    "w": "whenever",
+    "s": 143.38,
+    "e": 143.6,
+    "matched": true
+   },
+   {
+    "w": "i",
+    "s": 143.6,
+    "e": 143.92,
+    "matched": true
+   },
+   {
+    "w": "arrive",
+    "s": 143.92,
+    "e": 144.42,
+    "matched": true
+   },
+   {
+    "w": "they",
+    "s": 145.04,
+    "e": 145.38,
+    "matched": true
+   },
+   {
+    "w": "look",
+    "s": 145.38,
+    "e": 145.48,
+    "matched": true
+   },
+   {
+    "w": "up",
+    "s": 145.48,
+    "e": 145.64,
+    "matched": true
+   },
+   {
+    "w": "with",
+    "s": 145.64,
+    "e": 145.78,
+    "matched": true
+   },
+   {
+    "w": "that",
+    "s": 145.78,
+    "e": 145.92,
+    "matched": true
+   },
+   {
+    "w": "same",
+    "s": 145.92,
+    "e": 146.36,
+    "matched": true
+   },
+   {
+    "w": "bright",
+    "s": 146.36,
+    "e": 146.7,
+    "matched": true
+   },
+   {
+    "w": "expression",
+    "s": 146.7,
+    "e": 147.28,
+    "matched": true
+   }
+  ]
+ },
+ {
+  "i": 42,
+  "text": "Not affection.",
+  "start": 148.44,
+  "end": 148.98,
+  "words": [
+   {
+    "w": "not",
+    "s": 148.44,
+    "e": 148.56,
+    "matched": true
+   },
+   {
+    "w": "affection",
+    "s": 148.56,
+    "e": 148.98,
+    "matched": true
+   }
+  ]
+ },
+ {
+  "i": 43,
+  "text": "Recognition.",
+  "start": 149.88,
+  "end": 150.22,
+  "words": [
+   {
+    "w": "recognition",
+    "s": 149.88,
+    "e": 150.22,
+    "matched": true
+   }
+  ]
+ }
+]

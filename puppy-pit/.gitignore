@@ -1,0 +1,5 @@
+# render outputs & caches
+out/
+*.mp4
+*.wav
+__pycache__/

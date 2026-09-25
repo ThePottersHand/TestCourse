@@ -1,0 +1,44 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>The Puppy Pit — frame</title>
+<style>
+@font-face { font-family: 'EB Garamond'; src: url(fonts/eb-garamond-latin-400-normal.woff2) format('woff2'); font-weight: 400; font-style: normal; }
+@font-face { font-family: 'EB Garamond'; src: url(fonts/eb-garamond-latin-400-italic.woff2) format('woff2'); font-weight: 400; font-style: italic; }
+@font-face { font-family: 'EB Garamond'; src: url(fonts/eb-garamond-latin-500-normal.woff2) format('woff2'); font-weight: 500; font-style: normal; }
+html, body { margin: 0; background: #000; overflow: hidden; }
+#wrap { position: relative; width: 1920px; height: 1080px; overflow: hidden; background: #ddd8cc; }
+#stage { position: absolute; inset: 0; display: block; filter: contrast(1.06) saturate(1.05); }
+.post { position: absolute; inset: 0; pointer-events: none; }
+#paper { background: url(tex/paper.png); background-size: 1024px; mix-blend-mode: multiply; opacity: 0.55; }
+#grain { background-size: 512px; mix-blend-mode: overlay; opacity: 0.35; }
+#vignette { background: radial-gradient(ellipse 75% 70% at 50% 48%, rgba(0,0,0,0) 55%, rgba(40,30,25,0.34) 100%); mix-blend-mode: multiply; }
+#grade { background: #f1e6d0; mix-blend-mode: soft-light; opacity: 0.35; }
+#fade { background: #000; opacity: 0; }
+</style></head>
+<body>
+<div id="wrap">
+  <svg id="stage" width="1920" height="1080" viewBox="0 0 1920 1080"></svg>
+  <div class="post" id="grade"></div>
+  <div class="post" id="paper"></div>
+  <div class="post" id="grain"></div>
+  <div class="post" id="vignette"></div>
+  <div class="post" id="fade"></div>
+</div>
+<script type="module">
+const params = new URLSearchParams(location.search);
+const name = params.get('scene') || 'sign';
+const mod = await import(`./scenes/${name}.js`);
+const svg = document.getElementById('stage');
+const scene = await mod.build(svg);
+const grain = document.getElementById('grain');
+window.seek = t => {
+  scene.update(t);
+  const k = Math.floor(t * 12) % 6; // grain boils on twos
+  grain.style.backgroundImage = `url(tex/grain${k}.png)`;
+  grain.style.backgroundPosition = `${(k * 173) % 512}px ${(k * 311) % 512}px`;
+};
+await document.fonts.ready;
+window.seek(parseFloat(params.get('t') || '0'));
+await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+window.__ready = true;
+</script>
+</body></html>
