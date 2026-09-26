@@ -183,7 +183,7 @@ export async function recognition(svg, ctx) {
   shoeG.setAttribute('transform', 'translate(-9999 0)');
   return {
     update(t) {
-      set.update(kf(t, [[0, 0.62], [ctx.dur, 0.5, 'sine']]), [0, -30]);
+      set.update(kf(t, [[0, 0.42], [ctx.dur, 0.32, 'sine']]), [0, -30]);
       pups.forEach((q, j) => {
         q.p.set({ x: q.x, y: q.y, scale: q.sc, rot: q.rot, up: true, shine: true, wag: Math.sin(t * 2.5 + q.i) * 3, look: 0 });
         place(q, q.x, q.y, q.rot);

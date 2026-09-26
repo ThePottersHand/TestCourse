@@ -112,7 +112,7 @@ export async function coat(svg, ctx) {
       // climber scrambles up his front from his lap, then vanishes into the coat
       const up = kf(tt, [[0, 0], [tIn - 0.1, 1, 'io']]);
       const scr = Math.sin(tt * 20) * 4 * (1 - up);
-      climber.set({ x: nx - 118 * ns + up * 46 * ns, y: ny - 30 * ns - up * 200 * ns + scr, scale: ns * 0.95, flip: 1, headRot: -10 + scr, rot: 14 - up * 20, wag: Math.sin(tt * 14) * 30 });
+      climber.set({ x: nx - 118 * ns + up * 40 * ns, y: ny - 30 * ns - up * 125 * ns + scr, scale: ns * 0.95, flip: 1, headRot: -10 + scr, rot: 14 - up * 20, wag: Math.sin(tt * 14) * 30 });
       climber.root.style.display = inside ? 'none' : '';
       inCoat.root.style.display = inside ? '' : 'none';
       // head pops out of the coat, looks about, settles
@@ -219,10 +219,10 @@ export async function onHead(svg, ctx) {
       world.setAttribute('transform', camTransform(1000, 540, kf(t, [[0, 1.0], [ctx.dur, 1.05, 'sine']])));
       const tt = on2(t);
       const seated = tt >= tSat;
-      n.set({ ...SITPOSE, x: 1130, y: 1810, scale: 3.3, head: -1, eyes: (tt > 3.2 && tt < 3.35) ? 'closed' : 'open', chestPup: true });
+      n.set({ ...SITPOSE, x: 1130, y: 1640, scale: 3.3, head: -1, eyes: (tt > 3.2 && tt < 3.35) ? 'closed' : 'open', chestPup: true });
       // the climber scrambles up his back, then becomes the one sitting on his head
       const up = kf(tt, [[0.1, 0], [tSat, 1, 'io']]);
-      climbing.set({ x: 1500 - up * 190, y: 1260 - up * 640 + Math.sin(tt * 20) * 5 * (1 - up), scale: 2.0, flip: -1, headRot: -12, rot: -8 + up * 10, wag: Math.sin(tt * 14) * 24 });
+      climbing.set({ x: 1330 - up * 120, y: 1320 - up * 720 + Math.sin(tt * 20) * 5 * (1 - up), scale: 2.0, flip: -1, headRot: -12, rot: -18 + up * 20, wag: Math.sin(tt * 14) * 24 });
       climbing.root.style.display = seated ? 'none' : '';
       hp.root.style.display = seated ? '' : 'none';
       const barking = beats.some(b => tt >= b && tt < b + 0.14);
@@ -245,7 +245,7 @@ export async function reply(svg, ctx) {
       const tt = on2(t);
       const talking = words.some(([a, b]) => tt >= a && tt < Math.max(b, a + 0.12));
       const phase = Math.sin(tt * 26) > 0 ? 1 : 0.4;
-      n.set({ ...SITPOSE, x: 1130, y: 1810, scale: 3.3, head: -16, talk: talking ? phase : 0, chestPup: true, brow: 1, shoeless: true, buttons: 4 });
+      n.set({ ...SITPOSE, x: 1130, y: 1640, scale: 3.3, head: -16, talk: talking ? phase : 0, chestPup: true, brow: 1, shoeless: true, buttons: 4 });
       hp.set({ x: 4, y: 12, scale: 0.95, flip: 1, headRot: -30, earRot: 4, wag: Math.sin(tt * 3) * 6 });
     },
   };
@@ -268,7 +268,7 @@ export async function wisdom(svg, ctx) {
       const tt = on2(t);
       const talking = ws.some(([a, b]) => tt >= a && tt < Math.max(b, a + 0.12));
       const phase = Math.sin(tt * 24) > 0 ? 1 : 0.35;
-      n.set({ ...SITPOSE, x: 1130, y: 1810, scale: 3.3, head: -14, talk: talking ? phase : 0, chestPup: true, brow: 0,
+      n.set({ ...SITPOSE, x: 1130, y: 1640, scale: 3.3, head: -14, talk: talking ? phase : 0, chestPup: true, brow: 0,
         eyes: (tt > 2.4 && tt < 2.55) ? 'closed' : 'open' });
       hp.set({ x: 2, y: 8, scale: 0.85, flip: 1, headRot: 10, blink: true, wag: 0 });
     },

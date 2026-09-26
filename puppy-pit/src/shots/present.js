@@ -110,7 +110,7 @@ export async function notAffection(svg, ctx) {
   world.appendChild(sky(defs, { seed: 21, top: '#a99f94', mid: '#dcc096', low: '#f1cf98', clouds: true }));
   const rimY = 760;
   const sg = sign(defs, { seed: 4, back: true });
-  const signG = g({ transform: `translate(780 ${rimY + 170}) scale(0.4 0.4) skewY(3)` }, sg.root);
+  const signG = g({ transform: `translate(700 ${rimY + 330}) scale(0.6 0.6) skewY(3)` }, sg.root);
   const n = narrator(defs, { seed: 17 });
   // pit walls around the opening: the wall below him rises to the rim; side walls lean in
   const r = rng(5), fr = [];
@@ -136,7 +136,7 @@ export async function notAffection(svg, ctx) {
   return {
     update(t) {
       world.setAttribute('transform', camTransform(960, 560, kf(t, [[0, 1.0], [ctx.dur, 1.035, 'sine']])));
-      n.set({ x: 1150, y: rimY + 270, scale: 0.95, flip: -1, lean: 20, head: 30, armsBehind: true,
+      n.set({ x: 1180, y: rimY + 520, scale: 1.35, flip: -1, lean: 20, head: 30, armsBehind: true,
         armN: [14, 26, -30, 0.35], armF: [10, 26, -20, 0.35], eyes: 'open', brow: -1 });
     },
   };

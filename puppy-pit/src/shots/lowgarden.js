@@ -10,13 +10,13 @@ import { tuft } from '../env/garden.js';
 
 export async function help(svg, ctx) {
   const { defs, root } = stage(svg);
-  const cam = camera({ f: 2200, H: 0.42, cx: 960, cy: 500 });
-  const pitX = [-1.0, 1.1], pitZ = [4.2, 6.4];
-  const L = gardenSet(defs, cam, { mode: 'overcast', fenceZ: 9.5, housesZ: 70, pitX, pitZ, D: 1.6, signAt: [1.75, 5.2], signScaleX: 0.7, signSkew: -3, fg: false, leaves: 30, seed: 4 });
+  const cam = camera({ f: 3300, H: 0.42, cx: 960, cy: 470 });
+  const pitX = [-1.0, 1.1], pitZ = [3.6, 5.8];
+  const L = gardenSet(defs, cam, { mode: 'overcast', fenceZ: 9.5, housesZ: 70, pitX, pitZ, D: 1.6, signAt: [1.2, 4.4], signScaleX: 0.7, signSkew: -3, fg: false, leaves: 30, seed: 4 });
   const world = g({}); root.appendChild(world);
   world.append(L.sky, L.far, L.houses, L.trees, L.bushes, L.fence, L.lawn, L.pit.back, L.pit.rim);
-  const Zn = 5.2, ns = charScale(cam, Zn);
-  const [nx, ny] = cam.p(0.25, -1.6, Zn);
+  const Zn = 4.5, ns = charScale(cam, Zn);
+  const [nx, ny] = cam.p(0.1, -1.6, Zn);
   const n = narrator(defs, { seed: 17 });
   const hp = puppy(defs, { view: 'side', pose: 'sit', seed: 6, harold: true });
   n.slots.head.appendChild(hp.root);
@@ -33,7 +33,7 @@ export async function help(svg, ctx) {
   const words = ['shouted', 'for', 'help'].map(w => [ctx.W(17, w) - ctx.shot.start, ctx.W(17, w, 'e') - ctx.shot.start]);
   return {
     update(t) {
-      world.setAttribute('transform', camTransform(1000, 520, kf(t, [[0, 1.0], [ctx.dur, 1.03, 'sine']])));
+      world.setAttribute('transform', camTransform(990, 500, kf(t, [[0, 1.0], [ctx.dur, 1.03, 'sine']])));
       const tt = on2(t);
       const shouting = words.some(([a, b]) => tt >= a - 0.05 && tt < b + 0.1);
       const phase = Math.sin(tt * 22) > 0 ? 1 : 0.5;
