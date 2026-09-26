@@ -41,13 +41,29 @@ export function tint(defs, mode, { W = 1920, H = 1080, sun = [-200, 200] } = {})
   return t;
 }
 
+// Affine placement of the sign prop (units: mm, origin = stake foot) standing at
+// (X, Z) with its face turned `yaw` degrees from the camera toward -X. Fitted on
+// the sheet so it keeps the right foreshortening and slant for any camera; if we
+// are looking at it from behind, `back` says to draw the blank side.
+export function signMatrix(cam, X, Z, yaw) {
+  const a = yaw * Math.PI / 180, cs = Math.cos(a), sn = Math.sin(a);
+  const P3 = (u, v) => cam.p(X + u / 1000 * cs, -v / 1000, Z - u / 1000 * sn);
+  const o = P3(0, -1370), r = P3(210, -1370), l = P3(-210, -1370), up = P3(0, -1520), dn = P3(0, -1223);
+  const ax = (r[0] - l[0]) / 420, ay = (r[1] - l[1]) / 420, bx = (dn[0] - up[0]) / 297, by = (dn[1] - up[1]) / 297;
+  const e = o[0] + 1370 * bx, f = o[1] + 1370 * by;
+  const back = ax * by - ay * bx < 0;
+  // seen from behind: mirror the prop so the blank back and stake read correctly
+  const m = back ? [-ax, -ay, bx, by, e, f] : [ax, ay, bx, by, e, f];
+  return { transform: `matrix(${m.map(v => +v.toFixed(5)).join(' ')})`, back };
+}
+
 // ------------------------------------------------------------------ garden
 // The green behind the houses: rooftops, Colin's fence, the lawn, the pit and
 // its sign. Returns layers so a shot can slot characters in between.
 export function gardenSet(defs, cam, o = {}) {
   const {
     mode = 'overcast', fenceZ = 10, housesZ = 68, pitX = [-2.1, 0.0], pitZ = [4.4, 6.6], D = 0.85,
-    signAt = [1.45, 5.35], signScaleX = 0.78, signSkew = -5, cordonOn = false, leaves = 55, seed = 1,
+    signAt = [1.45, 5.35], signYaw = 68, cordonOn = false, leaves = 55, seed = 1,
     houses = true, windowsLit = mode === 'dusk', fg = true,
   } = o;
   const L = {};
@@ -93,14 +109,14 @@ export function gardenSet(defs, cam, o = {}) {
   const [wx, wy] = cam.p(pitX[1] + 0.7, 0, (pitZ[0] + pitZ[1]) / 2), ws = cam.s((pitZ[0] + pitZ[1]) / 2);
   L.lawn.appendChild(el('path', { d: ellipseD(wx, wy, 1.3 * ws, 0.34 * ws, -2), fill: '#8e8a62', opacity: 0.4, filter: blurFilter(defs, 14) }));
   L.pit = pit(defs, cam, { xl: pitX[0], xr: pitX[1], zn: pitZ[0], zf: pitZ[1], D, seed: 13, lip: 0.12 });
-  // sign (facing the pit side, turned a little toward camera)
+  // sign: it faces the pit (west, -X), turned partly toward camera
   L.sign = g({});
   if (signAt) {
     const [sgx, sgy] = cam.p(signAt[0], 0, signAt[1]), ss = cam.s(signAt[1]) / 1000;
-    const sg = sign(defs, { seed: 4 });
     L.sign.appendChild(el('path', { d: ellipseD(sgx, sgy + 2, 30 * ss * 4, 7 * ss * 4), fill: '#2f3524', opacity: 0.35, filter: blurFilter(defs, 2) }));
     if (mode === 'golden') L.sign.appendChild(el('path', { d: `M${sgx} ${sgy} L${sgx + 900 * ss} ${sgy + 14 * ss} L${sgx + 900 * ss} ${sgy + 44 * ss} L${sgx} ${sgy + 20 * ss}Z`, fill: '#3b2e1f', opacity: 0.3, filter: blurFilter(defs, 3) }));
-    L.sign.appendChild(g({ transform: `translate(${sgx} ${sgy}) scale(${ss * signScaleX} ${ss}) skewY(${signSkew})` }, sg.root));
+    const M = signMatrix(cam, signAt[0], signAt[1], signYaw);
+    L.sign.appendChild(g({ transform: M.transform }, sign(defs, { seed: 4, back: M.back }).root));
     L.signPos = [sgx, sgy, ss];
   }
   L.cordon = g({});
@@ -137,7 +153,7 @@ export function contactShadow(defs, x, y, w, mode, len = 3) {
 // camera height and re-projected per frame (lawn plane and floor plane scale
 // independently; the walls are re-quadded), so the camera can descend into it.
 export function topPitSet(defs, o = {}) {
-  const { mode = 'overcast', w = 2.1, l = 2.3, D = 1.6, seed = 3, leaves = 70, cordonOn = false, f = 1000, Href = 2.5, cx = 960, cy = 540 } = o;
+  const { mode = 'overcast', w = 2.1, l = 2.3, D = 1.6, seed = 3, leaves = 70, cordonOn = false, f = 1000, Href = 2.5, cx = 960, cy = 540, gloom = 0 } = o;
   const X0 = -w / 2, X1 = w / 2, G0 = -l / 2, G1 = l / 2;
   const pr = (X, G, Y, Hc = Href) => { const d = Hc - Y; return [cx + X * f / d, cy - G * f / d]; };
   const r = rng(seed);
@@ -201,8 +217,11 @@ export function topPitSet(defs, o = {}) {
   for (const side of ['N', 'S', 'W', 'E']) {
     wallEls[side] = BANDS.map(([a, b, c]) => { const e = el('path', { fill: shadeOf(side) >= 0 ? mix(c, '#140e0a', shadeOf(side)) : mix(c, '#d6a66c', -shadeOf(side) * 3) }); walls.appendChild(e); return { a, b, e }; });
   }
-  const wallShade = { N: el('path', { fill: linGrad(defs, 0, 0, 0, 1, [[0, '#140e0a', 0], [1, '#140e0a', 0.5]]) }), S: el('path', { fill: linGrad(defs, 0, 1, 0, 0, [[0, '#140e0a', 0], [1, '#140e0a', 0.5]]) }),
-    W: el('path', { fill: linGrad(defs, 0, 0, 1, 0, [[0, '#140e0a', 0], [1, '#140e0a', 0.5]]) }), E: el('path', { fill: linGrad(defs, 1, 0, 0, 0, [[0, '#140e0a', 0], [1, '#140e0a', 0.5]]) }) };
+  // walls darken toward the floor; with `gloom` they sink into near-black (a deep hole from high up)
+  const wsA = 0.5 + gloom * 0.47, wsC = gloom ? '#060403' : '#140e0a';
+  const wsStops = [[0, wsC, 0], [0.35, wsC, gloom * 0.5], [1, wsC, wsA]];
+  const wallShade = { N: el('path', { fill: linGrad(defs, 0, 0, 0, 1, wsStops) }), S: el('path', { fill: linGrad(defs, 0, 1, 0, 0, wsStops) }),
+    W: el('path', { fill: linGrad(defs, 0, 0, 1, 0, wsStops) }), E: el('path', { fill: linGrad(defs, 1, 0, 0, 0, wsStops) }) };
   Object.values(wallShade).forEach(e => walls.appendChild(e));
   // floor plane content (drawn at the reference height, scaled per frame)
   const sF = f / (Href + D);
@@ -222,12 +241,14 @@ export function topPitSet(defs, o = {}) {
   floorLight.appendChild(el('path', { d: floorD, fill: 'none', stroke: '#120c08', 'stroke-width': sF * 0.2, opacity: 0.35, filter: blurFilter(defs, sF * 0.06) }));
   const cast = g({});           // puppies go here (floor plane)
   const castTop = g({});        // things above the floor that scale with it too
-  const floorPlane = g({}, floor, floorLight, cast, castTop);
+  // darkness pooled on the floor (a deep hole seen from high up); off by default
+  const floorShade = el('path', { d: floorD, fill: '#060403', opacity: gloom * 0.97 });
+  const floorPlane = g({}, floor, floorLight, cast, castTop, floorShade);
   const groundPlane = g({}, ground, signG);
   const rimPlane = g({}, rimG);
   const golden = lit ? el('path', { fill: '#f6b76a', opacity: 0.1, style: 'mix-blend-mode:screen', filter: blurFilter(defs, 20) }) : null;
   L.root = g({}, groundPlane, walls, floorPlane, golden, rimPlane);
-  L.cast = cast; L.castTop = castTop;
+  L.cast = cast; L.castTop = castTop; L.floorShade = floorShade;
   L.floorAt = (X, G, lift = 0.2) => { const [x, y] = pr(X, G, -D + lift); return [x, y, (f / (Href + D - lift)) / 400]; };
   L.update = (Hc = Href, pan = [0, 0], cam = [0, 0]) => {
     const k0 = Href / Hc, kF = (Href + D) / (Hc + D);

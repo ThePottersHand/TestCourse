@@ -2,6 +2,7 @@
 // pose: 'phone' (filming, phone held up in both hands) | 'puppy' (cradling one)
 import { el, g, shape, ellipseD, circleD, T, paintFilter } from '../lib/core.js';
 import { P } from '../lib/palette.js';
+import { limb } from './limbs.js';
 
 const LINE = { skin: '#9a6a55', coat: '#4a2520', hair: '#2e231c', jeans: '#3a4250', boot: '#232a22' };
 
@@ -64,6 +65,13 @@ export function daughter(defs, { seed = 80, pose = 'phone' } = {}) {
       g({ filter: texSkin },
         shape(ellipseD(-18, -350, 8, 11), '#ebc7ae', { r: R(0.3, 6), line: LINE.skin, lw: 1 }),
         shape(ellipseD(18, -350, 8, 11), '#ebc7ae', { r: R(0.3, 6), line: LINE.skin, lw: 1 })));
+  } else if (pose === 'reach') {
+    // both arms reaching down for someone's wrist
+    const la = limb(defs, { w0: 30, w1: 24, fill: coatC, dark: coatD, line: LINE.coat, handFill: '#ebc7ae', handLine: LINE.skin, seed: seed + 30, filter: texCloth, handFilter: texSkin });
+    const ra = limb(defs, { w0: 30, w1: 24, fill: coatD, dark: coatD, line: LINE.coat, handFill: '#e2b89c', handLine: LINE.skin, seed: seed + 40, filter: texCloth, handFilter: texSkin });
+    arms = g({}, la.root, ra.root);
+    arms.__reach = [la, ra];
+    held = null;
   } else {
     arms = g({ filter: texCloth },
       shape('M-50 -420 C-66 -390, -70 -330, -60 -290 C-50 -262, 10 -262, 34 -272 L30 -290 C8 -284, -36 -284, -42 -300 C-46 -340, -42 -390, -36 -420Z', coatC, { r: R(0.8, 14), line: LINE.coat }),
@@ -78,7 +86,8 @@ export function daughter(defs, { seed = 80, pose = 'phone' } = {}) {
   const root = g({ class: 'daughter' }, lower, coat, headPiv, pose === 'puppy' ? held : null, arms, pose === 'phone' ? held : null);
   return {
     root, head: headPiv, slot: heldSlot,
-    set({ x = 0, y = 0, scale = 1, rot = 0, headTilt = 0, laugh = 0, bounce = 0, mood = 'grin' } = {}) {
+    set({ x = 0, y = 0, scale = 1, rot = 0, headTilt = 0, laugh = 0, bounce = 0, mood = 'grin', reach = null } = {}) {
+      if (arms.__reach && reach) { arms.__reach[0].set([-44, -412], reach[0]); arms.__reach[1].set([44, -412], reach[1]); }
       root.setAttribute('transform', `translate(${x} ${y + bounce}) rotate(${rot}) scale(${scale})`);
       headPiv.setAttribute('transform', `rotate(${headTilt} 0 -440) translate(0 ${-laugh * 3})`);
       eyesOpen.style.display = laugh > 0.5 ? 'none' : '';

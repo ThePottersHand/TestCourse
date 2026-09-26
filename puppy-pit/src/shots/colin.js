@@ -86,3 +86,33 @@ export async function colinSee(svg, ctx) {
     },
   };
 }
+
+// "His phone." He comes back, phone first. Three pictures (the flash goes off
+// in our eyes: this is the view from the bottom of the pit), a look at the
+// screen, a small nod of satisfaction, and he goes back inside.
+export async function colinPhone(svg, ctx) {
+  const S = set(svg, ctx);
+  const { root, world, colin, fTop } = S;
+  const white = el('rect', { x: 0, y: 0, width: 1920, height: 1080, fill: '#fffaf0', opacity: 0, style: 'mix-blend-mode:screen' });
+  root.appendChild(white);
+  const tUp = ctx.W(24, 'his') - ctx.shot.start - 0.12;
+  const shots = [ctx.W(24, 'phone', 'e') - ctx.shot.start - 0.1, 1.12, 1.46];
+  const tCheck = 1.75, tNod = 2.25, tGo = 2.7;
+  return {
+    update(t) {
+      world.setAttribute('transform', camTransform(960, 540, kf(t, [[0, 1.04], [ctx.dur, 1.07, 'sine']])));
+      const tt = on2(t);
+      const rise = kf(tt, [[tUp, 0], [tUp + 0.35, 1, 'out']]);
+      const sink = kf(tt, [[tGo, 0], [tGo + 0.6, 1, 'in']]);
+      // flash: one drawing at full, one fading
+      const fl = Math.max(...shots.map(a => (tt >= a && tt < a + 0.09 ? 1 : tt >= a + 0.09 && tt < a + 0.17 ? 0.35 : 0)));
+      white.setAttribute('opacity', (fl * 0.55).toFixed(3));
+      // after the burst he lowers it to look at the screen, then a little nod
+      const check = kf(tt, [[tCheck - 0.2, 0], [tCheck, 1, 'io']]);
+      const nod = tt > tNod && tt < tNod + 0.4 ? Math.sin((tt - tNod) / 0.4 * Math.PI) * 4 : 0;
+      const jolt = shots.some(a => tt >= a && tt < a + 0.09) ? 1.5 : 0;
+      colin.set({ x: 960, y: fTop - 10 + (1 - rise) * 440 + sink * 460, scale: 1.9, phone: true, flash: fl,
+        phoneY: check * 22 + jolt, phoneTilt: check * -6, tilt: -2 + check * 2, dip: check * 6 + nod, look: [0, 2 + check * 4] });
+    },
+  };
+}

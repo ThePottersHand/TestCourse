@@ -40,14 +40,35 @@ function presentWide(svg, { zoomFrom = 1, zoomTo = 1.06, focus = [900, 620] } = 
   return { defs, root, world, cam, L, pups, actor };
 }
 
-// Title over black, then the present day: he stands at the pit like a man at a graveside.
+// The garden in golden light with nothing in it but him: no hole, no sign, no
+// puppies (the pit is somewhere off to his left, below the frame).
+function goldenGarden(defs, world, cam, { blur = 0, seed = 2, fenceZ = 12 } = {}) {
+  const L = gardenSet(defs, cam, { mode: 'golden', fenceZ, housesZ: 70, pitX: [-40, -39], pitZ: [4.4, 6.6], signAt: null, leaves: 40, seed });
+  world.appendChild(g(blur ? { filter: blurFilter(defs, blur) } : {}, L.sky, L.far, L.houses, L.trees, L.bushes, L.fence, L.lawn));
+  return L;
+}
+// stand the rig so a point on its head lands on a given spot in `world`
+function placeHead(n, world, pose, target, local = [10, -58]) {
+  n.set({ ...pose, x: 0, y: 0 });
+  const m = world.getCTM().inverse().multiply(n.headG.getCTM());
+  const pt = new DOMPoint(local[0], local[1]).matrixTransform(m);
+  return [target[0] - pt.x, target[1] - pt.y];
+}
+const MOURN = { flip: -1, lean: 12, head: 16, armsBehind: true, armN: [14, 26, -30, 0.35], armF: [10, 26, -20, 0.35] };
+
+// Title over black, then the present day: an old man alone on a lawn at golden
+// hour, head bowed, like a man at a graveside. "I was seventy-two when I fell
+// into the puppy pit." — for now, the puppy pit could be anything.
 export async function open(svg, ctx) {
-  const S = presentWide(svg);
-  const { defs, root, world, cam, pups, actor } = S;
-  const Zn = 5.3, [nx, ny] = cam.p(2.15, 0, Zn), ns = charScale(cam, Zn);
-  actor.appendChild(contactShadow(defs, nx - 4, ny, 70 * ns, 'golden', 3.2));
+  const { defs, root } = stage(svg);
+  const cam = camera({ f: 2300, H: 0.55, cx: 960, cy: 790 });
+  const world = g({}); root.appendChild(world);
+  const L = goldenGarden(defs, world, cam);
+  const Zn = 5.0, [nx, ny] = cam.p(0.95, 0, Zn), ns = charScale(cam, Zn);
+  world.appendChild(contactShadow(defs, nx - 4, ny, 70 * ns, 'golden', 3.2));
   const n = narrator(defs, { seed: 17 });
-  actor.appendChild(n.root);
+  world.append(n.root, L.fg);
+  root.appendChild(tint(defs, 'golden', { sun: [-200, 380] }));
   const black = el('rect', { x: 0, y: 0, width: 1920, height: 1080, fill: '#060403' });
   const title = el('text', { x: 960, y: 552, 'text-anchor': 'middle', 'font-family': 'EB Garamond', 'font-style': 'italic', 'font-size': 64, fill: '#e9dfcb', 'letter-spacing': '1' }, document.createTextNode('The Puppy Pit'));
   root.append(black, title);
@@ -55,13 +76,35 @@ export async function open(svg, ctx) {
     update(t) {
       title.setAttribute('opacity', kf(t, [[0.35, 0], [1.2, 1, 'sine'], [2.2, 1], [2.8, 0, 'sine']]));
       black.setAttribute('opacity', kf(t, [[2.4, 1], [3.7, 0, 'sine']]));
-      const z = kf(t, [[2.4, 1.0], [ctx.dur, 1.065, 'sine']]);
-      world.setAttribute('transform', camTransform(lerp(960, 1000, (z - 1) / 0.065), lerp(540, 560, (z - 1) / 0.065), z));
-      const tt = on2(t);
+      const u = kf(t, [[2.4, 0], [ctx.dur, 1, 'sine']]);
+      world.setAttribute('transform', camTransform(lerp(960, 1150, u), lerp(540, 470, u), lerp(1.0, 1.07, u)));
       const br = wob(t, 3, 0.35);
-      n.set({ x: nx, y: ny, scale: ns, flip: -1, lean: 12 + br * 0.4, head: 16 + wob(t, 5, 0.2) * 1.5, armsBehind: true,
-        armN: [14, 26, -30, 0.35], armF: [10, 26, -20, 0.35], eyes: (t % 4.3) > 4.15 ? 'closed' : 'open' });
-      pups.forEach(({ p, base }, i) => p.set({ ...base, wag: Math.sin(tt * 4 + i) * 10 }));
+      n.set({ ...MOURN, x: nx, y: ny, scale: ns, lean: 12 + br * 0.4, head: 16 + wob(t, 5, 0.2) * 1.5,
+        eyes: (t > 5.9 && t < 6.05) ? 'closed' : 'open' });
+    },
+  };
+}
+
+// "Not a metaphorical pit. Not a difficult period in my life." — close on him,
+// perfectly grave.
+export async function face(svg, ctx) {
+  const { defs, root } = stage(svg);
+  const cam = camera({ f: 3000, H: 1.6, cx: 960, cy: 520 });
+  const world = g({}); root.appendChild(world);
+  goldenGarden(defs, world, cam, { blur: 7, fenceZ: 9 });
+  const n = narrator(defs, { seed: 17 });
+  world.appendChild(n.root);
+  root.appendChild(tint(defs, 'golden', { sun: [-150, 300] }));
+  const S = 4.1, pose = { ...MOURN, scale: S, head: 14 };
+  const [x0, y0] = placeHead(n, world, pose, [1010, 470]);
+  const blink1 = ctx.W(2, 'not') - ctx.shot.start - 0.45;
+  const close = ctx.W(2, 'life', 'e') - ctx.shot.start;
+  return {
+    update(t) {
+      world.setAttribute('transform', camTransform(990, 520, kf(t, [[0, 1.0], [ctx.dur, 1.05, 'sine']])));
+      const br = wob(t, 3, 0.35);
+      const shut = (t > blink1 && t < blink1 + 0.14) || (t > close + 0.05 && t < close + 0.62);
+      n.set({ ...pose, x: x0, y: y0, lean: 12 + br * 0.3, head: 14 + wob(t, 5, 0.2) * 0.8, eyes: shut ? 'closed' : 'open' });
     },
   };
 }
@@ -109,8 +152,9 @@ export async function notAffection(svg, ctx) {
   const world = g({}); root.appendChild(world);
   world.appendChild(sky(defs, { seed: 21, top: '#a99f94', mid: '#dcc096', low: '#f1cf98', clouds: true }));
   const rimY = 760;
-  const sg = sign(defs, { seed: 4, back: true });
-  const signG = g({ transform: `translate(700 ${rimY + 330}) scale(0.6 0.6) skewY(3)` }, sg.root);
+  // the sign faces the pit, so from down here we get the front of it
+  const sg = sign(defs, { seed: 4 });
+  const signG = g({ transform: `translate(700 ${rimY + 330}) scale(0.5 0.6) skewY(4)` }, sg.root);
   const n = narrator(defs, { seed: 17 });
   // pit walls around the opening: the wall below him rises to the rim; side walls lean in
   const r = rng(5), fr = [];

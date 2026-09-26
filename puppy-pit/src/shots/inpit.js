@@ -1,6 +1,6 @@
 // Inside the pit.
 import { el, g, T, mix, blurFilter, linGrad, radGrad, ellipseD, circleD, rng, lerp, clamp, shape, paintFilter } from '../lib/core.js';
-import { kf, on2, win, wob, step, camTransform } from '../lib/anim.js';
+import { kf, on2, win, wob, step, camTransform, EASE } from '../lib/anim.js';
 import { P } from '../lib/palette.js';
 import { stage, camera, charScale, inPitSet, tint, SKY } from './common.js';
 import { sky } from '../env/garden.js';
@@ -25,9 +25,10 @@ function pitScene(svg, cam, { mode = 'overcast', fence = true, twigs = true } = 
   const world = g({}); root.appendChild(world);
   world.append(L.sky, L.twigs);
   if (fence) world.appendChild(L.fence);
-  world.append(el('rect', { x: -3000, y: cam.p(0, -D, 2.4)[1] - 2, width: 8000, height: 4000, fill: '#30261e' }), L.back, L.shade);
+  // the grass fringe of the far rim goes behind everyone: anything in the pit is nearer than the far wall
+  world.append(el('rect', { x: -3000, y: cam.p(0, -D, 2.4)[1] - 2, width: 8000, height: 4000, fill: '#30261e' }), L.back, L.shade, L.rim);
   const back = g({}), mid = g({}), front = g({});
-  world.append(back, mid, front, L.rim);
+  world.append(back, mid, front);
   return { defs, root, world, L, back, mid, front };
 }
 function addPup(defs, layer, cam, X, Z, view, pose, seed, q = {}, harold = false) {
@@ -123,42 +124,103 @@ export async function coat(svg, ctx) {
 }
 
 // ------------------------------------------------------------------ shoe
-// "Another removed my left shoe."
+// "Another removed my left shoe." A small tug-of-war: the puppy has the toe of
+// the shoe; three tugs, the foot pointing a little further each time, the heel
+// slipping, and on "shoe" it comes away and the puppy sits down hard with it.
 async function shoeShot(svg, ctx) {
   // his feet: legs out to the left (he faces left); the near foot is his left
   const cam = aim(3000, HIP[0] - 0.95, -D + 0.12, HIP[1] - 0.05, 900, 620);
   const S = pitScene(svg, cam, { fence: false, twigs: false });
-  const { defs, back, mid, front } = S;
+  const { defs, world, mid, front } = S;
   const [nx, ny] = cam.p(HIP[0], -D, HIP[1]), ns = charScale(cam, HIP[1]);
   const n = narrator(defs, { seed: 17 });
   mid.appendChild(n.root);
   const thief = puppy(defs, { view: 'side', pose: 'stand', seed: 5 });
-  const theShoe = shoe(defs);
-  const shoeG = g({}, theShoe);
-  front.append(thief.root, shoeG);
-  const tOff = ctx.W(15, 'shoe') - ctx.shot.start;
-  // where his left foot is (screen), from the rig: legs straight out, foot at ~ hip + 370 units along -x
-  const footX = nx - 372 * ns, footY = ny - 30 * ns;
+  const ps = ns * 1.05;
+  const shoeG = g({}, shoe(defs));
+  const pupShadow = el('path', { d: ellipseD(0, 0, 38 * ps, 7 * ps), fill: '#0f0a08', opacity: 0.45 });
+  front.append(pupShadow, shoeG, thief.root);
+  const floorY = ny;
+  const T0 = ctx.W(15, 'shoe') - ctx.shot.start;          // it comes off on "shoe"
+  const TUGS = [[0.2, 0.52, 0.4], [0.62, 0.98, 0.7], [1.06, T0, 1]];
+  const rel = e => world.getCTM().inverse().multiply(e.getCTM());
+  const mat = m => `matrix(${[m.a, m.b, m.c, m.d, m.e, m.f].map(v => +v.toFixed(4)).join(' ')})`;
+  const TOE = new DOMPoint(56, 4);        // grip point on the shoe (ankle space)
+  const MOUTH = new DOMPoint(42, -19);    // grip point in the puppy's head space
+  // how hard it is pulling (0..1) and how far the shoe has slid off the heel (ankle units)
+  function tug(tt) {
+    let pull = 0;
+    TUGS.forEach(([a, b, k], i) => {
+      const u = win(tt, a, b);
+      if (u > 0 && u < 1) pull = Math.max(pull, (i < 2 ? Math.pow(Math.sin(u * Math.PI), 0.8) : EASE.in(u)) * k);
+    });
+    const slide = kf(tt, [[0.3, 0], [0.45, 4, 'out'], [0.75, 5], [0.9, 16, 'out'], [1.1, 17], [T0, 44, 'in']]);
+    return { pull, slide };
+  }
+  function footPose(tt) {
+    const { pull, slide } = tug(tt);
+    // after it lets go the foot springs back and wiggles its toes in the sock
+    const after = tt > T0 ? Math.exp(-(tt - T0) * 7) * Math.sin((tt - T0) * 26) * 10 : 0;
+    const footN = tt < T0 ? -8 + pull * 36 + (slide > 10 ? 6 : 0) : -8 + after;
+    n.set({ ...SITPOSE, x: nx, y: ny, scale: ns, shoeless: true, footN, thighN: -84 + pull * 1.8, shinN: 2 - pull * 1.2,
+      head: -1 + (tt > T0 ? kf(tt, [[T0, 0], [T0 + 0.3, 6, 'out']]) : 0), brow: tt > T0 + 0.1 ? 1 : 0 });
+    return { pull, slide };
+  }
+  // feet on the floor, leaning back as it pulls; the neck bends and the body
+  // slides so that its mouth stays on the toe of the shoe
+  const pupFloor = floorY + 10;
+  function gripPup(tt, pull, toe) {
+    const q = { x: toe.x - 70 * ps, y: pupFloor, scale: ps, flip: 1, rot: 5 * pull, headRot: 20, wag: Math.sin(tt * 16) * 26, earRot: pull * 10 };
+    for (let k = 0; k < 6; k++) {
+      thief.set(q);
+      const piv = new DOMPoint(0, 0).matrixTransform(rel(thief.headRot));
+      const m = MOUTH.matrixTransform(rel(thief.headRot));
+      const L = Math.hypot(m.x - piv.x, m.y - piv.y);
+      q.headRot = clamp(q.headRot + (toe.y - m.y) / (L * Math.PI / 180), -45, 62);
+      q.x += toe.x - m.x;
+    }
+    q.headRot += Math.sin(tt * 30) * 1.5 * pull;
+    thief.set(q);
+    return q;
+  }
+  const shoeAt = slide => rel(n.legN.ankle).translate(slide, -slide * 0.08).rotate(slide * 0.35);
+  // the shoe's pose inside the puppy's head at the moment it comes away
+  footPose(T0 - 1e-3);
+  const { slide: s0 } = tug(T0 - 1e-3);
+  const toe0 = TOE.matrixTransform(shoeAt(s0));
+  const q0 = gripPup(T0, 1, toe0);
+  const inMouth = rel(thief.headRot).inverse().multiply(shoeAt(s0));
+  const px0 = q0.x, py0 = q0.y, hr0 = q0.headRot;
+  thief.headRot.insertBefore(g({ class: 'carried' }), thief.headRot.firstChild);
+  const carried = thief.headRot.firstChild;
   return {
     update(t) {
       S.world.setAttribute('transform', camTransform(960, 560, kf(t, [[0, 1.0], [ctx.dur, 1.03, 'sine']])));
       const tt = on2(t);
-      const off = tt >= tOff;
-      // two tugs before it comes off (the foot jerks with each)
-      const tug = tt < tOff ? Math.max(0, Math.sin((tt - 0.4) * 9)) * win(tt, 0.4, 0.6) : 0;
-      n.set({ ...SITPOSE, x: nx, y: ny, scale: ns, shoeless: off, footN: -8 - tug * 6, thighN: -84 + tug * 1.5 });
-      // thief: comes in from the left, grabs the heel, leans back, then trots off left with the prize
-      const arrive = kf(tt, [[0, -260], [0.45, 0, 'out']]);
-      const away = off ? kf(tt, [[tOff + 0.15, 0], [ctx.dur, -900, 'in']]) : 0;
-      const lean = off ? 0 : tug * 22;
-      const px = footX - 120 * ns + arrive + away - lean;
-      thief.set({ x: px, y: footY + 150 * ns, scale: ns * 1.05, flip: off ? -1 : 1, headRot: off ? -6 : 18 - tug * 8, rot: off ? 0 : -tug * 6,
-        trot: (tt < 0.45 || off) ? tt * 3.2 : null, wag: Math.sin(tt * 16) * 30 });
-      if (off) {
-        // shoe in its mouth, heel first
-        shoeG.style.display = '';
-        shoeG.setAttribute('transform', `translate(${px - 58 * ns * 1.05} ${footY + 150 * ns - 64 * ns * 1.05}) scale(${-ns * 0.95} ${ns * 0.95}) rotate(-20)`);
-      } else shoeG.style.display = 'none';
+      const { pull, slide } = footPose(tt);
+      if (tt < T0) {
+        const toe = TOE.matrixTransform(shoeAt(slide));
+        const px = gripPup(tt, pull, toe).x;
+        if (shoeG.parentNode !== front) front.insertBefore(shoeG, thief.root);
+        shoeG.setAttribute('transform', mat(shoeAt(slide)));
+        pupShadow.setAttribute('transform', `translate(${px} ${floorY})`);
+      } else {
+        // lands on its bottom, shakes the prize, turns, and trots off with it
+        const dt = tt - T0;
+        const recoil = kf(dt, [[0, 0], [0.16, 1, 'out']]);
+        const turned = dt > 0.42;
+        const away = turned ? EASE.in(win(dt, 0.42, 1.1)) * 900 : 0;
+        const px = px0 - recoil * 34 * ps - away, py = py0 - (turned ? Math.abs(Math.sin(dt * 18)) * 3 * ps : 0);
+        const shake = dt > 0.16 && dt < 0.42 ? Math.sin(dt * 55) * 9 : 0;
+        const settle = kf(dt, [[0, hr0], [0.3, -2, 'out']]);
+        thief.set({ x: px, y: py, scale: ps, flip: turned ? -1 : 1, rot: turned ? 0 : lerp(5, -14, recoil) * (1 - win(dt, 0.25, 0.42)),
+          headRot: turned ? -2 : settle + shake, wag: Math.sin(tt * 18) * 30, trot: turned ? tt * 3.4 : null, earRot: 8 });
+        if (shoeG.parentNode !== carried) carried.appendChild(shoeG);
+        // held by the toe, it swings down to dangle from the mouth (and sways as it trots)
+        const swing = kf(dt, [[0, 0], [0.32, 1, 'back']]) * 128 + (turned ? Math.sin(dt * 18) * 6 : 0);
+        shoeG.setAttribute('transform', mat(new DOMMatrix().translate(MOUTH.x, MOUTH.y).rotate(swing).translate(-MOUTH.x, -MOUTH.y).multiply(inMouth)));
+        pupShadow.setAttribute('transform', `translate(${px} ${floorY})`);
+      }
     },
   };
 }
@@ -208,9 +270,9 @@ export async function onHead(svg, ctx) {
   const S = lowHead(svg, ctx);
   const { defs, world, n } = S;
   const hp = puppy(defs, { view: 'side', pose: 'sit', seed: 6, harold: true });   // Harold, as it turns out
+  // the climber lives in the same head slot at the same scale, so it can't change size on arrival
   const climbing = puppy(defs, { view: 'side', pose: 'beg', seed: 6, harold: true });
-  n.slots.head.appendChild(hp.root);
-  world.appendChild(climbing.root);
+  n.slots.head.append(climbing.root, hp.root);
   const tSat = ctx.W(16, 'sat') - ctx.shot.start;
   const tBark = ctx.W(16, 'barking') - ctx.shot.start;
   const beats = [0, 0.26, 0.5, 0.84, 1.1, 1.36, 1.7, 1.94, 2.2, 2.56].map(b => tBark + b);
@@ -220,9 +282,11 @@ export async function onHead(svg, ctx) {
       const tt = on2(t);
       const seated = tt >= tSat;
       n.set({ ...SITPOSE, x: 1130, y: 1640, scale: 3.3, head: -1, eyes: (tt > 3.2 && tt < 3.35) ? 'closed' : 'open', chestPup: true });
-      // the climber scrambles up his back, then becomes the one sitting on his head
-      const up = kf(tt, [[0.1, 0], [tSat, 1, 'io']]);
-      climbing.set({ x: 1330 - up * 120, y: 1320 - up * 720 + Math.sin(tt * 20) * 5 * (1 - up), scale: 2.0, flip: -1, headRot: -12, rot: -18 + up * 20, wag: Math.sin(tt * 14) * 24 });
+      // the climber scrambles up the back of his coat and over his head (slot units:
+      // +x is forward, toward his face; +y is down), then settles as the one sitting there
+      const up = kf(tt, [[0, 0], [tSat - 0.12, 1, 'io']]);
+      const scr = Math.sin(tt * 20) * 3 * (1 - up);
+      climbing.set({ x: lerp(-58, 2, up), y: lerp(215, 14, up) + scr, scale: 0.95, flip: 1, headRot: lerp(-24, -6, up) + scr, rot: lerp(-30, -8, up), wag: Math.sin(tt * 14) * 24 });
       climbing.root.style.display = seated ? 'none' : '';
       hp.root.style.display = seated ? '' : 'none';
       const barking = beats.some(b => tt >= b && tt < b + 0.14);
@@ -328,9 +392,9 @@ export async function twenty(svg, ctx) {
   const world = g({}); root.appendChild(world);
   const skyDusk = sky(defs, { seed: 8, ...SKY.dusk });
   const skyLate = sky(defs, { seed: 8, ...SKY.late });
-  world.append(L.sky, skyLate, skyDusk, L.twigs, L.fence, L.back, L.shade);
+  world.append(L.sky, skyLate, skyDusk, L.twigs, L.fence, L.back, L.shade, L.rim);
   const back = g({}), mid = g({}), front = g({});
-  world.append(back, mid, front, L.rim);
+  world.append(back, mid, front);
   glassesOnFloor(back, cam, -0.35, 3.2);
   const [nx, ny] = cam.p(HIP[0], -D, HIP[1]), ns = charScale(cam, HIP[1]);
   const n = narrator(defs, { seed: 17 });
@@ -362,13 +426,13 @@ export async function twenty(svg, ctx) {
   // light: overcast -> late afternoon -> dusk
   const late = tint(defs, 'late'), dusk = tint(defs, 'dusk');
   root.append(late, dusk);
-  const cuts = [0, 2.3, 4.6, ctx.W(26, 'confidence') - ctx.shot.start - 0.35];
+  const cuts = [0, 1.6, ctx.W(26, 'climbed') - ctx.shot.start - 0.1, ctx.W(26, 'confidence') - ctx.shot.start - 0.35];
   return {
     update(t) {
       const tt = on2(t);
       const k = cuts.filter(c => t >= c).length - 1;
       world.setAttribute('transform', camTransform(1000, 560, 1.03));
-      const lateA = kf(t, [[0, 0], [4.6, 1, 'lin'], [ctx.dur, 0.4]]), duskA = kf(t, [[2.3, 0], [ctx.dur, 1, 'lin']]);
+      const lateA = kf(t, [[0, 0.15], [cuts[2], 1, 'lin'], [ctx.dur, 0.4]]), duskA = kf(t, [[cuts[1], 0], [ctx.dur, 1, 'lin']]);
       late.setAttribute('opacity', lateA); dusk.setAttribute('opacity', duskA);
       skyLate.setAttribute('opacity', lateA); skyDusk.setAttribute('opacity', duskA);
       // him: perfectly still, very upright
@@ -391,37 +455,6 @@ export async function twenty(svg, ctx) {
         if (view === 'side') q.flip = flip; else { q.look = k === 3 ? 0 : 2.2; q.lookY = 0; }
         v.p.set(q);
       });
-    },
-  };
-}
-
-// ------------------------------------------------------------------ lifted
-// "They lifted me out." — up the ladder, out of the top of the frame
-export async function lifted(svg, ctx) {
-  const cam = camera({ ...BASE, cx: 900, cy: 700 });
-  const S = pitScene(svg, cam, { mode: 'dusk', fence: true });
-  const { defs, root, back, mid, front } = S;
-  const [lx, ly] = cam.p(0.2, -D, 3.72), lsc = charScale(cam, 3.72);
-  back.appendChild(g({ transform: `translate(${lx} ${ly}) rotate(-6) scale(${lsc})` }, ladder(defs, { len: 2.4 })));
-  const n = narrator(defs, { seed: 17 });
-  mid.appendChild(n.root);
-  const pups = [
-    addPup(defs, front, cam, -1.1, 3.3, 'side', 'sit', 3, { headRot: -34 }),
-    addPup(defs, front, cam, -0.55, 3.25, 'front', 'sit', 4, { look: 1.5, lookY: -2.6 }),
-    addPup(defs, front, cam, 0.7, 3.3, 'side', 'sit', 9, { headRot: -36, flip: -1 }),
-  ];
-  root.appendChild(tint(defs, 'dusk'));
-  return {
-    update(t) {
-      const tt = on2(t);
-      const climb = kf(tt, [[0, 0], [ctx.dur, 1, 'in']]);
-      const ph = tt * 3.2;
-      const [x, y] = cam.p(0.2, -D + climb * 2.2, 3.55);
-      n.set({ x, y, scale: lsc, flip: -1, lean: 4, head: -10, shoeless: true, tuft: true, buttons: 2,
-        thighN: -40 + Math.sin(ph * Math.PI) * 30, shinN: 50 - Math.sin(ph * Math.PI) * 30, footN: -10,
-        thighF: -40 - Math.sin(ph * Math.PI) * 30, shinF: 50 + Math.sin(ph * Math.PI) * 30, footF: -10,
-        armN: [-160, 10, 0, 1], armF: [-150, 0, 0, 1] });
-      pups.forEach(({ p, base }, i) => p.set({ ...base, wag: Math.sin(tt * 8 + i) * 14 }));
     },
   };
 }

@@ -2,6 +2,7 @@
 // Units: ~720 = standing height. Root origin = ground under the hip.
 import { el, g, shape, ellipseD, circleD, T, paintFilter, clipTo, mix, uid } from '../lib/core.js';
 import { P } from '../lib/palette.js';
+import { limb } from './limbs.js';
 
 const LEN = { thigh: 188, shin: 188, upper: 140, fore: 120 };
 const LINE = { coat: '#1f2626', trousers: '#3f3d39', skin: '#9a6f5c', hair: '#a8a295', shoe: '#2c1c14', scarf: '#4a2522' };
@@ -333,6 +334,100 @@ export function narratorFront(defs, opts = {}) {
       eyesShutF.style.display = blink ? '' : 'none';
       eyesF.setAttribute('transform', T(look[0], look[1]));
       mousF.setAttribute('transform', talk ? `translate(0 ${(-1 - talk * 2).toFixed(2)})` : '');
+    },
+  };
+}
+
+// ============================================================== BACK VIEW
+// Seen from behind (climbing out, facing the wall). Units 400 = 1 m, origin =
+// between the feet. The arms are two-point limbs so the hands can be put
+// exactly where the helpers are holding them. Groups: `upper` (coat, arms,
+// head) pivots at the hips so he can tip over the edge; `legs` hang below it.
+export function narratorBack(defs, opts = {}) {
+  const seed = opts.seed || 91;
+  const texCoat = paintFilter(defs, { freq: [0.07, 0.012], strength: 0.2, tooth: 0.1, seed });
+  const texCloth = paintFilter(defs, { freq: [0.09, 0.02], strength: 0.18, tooth: 0.1, seed: seed + 1 });
+  const texSkin = paintFilter(defs, { freq: 0.06, strength: 0.14, tooth: 0.06, seed: seed + 3 });
+  let s = seed * 5;
+  const R = (amp = 1.1, wl = 24, more = {}) => ({ amp, wl, seed: ++s, ...more });
+  const HIP = -330;
+  // legs: trousers from under the coat to the heel; his left (screen left) is in a sock
+  function legBack(side, sock) {
+    const x = side * 25;
+    const trouser = shape(`M${x - 21} ${HIP + 40} L${x - 19} -18 L${x + 19} -18 L${x + 21} ${HIP + 40}Z`, P.trousers, { r: R(1), line: LINE.trousers });
+    const crease = shape(`M${x - 21} ${HIP + 40} L${x - 19} -18 L${x - 8} -18 L${x - 9} ${HIP + 40}Z`, P.trousersDark, { r: R(0.6), opacity: 0.5 });
+    const heel = sock
+      ? g({}, shape(`M${x - 17} -26 C${x - 20} -8, ${x - 14} 3, ${x} 3 C${x + 14} 3, ${x + 20} -8, ${x + 17} -26Z`, P.sock, { r: R(0.6, 8), line: '#555' }),
+        el('path', { d: `M${x - 12} -8 C${x - 6} -3, ${x + 6} -3, ${x + 12} -8`, stroke: P.sockDark, 'stroke-width': 3, fill: 'none', opacity: 0.8 }))
+      : g({}, shape(`M${x - 21} -28 C${x - 24} -8, ${x - 16} 5, ${x} 5 C${x + 16} 5, ${x + 24} -8, ${x + 21} -28Z`, P.shoe, { r: R(0.6, 8), line: LINE.shoe }),
+        shape(`M${x - 19} -4 C${x - 12} 4, ${x + 12} 4, ${x + 19} -4 L${x + 18} 4 C${x + 10} 8, ${x - 10} 8, ${x - 18} 4Z`, P.shoeDark, { r: R(0.4, 6) }));
+    return g({ filter: texCloth }, trouser, crease, heel);
+  }
+  const legL = legBack(-1, true), legR = legBack(1, false);
+  const legs = g({}, legL, legR);
+  // coat, from behind: centre seam, vent, half-belt
+  const coatD = 'M-66 -560 C-74 -520, -72 -420, -68 -330 C-66 -260, -70 -200, -76 -140 C-40 -132, 40 -132, 76 -140 C70 -200, 66 -260, 68 -330 C72 -420, 74 -520, 66 -560 C40 -574, -40 -574, -66 -560Z';
+  const coat = g({ filter: texCoat },
+    shape(coatD, P.coat, { r: R(1.2, 30), line: LINE.coat }),
+    shape('M-66 -560 C-74 -520, -72 -420, -68 -330 C-66 -260, -70 -200, -76 -140 L-50 -138 C-48 -220, -48 -330, -48 -470Z', P.coatDark, { r: R(1, 30), opacity: 0.55 }),
+    shape('M66 -560 C74 -520, 72 -420, 68 -330 C66 -260, 70 -200, 76 -140 L56 -138 C54 -220, 54 -330, 56 -470Z', P.coatDark, { r: R(1, 30), opacity: 0.35 }),
+    el('path', { d: 'M0 -556 L1 -250', stroke: P.coatDark, 'stroke-width': 3.5, opacity: 0.85 }),
+    // vent: the right panel overlaps the left
+    shape('M1 -250 L-2 -140 L20 -138 L14 -250Z', P.coatDark, { r: R(0.5, 12), opacity: 0.45 }),
+    el('path', { d: 'M1 -250 L-2 -140', stroke: '#1c2222', 'stroke-width': 2.5, opacity: 0.9 }),
+    shape('M-62 -356 L62 -356 L62 -330 L-62 -330Z', P.coatDark, { r: R(0.6, 16), opacity: 0.8 }),
+    el('path', { d: circleD(-50, -343, 5), fill: P.button }), el('path', { d: circleD(50, -343, 5), fill: P.button }),
+    shape('M-76 -168 C-40 -160, 40 -160, 76 -168 L76 -140 C40 -132, -40 -132, -76 -140Z', P.coatDark, { r: R(1, 30), opacity: 0.45 }));
+  // collar and the back of the scarf
+  const collar = g({ filter: texCloth },
+    shape('M-50 -592 C-30 -604, 30 -604, 50 -592 C54 -578, 50 -562, 44 -556 C20 -562, -20 -562, -44 -556 C-50 -562, -54 -578, -50 -592Z', P.scarf, { r: R(0.8, 12), line: LINE.scarf }),
+    shape('M-60 -566 C-40 -576, 40 -576, 60 -566 L64 -548 C40 -556, -40 -556, -64 -548Z', P.coatDark, { r: R(0.7, 14), line: LINE.coat }));
+  // the back of his head: mostly bald crown; a horseshoe of grey-white hair
+  // hugging the back from ear to ear; the neck going down into his collar
+  const head = g({},
+    g({ filter: texSkin },
+      shape('M-17 -616 L-15 -588 L15 -588 L17 -616Z', P.skinDark, { r: R(0.3, 6), line: LINE.skin, lw: 1 }),
+      shape('M-38 -656 C-42 -696, -26 -724, 0 -724 C26 -724, 42 -696, 38 -656 C36 -634, 22 -618, 0 -616 C-22 -618, -36 -634, -38 -656Z', P.skin, { r: R(0.6, 14), line: LINE.skin, lw: 1.4 }),
+      shape('M-30 -700 C-20 -712, 20 -712, 30 -700 C24 -690, -24 -690, -30 -700Z', '#f3dcc8', { r: R(0.3, 10), opacity: 0.45 })),
+    shape('M-40 -670 C-42 -652, -36 -634, -24 -624 C-14 -617, 14 -617, 24 -624 C36 -634, 42 -652, 40 -670 C33 -664, 30 -652, 22 -644 C14 -638, -14 -638, -22 -644 C-30 -652, -33 -664, -40 -670Z', P.hairDark, { r: R(0.8, 6, { tufts: 1.5, tuftLen: 5 }), line: LINE.hair, lw: 1 }),
+    el('path', { d: 'M-32 -650 C-28 -640, -22 -632, -14 -627 M-4 -632 C0 -630, 4 -630, 8 -631 M16 -628 C24 -634, 30 -642, 33 -652', stroke: '#b3ad9f', 'stroke-width': 1.3, fill: 'none', opacity: 0.8 }),
+    el('path', { d: 'M-14 -616 C-6 -612, 6 -612, 14 -616', stroke: P.skinDeep, 'stroke-width': 1.3, fill: 'none', opacity: 0.5 }),
+    g({ filter: texSkin },
+      shape(ellipseD(-43, -658, 8, 15, -14), P.skin, { r: R(0.4, 8), line: LINE.skin, lw: 1.2 }),
+      shape(ellipseD(43, -658, 8, 15, 14), P.skin, { r: R(0.4, 8), line: LINE.skin, lw: 1.2 })));
+  const tuft = shape('M-4 -716 C-10 -732, -2 -746, 8 -748 C2 -738, 2 -728, 6 -718Z', P.hair, { r: R(0.4, 6), line: LINE.hair, lw: 1.1, style: 'display:none' });
+  const headTop = g({ transform: 'translate(0 -714)' });   // something asleep on his head
+  head.append(tuft, headTop);
+  const mkArm = (dark, sd) => limb(defs, { w0: 44, w1: 34, fill: dark ? P.coatDark : P.coat, dark: dark ? mix(P.coatDark, P.ink, 0.3) : P.coatDark, line: LINE.coat, handFill: dark ? P.skinDark : P.skin, handLine: LINE.skin, seed: seed + sd, filter: texCoat, handFilter: texSkin });
+  const armL = mkArm(false, 40), armR = mkArm(true, 50);
+  const SH = [[-58, -546], [58, -546]];
+  // the coat is cut at the hips: the skirt hangs with the legs, the rest tips with him
+  const cutUp = uid('nbUp'), cutDn = uid('nbDn');
+  defs.appendChild(el('clipPath', { id: cutUp }, el('rect', { x: -300, y: -1200, width: 600, height: 1200 + HIP + 1.5 })));
+  defs.appendChild(el('clipPath', { id: cutDn }, el('rect', { x: -300, y: HIP, width: 600, height: 600 })));
+  const skirt = g({}, g({ 'clip-path': `url(#${cutDn})` }, coat.cloneNode(true)));
+  const upper = g({}, g({ 'clip-path': `url(#${cutUp})` }, coat), collar, head);
+  const upperPiv = g({}, upper);
+  // arms live outside the tipping group (so they never squash) and behind the coat
+  const arms = g({}, armL.root, armR.root);
+  const root = g({ class: 'narrator-back' }, legs, skirt, arms, upperPiv);
+  return {
+    root, upper: upperPiv, arms, legs, skirt, legL, legR, SH, HIP, slots: { head: headTop },
+    // hands: [[x,y],[x,y]] wrist targets in rig units (left, right); lift: feet raised
+    set({ x = 0, y = 0, scale = 1, rot = 0, hands = [[-70, -800], [70, -800]], liftL = 0, liftR = 0, tip = 0, sink = 0, tuft: tf = true, headTilt = 0 } = {}) {
+      root.setAttribute('transform', `translate(${x} ${y}) rotate(${rot}) scale(${scale})`);
+      legL.setAttribute('transform', `translate(0 ${-liftL})`);
+      legR.setAttribute('transform', `translate(0 ${-liftR})`);
+      // tipping forward over the edge: from below, the torso shortens toward the hips and drops
+      upperPiv.setAttribute('transform', `translate(0 ${sink}) translate(0 ${HIP}) scale(1 ${(1 - tip).toFixed(4)}) translate(0 ${-HIP})`);
+      // the head keeps its shape when the torso tips (undo the squash about the neck)
+      const k = Math.max(0.2, 1 - tip);
+      head.setAttribute('transform', `translate(0 -596) scale(1 ${(1 / k).toFixed(4)}) translate(0 596)` + (headTilt ? ` rotate(${headTilt} 0 -596)` : ''));
+      tuft.style.display = tf ? '' : 'none';
+      // the arms reach from the (tipped) shoulders to the hands
+      const sq = ([sx, sy]) => [sx, HIP + (sy - HIP) * (1 - tip) + sink];
+      armL.set(sq(SH[0]), hands[0]);
+      armR.set(sq(SH[1]), hands[1]);
     },
   };
 }

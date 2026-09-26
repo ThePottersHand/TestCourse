@@ -12,7 +12,7 @@ export async function help(svg, ctx) {
   const { defs, root } = stage(svg);
   const cam = camera({ f: 3300, H: 0.42, cx: 960, cy: 470 });
   const pitX = [-1.0, 1.1], pitZ = [3.6, 5.8];
-  const L = gardenSet(defs, cam, { mode: 'overcast', fenceZ: 9.5, housesZ: 70, pitX, pitZ, D: 1.6, signAt: [1.2, 4.4], signScaleX: 0.7, signSkew: -3, fg: false, leaves: 30, seed: 4 });
+  const L = gardenSet(defs, cam, { mode: 'overcast', fenceZ: 9.5, housesZ: 70, pitX, pitZ, D: 1.6, signAt: null, fg: false, leaves: 30, seed: 4 });
   const world = g({}); root.appendChild(world);
   world.append(L.sky, L.far, L.houses, L.trees, L.bushes, L.fence, L.lawn, L.pit.back, L.pit.rim);
   const Zn = 4.5, ns = charScale(cam, Zn);

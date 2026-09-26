@@ -9,7 +9,7 @@ import { ladder } from '../props/misc.js';
 
 function duskGarden(defs, root, cam, { blur = 0 } = {}) {
   const pitX = [-3.3, -1.2], pitZ = [5.0, 7.0];
-  const L = gardenSet(defs, cam, { mode: 'dusk', fenceZ: 10.5, pitX, pitZ, D: 1.6, signAt: [1.8, 5.3], signScaleX: 0.8, signSkew: -2, fg: false, leaves: 40, seed: 6 });
+  const L = gardenSet(defs, cam, { mode: 'dusk', fenceZ: 10.5, pitX, pitZ, D: 1.6, signAt: [1.8, 5.3], signYaw: 80, fg: false, leaves: 40, seed: 6 });
   const bg = g(blur ? { filter: blurFilter(defs, blur) } : {}, L.sky, L.far, L.houses, L.trees, L.bushes, L.fence, L.lawn, L.pit.back, L.pit.rim);
   // the ladder left standing in the hole, top poking out
   const [lx, ly] = cam.p(-1.65, -1.6, 6.5), ls = charScale(cam, 6.5);

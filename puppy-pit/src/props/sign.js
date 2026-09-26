@@ -43,5 +43,6 @@ export function sign(defs, { seed = 2, back = false, text = ['PLEASE DO NOT', 'F
     el('rect', { x: -26, y: sy + H - 20, width: 52, height: 9, rx: 3, fill: P.tie }),
     el('path', { d: `M26 ${sy + 16} l20 -7 M26 ${sy + H - 16} l18 6`, stroke: P.tie, 'stroke-width': 5, 'stroke-linecap': 'round' }));
   const board = g({ filter: tex }, parts);
-  return { root: g({}, stake, board, ties), stake, board, W, H, top };
+  // from behind, the stake is in front of the sheet
+  return { root: back ? g({}, board, ties, stake) : g({}, stake, board, ties), stake, board, W, H, top };
 }

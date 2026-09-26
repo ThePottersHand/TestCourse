@@ -8,8 +8,9 @@ import { tuft } from '../env/garden.js';
 
 function backdrop(defs, root, { f = 1500, H = 1.3, blur = 6 } = {}) {
   const cam = camera({ f, H, cx: 960, cy: 540 });
-  const L = gardenSet(defs, cam, { mode: 'overcast', fenceZ: 7.5, pitX: [-3.4, -1.3], pitZ: [2.6, 4.8], D: 1.2, signAt: null, fg: false, seed: 3 });
-  const bg = g({ filter: blurFilter(defs, blur) }, L.sky, L.far, L.houses, L.trees, L.bushes, L.fence, L.lawn, L.pit.back, L.pit.rim);
+  const L = gardenSet(defs, cam, { mode: 'overcast', fenceZ: 7.5, pitX: [-30, -29], pitZ: [2.6, 4.8], D: 1.2, signAt: null, fg: false, seed: 3 });
+  // we are standing where he stood, so the pit is behind the camera
+  const bg = g({ filter: blurFilter(defs, blur) }, L.sky, L.far, L.houses, L.trees, L.bushes, L.fence, L.lawn);
   root.appendChild(bg);
   return { cam, L, bg };
 }

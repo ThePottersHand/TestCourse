@@ -34,35 +34,31 @@ function cast(set, defs, layout, { harold = 4, seedOff = 0 } = {}) {
 }
 const place = (q, x, y, rot) => { q.sh.setAttribute('cx', x); q.sh.setAttribute('cy', y + 8 * q.sc); q.sh.setAttribute('transform', `rotate(${rot} ${x} ${y})`); };
 
-// "Not a metaphorical pit. Not a difficult period in my life." — descending into the dark
+// "An actual hole in the ground, containing..." — from high above, sinking toward
+// it. The bottom is lost in shadow; whatever it contains, we can't see yet.
 export async function abyss(svg, ctx) {
   const { defs, root } = stage(svg);
-  const set = topPitSet(defs, { mode: 'overcast', seed: 5 });
+  const set = topPitSet(defs, { mode: 'overcast', seed: 7, gloom: 1 });
   root.appendChild(set.root);
-  const dark = el('rect', { x: 0, y: 0, width: 1920, height: 1080, fill: '#050303', opacity: 0 });
-  root.appendChild(dark);
   return {
     update(t) {
-      set.update(kf(t, [[0, 7.0], [ctx.dur, 0.3, 'io']]));
-      dark.setAttribute('opacity', kf(t, [[0, 0], [ctx.dur * 0.45, 0.18, 'in'], [ctx.dur - 0.5, 0.97, 'io'], [ctx.dur, 1]]));
+      set.update(kf(t, [[0, 7.5], [ctx.dur, 3.3, 'out']]));
     },
   };
 }
 
-// "An actual hole in the ground, containing puppies. There were nine of them, all golden and enthusiastic,"
+// "...puppies. There were nine of them, all golden and enthusiastic," — cut in on
+// the word: nine faces turning up to us.
 export async function reveal(svg, ctx) {
   const { defs, root } = stage(svg);
   const set = topPitSet(defs, { mode: 'overcast', seed: 7 });
   const pups = cast(set, defs, HEAP);
   root.appendChild(set.root);
-  const black = el('rect', { x: 0, y: 0, width: 1920, height: 1080, fill: '#050303' });
-  root.appendChild(black);
-  const wake = ctx.W(3, 'puppies') - ctx.shot.start;
+  const wake = Math.max(0.05, ctx.W(3, 'puppies') - ctx.shot.start);
   const keen = ctx.W(4, 'golden') - ctx.shot.start;
   return {
     update(t) {
-      black.setAttribute('opacity', kf(t, [[0, 1], [0.7, 0, 'out']]));
-      set.update(kf(t, [[0, 2.2], [ctx.dur, 1.6, 'sine']]));
+      set.update(kf(t, [[0, 2.1], [ctx.dur, 1.6, 'sine']]));
       const tt = on2(t);
       pups.forEach((q, j) => {
         const { p, i, x, y, sc, rot } = q;
