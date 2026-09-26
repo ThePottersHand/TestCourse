@@ -44,7 +44,7 @@ export async function smell(svg, ctx) {
   const lying = g({}, n.root);
   // puppies: one sniffing from above his head, one at his cheek, one licking at the end
   const pA = puppy(defs, { view: 'side', pose: 'stand', seed: 3 });     // behind his head, facing right
-  const pB = puppy(defs, { view: 'side', pose: 'stand', seed: 8 });     // over his chest, facing left
+  const pB = puppy(defs, { view: 'side', pose: 'stand', seed: 7 });     // over his chest, facing left
   const pC = puppy(defs, { view: 'front', pose: 'sit', seed: 5 });      // in the back, watching
   const back = g({}, pC.root), mid = g({}, pA.root), front = g({}, pB.root);
   world.append(back, lying, mid, front);

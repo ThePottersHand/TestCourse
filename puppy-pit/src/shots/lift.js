@@ -9,7 +9,7 @@
 // is in the pit nothing of him is clipped (he is in front of the wall); as he
 // goes over, his legs are clipped below the rim line, so they disappear over the
 // edge instead of passing through it.
-import { el, g, lerp, ellipseD } from '../lib/core.js';
+import { el, g, lerp } from '../lib/core.js';
 import { kf, on2, win, camTransform, EASE } from '../lib/anim.js';
 import { stage, camera, charScale, inPitSet, tint } from './common.js';
 import { narratorBack } from '../chars/narrator.js';
@@ -29,15 +29,11 @@ export async function lifted(svg, ctx) {
   const above = clip('liftAbove', -3000, rimY + 1), below = clip('liftBelow', rimY - 1, 4000);
   world.append(L.sky, L.twigs, L.fence);
 
-  // --- the helpers, kneeling just beyond the far edge
-  const Zh = 4.0, hs = charScale(cam, Zh);
+  // --- the helpers, either side of the ladder just beyond the far edge: Colin kneeling,
+  // his daughter standing. The lip of the lawn hides his knees and her feet.
+  const Zh = 4.0;
   const colin = colinOverFence(defs, { seed: 64 });
   const kid = daughter(defs, { pose: 'reach', seed: 81 });
-  // kneeling up at the edge either side of the ladder; the rim hides them from the knees
-  // (Colin) and from the hem of her coat (her) down
-  const cs = hs * 0.86;                                          // (his rig is broad: slim him to match)
-  const [cx0, cy0] = cam.p(-0.32, 0.82, Zh);                     // Colin's chest (rig origin): kneeling up
-  const [kx0, ky0] = cam.p(1.0, 0, Zh);                          // her feet: she stands at the edge, bending to it
   world.appendChild(g({ 'clip-path': above }, colin.root, kid.root));
   world.append(el('rect', { x: -3000, y: cam.p(0, -D, 2.4)[1] - 2, width: 8000, height: 4000, fill: '#30261e' }), L.back, L.shade, L.rim);
 
@@ -46,17 +42,9 @@ export async function lifted(svg, ctx) {
   const [lfx, lfy] = cam.p(0.34, -D, 3.55), [, lty] = cam.p(0.34, 0.06, ZF), ls = charScale(cam, 3.68);
   world.appendChild(g({ transform: `translate(${lfx} ${lfy}) scale(${ls})` }, ladder(defs, { len: (lfy - lty) / ls / 400, w: 0.44 })));
 
-  // --- the three that stayed, at the bottom of the frame, watching
-  const pups = [[-0.55, 3.0, 5, -1, -34], [0.95, 2.95, 9, 1, -30], [1.35, 3.05, 3, -1, -38]].map(([X, Z, sd, fl, hr]) => {
-    const p = puppy(defs, { view: 'side', pose: 'sit', seed: sd });
-    const [x, y] = cam.p(X, -D, Z), sc = charScale(cam, Z);
-    world.append(el('path', { d: ellipseD(x, y + 1, 36 * sc, 8 * sc), fill: '#0f0a08', opacity: 0.5 }), p.root);
-    return { p, x, y, sc, fl, hr };
-  });
-
-  // --- him, from behind. His top half and his legs sit in separate wrappers so
-  // they can be clipped differently as he goes over.
-  const Zn = 3.42, ns = charScale(cam, Zn);
+  // --- him, from behind. His legs sit in their own wrapper so they can be clipped
+  // at the rim as they go over the edge.
+  const Zn = 3.42;
   const n = narratorBack(defs, { seed: 93 });
   // Harold is still asleep on his head, and comes out with him
   const hp = puppy(defs, { view: 'side', pose: 'lie', seed: 6, harold: true });
@@ -115,7 +103,7 @@ export async function lifted(svg, ctx) {
       const kick = over > 0 && over < 1 ? Math.sin((tt - tOver) * 22) * 24 * (1 - over) : 0;
       n.set({ x: fx, y: fy, scale: so, hands: [[(gL[0] - fx) / so, (gL[1] - fy) / so], [(gR[0] - fx) / so, (gR[1] - fy) / so]],
         liftL: stepL + Math.max(0, kick), liftR: stepR + Math.max(0, -kick), tip: eo * 0.4, sink: 0, tuft: true, headTilt: (brace - lean) * 3 + eo * 5 });
-      hp.set({ x: 6, y: 2, scale: 0.85, flip: -1, headRot: 10 + Math.max(h1, h2) * 0 , blink: true, wag: 0, rot: (brace - lean) * 2 });
+      hp.set({ x: 6, y: 2, scale: 0.85, flip: -1, headRot: 10, blink: true, wag: 0, rot: (brace - lean) * 2 });
       const rt = n.root.getAttribute('transform');
       upT.setAttribute('transform', rt);
       // his legs: in the pit they're in front of the wall; as they're dragged over the edge
@@ -123,7 +111,6 @@ export async function lifted(svg, ctx) {
       const drag = Math.max(0, fy - rimY + 30) * EASE.in(win(tt, tOver + 0.05, tGone));
       legT.setAttribute('transform', `translate(0 ${-drag}) ${rt}`);
       if (over > 0) legWrap.setAttribute('clip-path', below); else legWrap.removeAttribute('clip-path');
-      pups.forEach(({ p, x, y, sc, fl, hr }, i) => p.set({ x, y, scale: sc, flip: fl, headRot: hr - Math.max(h2, over) * 12, wag: Math.sin(tt * 8 + i) * 14 }));
     },
   };
 }

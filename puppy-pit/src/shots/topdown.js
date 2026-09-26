@@ -19,9 +19,9 @@ const GATHER = [
   [-0.06, -0.4, 0],
 ];
 
-function cast(set, defs, layout, { harold = 4, seedOff = 0 } = {}) {
+function cast(set, defs, layout, { harold = 4, seedOff = 0, skip = -1 } = {}) {
   const pups = [];
-  const order = layout.map((v, i) => [v, i]).sort((a, b) => b[0][1] - a[0][1]);
+  const order = layout.map((v, i) => [v, i]).filter(([, i]) => i !== skip).sort((a, b) => b[0][1] - a[0][1]);
   order.forEach(([[X, G, rot], i]) => {
     const p = puppy(defs, { view: 'top', seed: i + 1 + seedOff, harold: i === harold });
     const [x, y, sc] = set.floorAt(X, G);
@@ -77,11 +77,11 @@ export async function reveal(svg, ctx) {
   };
 }
 
-// "The puppies were unharmed."
+// "The puppies were unharmed." Eight of them: Harold left the pit asleep on his head.
 export async function unharmed(svg, ctx) {
   const { defs, root } = stage(svg);
   const set = topPitSet(defs, { mode: 'dusk', seed: 9 });
-  const pups = cast(set, defs, HEAP);
+  const pups = cast(set, defs, HEAP, { skip: 4 });
   const chew = pups.find(q => q.i === 7);
   const a = (chew.rot + 20) * Math.PI / 180;
   const shoeG = g({ transform: `translate(${chew.x + Math.sin(a) * 66 * chew.sc} ${chew.y - Math.cos(a) * 66 * chew.sc}) rotate(${chew.rot + 20 + 90}) scale(${chew.sc * 0.85})` }, shoeTop(defs));
