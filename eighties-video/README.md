@@ -22,7 +22,8 @@ Lyrics are carried by the big kinetic type (chorus slams, call-and-response, tit
 along the bottom of the frame are off by default. Turn them on with `C` or the **CC** button, or open the page with
 `#cc` in the URL. Add `#t52` to start at 0:52; the two combine as `#t52-cc`.
 Rendering resolution adapts to keep playback smooth on slower GPUs. If the viewer prefers reduced motion,
-flashes and camera shake are toned down.
+flashes and camera shake are toned down. The full video was measured frame by frame at 30 fps against the
+WCAG 2.3.1 general-flash threshold; no one-second window has more than three flashes.
 
 ## Encode to MP4
 

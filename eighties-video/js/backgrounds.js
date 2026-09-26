@@ -112,7 +112,7 @@ void main(){
 
   // ---------------------------------------------------------------- NIGHT STREET / TOWN
   SH.street = `
-uniform vec3 u_moon; uniform float u_neon, u_scroll, u_hor, u_sketch, u_fogAmt, u_winSeed;
+uniform vec3 u_moon; uniform float u_neon, u_scroll, u_hor, u_sketch, u_fogAmt, u_winSeed, u_zoom;
 uniform vec3 u_skyTop, u_skyBot;
 float building(float x, out float wx, out float id){
   float cell = floor(x*3.0); id = cell; wx = fract(x*3.0);
@@ -131,27 +131,34 @@ void main(){
   vec3 moonCol = vec3(1.0,0.96,0.85)*(1.05 - crater);
   col += vec3(0.6,0.7,1.0)*0.35*exp(-max(md,0.0)*5.0/max(u_moon.z,0.05));
   col = mix(col, moonCol*1.4, smoothstep(0.004,-0.004,md));
-  // skyline (two layers, parallax)
+  // skyline (two layers, parallax). The town grows around the horizon point as the camera advances.
+  float zm = u_zoom > 0.0 ? u_zoom : 1.0;
+  vec2 pz = vec2(p.x, p.y - u_hor)/zm + vec2(0.0, u_hor);
   for(int k=1;k>=0;k--){
     float fk = float(k);
     float sc = 1.0+fk*0.7;
-    float x = p.x*sc*0.6 + u_scroll*(0.3+fk*0.35) + fk*13.0;
+    float x = pz.x*sc*0.6 + u_scroll*(0.3+fk*0.35) + fk*13.0;
     float wx, bid; float bh = building(x, wx, bid)*(1.0-fk*0.35);
     float base = u_hor;
     float top = base + bh;
     float gap = step(0.06, wx)*step(wx, 0.94);
-    if(p.y < top && gap>0.5){
+    if(pz.y < top && gap>0.5){
       vec3 bc = mix(vec3(0.03,0.02,0.07), vec3(0.08,0.07,0.13), fk);
       // windows
-      vec2 w = vec2(wx*7.0, (p.y-base)*28.0*sc);
+      vec2 w = vec2(wx*7.0, (pz.y-base)*28.0*sc);
       vec2 wi = floor(w); vec2 wf = fract(w);
       float lit = step(0.55, hash21(wi + bid*17.0 + u_winSeed + floor(u_time*0.25+hash11(bid)*10.0)*0.0));
       float win = step(0.25, wf.x)*step(wf.x,0.75)*step(0.3,wf.y)*step(wf.y,0.8)*step(1.0, wi.x)*step(wi.x, 5.0);
       vec3 wc = mix(vec3(0.85,0.8,0.6), hsv2rgb(vec3(hash21(wi+bid)*0.3+0.8, 0.8, 1.0))*1.8, u_neon);
       bc += wc*win*lit*(0.6+0.8*u_neon)*(1.0-fk*0.4);
-      // sketch outline mode
-      float edge = min(min(wx-0.06, 0.94-wx)*3.0, top-p.y);
-      bc = mix(bc, mix(vec3(0.93,0.9,0.84), vec3(0.2), smoothstep(0.004,0.0,edge)), u_sketch*(1.0-fk*0.5));
+      // sketch mode: paper-white blocks with graphite outlines and window boxes
+      float edge = min(min(wx-0.06, 0.94-wx)/(3.0*sc*0.6), top-pz.y);
+      float wo = abs(max(abs(wf.x-0.5)-0.22, abs(wf.y-0.55)-0.22));
+      float winLine = (1.0-smoothstep(0.03, 0.07, wo))*step(1.0, wi.x)*step(wi.x, 5.0)*step(0.5, hash21(wi+bid*7.0));
+      float ink = max(1.0-smoothstep(0.005, 0.013, edge), winLine*0.8);
+      ink *= 0.75 + 0.25*hash21(floor(gl_FragCoord.xy*0.5));
+      vec3 sk = mix(vec3(0.93,0.9,0.84), vec3(0.1,0.09,0.12), ink);
+      bc = mix(bc, sk, u_sketch*(1.0-fk*0.35));
       col = bc;
     }
   }
@@ -168,7 +175,7 @@ uniform vec3 u_cam; uniform float u_pitch, u_yaw; uniform vec4 u_feet[4]; unifor
 void main(){
   vec2 p = P();
   vec3 ro = u_cam;
-  vec3 fw = normalize(vec3(sin(u_yaw), -sin(u_pitch), -cos(u_yaw)));
+  vec3 fw = vec3(sin(u_yaw)*cos(u_pitch), -sin(u_pitch), -cos(u_yaw)*cos(u_pitch));
   vec3 rt = normalize(cross(fw, vec3(0,1,0))); vec3 up = cross(rt, fw);
   vec3 rd = normalize(fw*1.8 + rt*p.x + up*p.y);
   vec3 col = vec3(0.01,0.0,0.02);

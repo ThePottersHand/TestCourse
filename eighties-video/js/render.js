@@ -1,7 +1,7 @@
 /* Renderer: render targets, layer queue, composite, feedback, bloom and the final "look" pass. */
 (function () {
   'use strict';
-  const V = window.V, G = V.G;
+  const V = window.V, G = V.G, M = V.M;
 
   const Rn = (V.Rn = {});
   let gl;
@@ -160,7 +160,7 @@ void main(){
   // letterbox
   float lb = u_letterbox*0.12;
   if(v_uv.y < lb || v_uv.y > 1.0-lb) col = vec3(0.0);
-  if(uv.x<0.0||uv.x>1.0||uv.y<0.0||uv.y>1.0) col = vec3(0.0);
+  if(u_crt > 0.0 && (uv.x<0.0||uv.x>1.0||uv.y<0.0||uv.y>1.0)) col = vec3(0.0);
   // CRT power on/off: picture squeezes to a bright line, then a dot
   if(u_open < 1.0){
     float oy = max(u_open*2.0-1.0, 0.0);            // vertical opening (second half)
@@ -267,13 +267,19 @@ void main(){
     let hdr = T.comp;
     // feedback
     const fb = P.fb;
+    // Feedback parameters are authored per 1/60 s and rescaled by the real frame time, so trails look
+    // the same at 60 fps live, on a slower machine, and in a 30 fps encode. A seek (time jump) clears them.
+    const dt = Rn.lastPostT == null ? 1 / 60 : t - Rn.lastPostT;
+    Rn.lastPostT = t;
+    if (dt < -0.05 || dt > 0.25) Rn.fbValid = false;       // a seek, not clock jitter
+    const f = M.clamp(Math.abs(dt) * 60, 0.25, 4);
     if (fb.amt > 0) {
       const prev = Rn.fbValid ? T.fbA : T.comp;
       G.bind(T.fbB);
       G.blend(null);
       Rn.progs.feedback.use({
-        u_cur: T.comp, u_prev: prev, u_amt: fb.amt, u_zoom: fb.zoom, u_rot: fb.rot, u_decay: fb.decay,
-        u_hue: fb.hue, u_aspect: Rn.aspect, u_off: [fb.dx, fb.dy], u_mode: fb.mode,
+        u_cur: T.comp, u_prev: prev, u_amt: Math.pow(fb.amt, f), u_zoom: Math.pow(fb.zoom, f), u_rot: fb.rot * f,
+        u_decay: Math.pow(fb.decay, f), u_hue: fb.hue * f, u_aspect: Rn.aspect, u_off: [fb.dx * f, fb.dy * f], u_mode: fb.mode,
       });
       G.drawTri();
       const tmp = T.fbA; T.fbA = T.fbB; T.fbB = tmp;
@@ -305,7 +311,8 @@ void main(){
       u_hdr: hdr, u_bloom: B[0], u_res: [Rn.W, Rn.H], u_time: t, u_aspect: Rn.aspect,
       u_exposure: P.exposure, u_contrast: P.contrast, u_sat: P.sat, u_bw: P.bw, u_bloomAmt: P.bloom * 0.35,
       u_vig: P.vig, u_grain: P.grain, u_ca: P.ca, u_vhs: P.vhs, u_vhsRoll: P.vhsRoll, u_rewind: P.rewind,
-      u_crt: P.crt, u_scan: P.scan, u_fade: P.fade, u_letterbox: P.letterbox, u_zoom: P.zoom, u_glitch: P.glitch,
+      u_crt: P.crt, u_scan: P.scan, u_fade: P.fade, u_letterbox: P.letterbox, u_glitch: P.glitch,
+      u_zoom: Math.max(P.zoom, 0.5 / (0.5 - Math.min(0.2, Math.max(Math.abs(P.shake[0]), Math.abs(P.shake[1]))))),
       u_posterize: P.posterize, u_open: P.open, u_tint: P.tint, u_bwTint: P.bwTint, u_lift: P.lift, u_flash: P.flash, u_shake: P.shake,
     });
     G.drawTri();

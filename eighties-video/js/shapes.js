@@ -97,7 +97,7 @@
     S.closed(Sh.circ(front[0], front[1], R, 40), wc);
     S.closed(Sh.circ(rear[0], rear[1], R * 0.86, 36), wc, { w: 0.006 });
     S.closed(Sh.circ(front[0], front[1], R * 0.86, 36), wc, { w: 0.006 });
-    for (let k = 0; k < 3; k++) {
+    for (let k = 0; k < (o.noSpokes ? 0 : 3); k++) {
       const a = (k * Math.PI) / 3 + 0.3;
       for (const w of [rear, front]) S.add(Sh.line(w[0] - Math.cos(a) * R * 0.84, w[1] - Math.sin(a) * R * 0.84, w[0] + Math.cos(a) * R * 0.84, w[1] + Math.sin(a) * R * 0.84), wc, { w: 0.004 });
     }
@@ -360,9 +360,9 @@
   };
 
   // kid riding a BMX (for the moon crossing)
-  Sh.rider = () => {
+  Sh.rider = (o = {}) => {
     const S = Sh.make();
-    S.merge(Sh.bike({ col: C.white, wcol: C.white }));
+    S.merge(Sh.bike({ col: C.white, wcol: C.white, noSpokes: o.noSpokes }));
     const c = C.white;
     S.closed(Sh.circ(0.18, 0.86, 0.12, 20), c, { w: 0.013 });
     S.add(Sh.spline([[0.08, 0.95], [0.2, 1.0], [0.32, 0.93], [0.4, 0.92]], 5), c, { w: 0.012 }); // cap
@@ -374,6 +374,18 @@
     S.closed(Sh.rrect(0.62, 0.52, 0.22, 0.14, 0.03), c, { w: 0.01 });
     return S;
   };
+
+  // spokes for the two bike wheels at rotation `ang` (raw strokes, so they can spin)
+  Sh.spokes = (ang) => {
+    const out = [], r = 0.36 * 0.84;
+    for (const [cx, cy] of [[-0.62, -0.25], [0.62, -0.25]])
+      for (let k = 0; k < 3; k++) {
+        const a = ang + (k * Math.PI) / 3;
+        out.push({ p: [[cx - Math.cos(a) * r, cy - Math.sin(a) * r, 0], [cx + Math.cos(a) * r, cy + Math.sin(a) * r, 0]], w: 0.004 });
+      }
+    return out;
+  };
+  Sh.BIKE_BOTTOM = -0.25 - 0.36; // lowest point of the wheels in bike space
 
   // volume knob with ticks 0..11
   Sh.knob = (o = {}) => {

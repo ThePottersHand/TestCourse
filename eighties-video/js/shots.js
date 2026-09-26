@@ -51,6 +51,18 @@
     S.osd(() => St.draw(b, St.flatCam(), { style: 'solid', blend: 'premul' }));
   }
 
+  // screen y of the horizon for a 3D camera, so painted backdrops line up with the 3D world
+  const horizonY = (cam) => cam.vp[9] / cam.vp[11];
+  // internal scene cuts, snapped to the nearest beat at init so every edit lands on the music
+  const CUT = { v2b: 85.9, v2c: 89.7, v2d: 92.5, v2e: 95.9, v2f: 98.95, v2g: 102.45, brB: 140.2, brC: 143.4, brD: 146.6, brE: 149.6, brF: 153.05, brG: 156.35, brH: 159.05, brI: 162.85, bdB: 177.0, ouB: 208.45, ouC: 213.1, ouD: 217.7, p1: 73.72 };
+  const nearestBeat = (x) => T.beats.reduce((b, v) => (Math.abs(v - x) < Math.abs(b - x) ? v : b), T.beats[0]);
+  const LCUT = []; // per lyric line: the beat on which the chorus cuts to that line's picture
+  // a BMX rider whose wheels actually turn; `roll` is distance travelled (wheel angle = roll / radius)
+  function riderStrokes(b, model, col, roll, o = {}) {
+    St.emit(b, SH.rider, null, 0, Object.assign({ model, color: col }, o));
+    St.emitRaw(b, Sh.spokes(-roll / 0.36), { model, color: col, alpha: o.alpha, wscale: o.wscale });
+  }
+
   // morph chain: list of {shape, t (arrival), dur}; returns [A, B, k]
   function chainAt(list, t) {
     let i = 0;
@@ -335,7 +347,7 @@
     const fly = H.ramp(t, 45.12, 51.74, E.inQuad);
     const tilt = H.ramp(t, 48.0, 50.6, E.inOutCubic);
     const z = 3.2 - fly * 9;
-    return St.camera({ eye: [Math.sin(t * 0.4) * 0.2, -0.35 + tilt * 0.25, z], at: [0, -0.2 + tilt * 1.4, z - 4], roll: Math.sin(t * 0.3) * 0.03 });
+    return St.camera({ eye: [Math.sin(t * 0.4) * 0.2, -0.35 + tilt * 0.25, z], at: [0, -0.2 + tilt * 1.4, z - 4] });
   }
   function pre1(S, t) {
     const P = S.post;
@@ -343,12 +355,12 @@
     P.bw = 0.5 * sk;
     P.grain = 0.07; P.vig = 0.5;
     const moonUp = H.ramp(t, 47.6, 50.8, E.inOutCubic);
+    const cam = pre1Cam(t);
     S.bg('street', {
       u_moon: [M.mix(0.95, 0.15, moonUp), M.mix(0.55, 0.28, moonUp), M.mix(0.1, 0.5, moonUp)], u_neon: M.mix(0.0, 0.8, 1 - sk),
-      u_scroll: t * 0.15, u_hor: -0.42 + H.ramp(t, 48, 50.6) * -0.3, u_sketch: sk, u_fogAmt: 0.8, u_winSeed: 3,
+      u_scroll: t * 0.15, u_hor: horizonY(cam), u_zoom: 30 / (30 - (3.2 - cam.eye[2])), u_sketch: sk, u_fogAmt: 0.8, u_winSeed: 3,
       u_skyTop: hex('#070320'), u_skyBot: hex('#2b1055'),
     });
-    const cam = pre1Cam(t);
     // streetlights: pencil posts, lamps ignite with a flicker
     const ib = S.batch(), nb = S.batch();
     St.emit(ib, SH.street, null, 0, { time: t, jitter: 0.01, passes: 2 });
@@ -368,8 +380,8 @@
       const a = t - t0;
       if (a < 0 || a > 2.2) continue;
       const x = M.mix(-4.5, 4.5, a / 2.2);
-      const model = Mat.mul(Mat.translate(x, -0.95 + 0.6 * sc, z), Mat.scale(sc * 0.6, sc * 0.6, 1));
-      St.emit(nb, SH.rider, null, 0, { model, color: col, time: t });
+      const model = Mat.mul(Mat.translate(x, -1 - Sh.BIKE_BOTTOM * 0.6 * sc, z), Mat.scale(sc * 0.6, sc * 0.6, 1));
+      riderStrokes(nb, model, col, (x + 4.5) / (0.6 * sc), { time: t });
     }
     S.neon(nb, cam, { intensity: 1.3 });
     // E.T. moon crossing: silhouette of a rider across the moon
@@ -377,7 +389,7 @@
     if (mx > 0 && mx < 1) {
       const sb = S.batch();
       const cx = M.mix(-1.4, 1.2, mx), cy = M.mix(0.05, 0.55, mx) + Math.sin(mx * Math.PI) * 0.12;
-      St.emit(sb, SH.rider, null, 0, { model: Mat.mul(Mat.translate(cx, cy, 0), Mat.scale(0.3, 0.3, 1)), color: [0, 0, 0], wscale: 1.6 });
+      riderStrokes(sb, Mat.mul(Mat.translate(cx, cy, 0), Mat.scale(0.3, 0.3, 1)), [0, 0, 0], mx * 30, { wscale: 1.6 });
       S.solid(sb, H.flat(), { minPx: 1.2, glow: 1.2 });
     }
     S.parts(cam, { mode: 'dust', count: 250, size: 0.02, speed: 1, seed: 7 });
@@ -528,7 +540,9 @@
     const cam = H.orbit(t, { amp: 0.35, z: 3 });
     P.bloom = 1.0; P.sat = 1.2; P.grain = 0.05; P.vig = 0.45;
     P.zoom = 1 + k * 0.015;
-    const li = M.clamp(D.lineIndexAt(t, 0.3) - c0, 0, 5);
+    let li = 0;
+    for (let k = 1; k <= 5; k++) if (t >= LCUT[c0 + k]) li = k;
+    S.cut('L' + li);
     const lend = (i) => L(i).e;
 
     // ---------------- line 0: TURN THE EIGHTIES UP! Oh-oh-oh!
@@ -570,7 +584,7 @@
         if (bl > 0) S.scene(() => Bg.draw('beams', { add: 1, u_n: 7, u_spread: 0.22, u_sweep: 1.6, u_int: (v === 1 ? 0.45 : 0.9) * bl, u_srcY: 1.15, u_c1: vc.acc, u_c2: [1, 1, 1] }));
         word(S, t, 'BRIGHT', t2, { font: 'chrome', y: 0.36, size: 0.36, until: t4 - 0.22, exitDur: 0.15, st: ST.chrome, anim: 'pop', exitGrow: 0.6 });
         word(S, t, 'LIGHTS!', tokT(c0 + 1, 3), { font: 'chrome', y: -0.08, size: 0.42, until: t4 - 0.22, exitDur: 0.15, st: v === 1 ? ST.hotCyan : ST.hot, anim: 'slam', exitGrow: 0.6 });
-        P.flash = [1, 1, 1, (H.pulse(t, t2, 0.1) + H.pulse(t, tokT(c0 + 1, 3), 0.1)) * 0.3];
+        P.flash = [1, 1, 1, (H.pulse(t, t2, 0.1) + H.pulse(t, tokT(c0 + 1, 3), 0.1)) * (v === 2 ? 0.14 : 0.3)];
         P.exposure = 1 + bl * (v === 1 ? 0.0 : 0.1);
       }
       // let the good times roll (text rides a barrel roll while the world rolls)
@@ -599,7 +613,7 @@
     // ---------------- line 3: TOO MUCH COLOUR to ever tone it down
     else if (li === 3) {
       const t0 = L(3).s, tDown = tokT(c0 + 3, 7);
-      const flood = H.ramp(t, t0 - 0.1, t0 + 0.5, E.outCubic);
+      const flood = H.ramp(t, LCUT[c0 + 3], LCUT[c0 + 3] + 0.4, E.outCubic);
       paperBg(S, 1, { paper: [0.1, 0.1, 0.115], vig: 0.4 });
       S.bg('memphis', { u_scroll: t * 0.25, u_density: 0.75, u_dark: v === 1 ? 1 : 0, u_bgc: v === 1 ? [0.03, 0.01, 0.08] : [0.2, 0.9, 0.85], u_alpha: flood });
       const burst = tokT(c0 + 3, 2);
@@ -614,11 +628,12 @@
     else if (li === 4) {
       const h1 = tokT(c0 + 4, 0), h2 = tokT(c0 + 4, 1), w0 = tokT(c0 + 4, 2);
       chorusBg(S, t, v, c0, { boost: H.ramp(t, w0, lend(4), E.inQuad) * 10, low: -0.1 * H.ramp(t, w0, lend(4)) });
-      const bursting = (t > h1 - 0.05 && t < h1 + 0.2) || (t > h2 - 0.05 && t < h2 + 0.2);
-      if (bursting) S.bg('burst', { u_rays: 24, u_spin: t * 2, u_c1: vc.acc2, u_c2: [0.05, 0, 0.1], u_center: [t < h2 - 0.05 ? -0.6 : 0.6, 0.05], u_halftone: 1, u_alpha: 0.85 });
+      // one continuous pop-art burst behind both HEYs (no on/off strobing between them)
+      const ba = H.ramp(t, h1 - 0.06, h1 + 0.02) * (1 - H.ramp(t, h2 + 0.25, h2 + 0.45));
+      if (ba > 0) S.bg('burst', { u_rays: 24, u_spin: t * 2, u_c1: vc.acc2, u_c2: [0.05, 0, 0.1], u_center: [M.mix(-0.6, 0.6, E.inOutCubic(H.seg(t, h2 - 0.12, h2 + 0.05))), 0.05], u_halftone: 1, u_alpha: 0.85 * ba });
       word(S, t, 'HEY!', h1, { font: 'comic', x: -0.72, y: 0.12, size: 0.72, until: w0 - 0.12, exitDur: 0.15, st: ST.comic, anim: 'slam', rot: -0.12, shadow: true });
       word(S, t, 'HEY!', h2, { font: 'comic', x: 0.72, y: -0.02, size: 0.72, until: w0 - 0.12, exitDur: 0.15, st: ST.comicW, anim: 'slam', rot: 0.1, shadow: true });
-      P.flash = [1, 1, 1, (H.pulse(t, h1, 0.09) + H.pulse(t, h2, 0.09)) * 0.45];
+      P.flash = [1, 1, 1, (H.pulse(t, h1, 0.08) + H.pulse(t, h2, 0.08)) * 0.18];
       P.zoom = 1 + (H.pulse(t, h1, 0.15) + H.pulse(t, h2, 0.15)) * 0.06 + k * 0.01;
       P.shake = H.shake((H.pulse(t, h1, 0.2) + H.pulse(t, h2, 0.2)) * 1.6, t);
       D.lyric(S, c0 + 4, t, { range: [2, 5], font: 'chrome', size: 0.3, maxW: 3.2, y: 0.18, style: 'chrome', col2: [0.03, 0, 0.1], outline: 3, glow: 3, anim: 'pop', hold: 0.2, upper: true });
@@ -630,7 +645,7 @@
       const tTurn = tokT(c0 + 5, 4), tUp = tokT(c0 + 5, 7);
       chorusBg(S, t, v, c0);
       const back = H.pulse(t, tTurn, 0.25);
-      P.flash = [1, 1, 1, back * 0.8];
+      P.flash = [1, 1, 1, back * 0.5];
       knob(S, t, cam, 10, 0, 0.05, 1.3, 0.35, vc.acc);
       const hold = lend(5) + 0.3;
       word(S, t, 'TURN THE', tTurn, { y: 0.42, size: 0.3, until: hold, st: ST.chrome, anim: 'drop', shadow: true });
@@ -653,7 +668,7 @@
   }
 
   function postChorus(S, t) {
-    if (t < 73.72) { chorus(S, t, 0); return; } // let the title slam land before the oh-oh-ohs
+    if (t < CUT.p1) { chorus(S, t, 0); return; } // let the title slam land before the oh-oh-ohs
     const P = S.post;
     const k = H.kick(t, 0.12);
     const flat = H.flat();
@@ -698,8 +713,9 @@
   // rewind overlay (VHS REW)
   function rewindOverlay(S, t, u) {
     const P = S.post;
-    P.vhs = 1; P.rewind = 0.8; P.scan = 0.18; P.sat = 0.85; P.vhsRoll = t * 3.0; P.exposure = 0.9;
-    P.fb = { amt: 0.55, zoom: 1, rot: 0, decay: 1, hue: 0, dx: 0, dy: 0, mode: 2 };
+    // compressed contrast + heavy motion blur keep the fast replay from strobing
+    P.vhs = 1; P.rewind = 0.8; P.scan = 0.18; P.sat = 0.8; P.vhsRoll = t * 3.0; P.exposure = 0.85; P.contrast = 0.72; P.bloom = 0.5;
+    P.fb = { amt: u === 2 ? 0.91 : 0.88, zoom: 1, rot: 0, decay: 1, hue: 0, dx: 0, dy: 0, mode: 2 };
     P.flash = [1, 1, 1, 0];
     P.shake = [0, 0]; P.zoom = 1;
     const bl = Math.floor(t * 4) % 2 ? 1 : 0.4;
@@ -728,7 +744,8 @@
     const k = H.kick(t, 0.12);
 
     // ---------- A: DeLorean tyres leaving fire in the street (81.38 – 85.9)
-    if (t < 85.9) {
+    S.cut('v2b');
+    if (t < CUT.v2b) {
       const v = t - 81.38;
       const speed = v * 3 + v * v * 0.6;
       outrun(S, t, {
@@ -786,40 +803,43 @@
     }
 
     // ---------- B: Kids trying moonwalks, staring at their feet (85.9 – 89.7)
-    if (t < 89.7) {
+    S.cut('v2c');
+    if (t < CUT.v2c) {
       const stare = H.ramp(t, H.w('Kids trying', 'staring') - 0.2, 88.6, E.inOutCubic);
       const pitch = M.mix(0.34, 0.8, stare), camY = M.mix(0.95, 1.7, stare);
-      const eye = [Math.sin(t * 0.4) * 0.25 + (1.3 - (t - 85.9) * 1.1) * 0.6, camY, M.mix(2.3, 1.6, stare)];
-      const bp = T.beatPos(t);
-      const travel = -(t - 85.9) * 1.1;             // dancer glides backwards (to the left)
-      const stepPh = M.fract(bp * 0.5);             // one step per beat
-      const footA = stepPh < 0.5, sl = E.inOutQuad((stepPh % 0.5) * 2);
-      const baseX = 1.3 + travel;
-      const ax = baseX + (footA ? 0.5 - sl * 1.0 : -0.5), bx = baseX + (footA ? -0.5 : 0.5 - sl * 1.0);
+      const bp = T.beatPos(t) - T.beatPos(CUT.v2b);
+      const st = Math.max(0, Math.floor(bp)), f = M.clamp(bp - st), e = E.inOutQuad(f);
+      const STEP = 1.0, X0 = 2.2;
+      const ax = X0 - Math.floor((st + 1) / 2) * STEP - (st % 2 === 0 ? e * STEP : 0);        // foot A slides on even beats
+      const bx = X0 - 0.5 - Math.floor(st / 2) * STEP - (st % 2 === 1 ? e * STEP : 0);      // foot B slides on odd beats
+      const rise = E.outCubic(M.clamp(f / 0.15));                                           // the newly planted foot pops onto its toe
+      const toeA = st % 2 === 0 ? -0.35 * (1 - rise) : -0.35 * rise, toeB = st % 2 === 1 ? -0.35 * (1 - rise) : -0.35 * rise;
+      const eye = [Math.sin(t * 0.4) * 0.2 + (ax + bx) * 0.5 * 0.85, camY, M.mix(2.3, 1.6, stare)];
       const feet = new Float32Array(16);
-      feet.set([ax + 0.2, -0.2, 1.0, 0, bx + 0.25, 0.25, 1.0, 0]);
+      feet.set([ax, -0.4, 1.0, 0, bx, 0.4, 1.0, 0]);
       S.bg('tiles', { u_cam: eye, u_pitch: pitch, u_yaw: 0, u_feet: feet, u_pattern: 0.7, u_gridScroll: 0 });
       const fw = [0, -Math.sin(pitch), -Math.cos(pitch)];
       const cam = St.camera({ fov: 2 * Math.atan(1 / 1.8), eye, at: [eye[0] + fw[0], eye[1] + fw[1], eye[2] + fw[2]] });
       const nb = S.batch();
       // sneaker on the floor (y=0) in the x/y plane at z; the lifted foot rolls onto its toe
       const shoe = (x, z, toe, col) => {
-        const m = Mat.chain(Mat.translate(x + 0.42, 0, z), Mat.rotZ(toe), Mat.translate(-0.42, 0.22, 0), Mat.scale(1.0, 1.0, 1.0));
+        const m = Mat.chain(Mat.translate(x + 0.47, 0, z), Mat.rotZ(toe), Mat.translate(-0.47, 0.1, 0));
         St.emit(nb, SH.sneaker, null, 0, { model: m, color: col, time: t });
       };
-      shoe(ax, -0.2, footA ? 0 : 0.35, C.cyan);
-      shoe(bx, 0.25, footA ? 0.35 : 0, C.pink);
+      shoe(ax, -0.4, toeA, C.cyan);
+      shoe(bx, 0.4, toeB, C.pink);
       S.neon(nb, cam, { intensity: 1.5 });
       P.fb = { amt: 0.25, zoom: 1, rot: 0, decay: 0.75, hue: 0, dx: 0, dy: 0, mode: 0 };
-      P.flash = [1, 1, 1, H.pulse(t, 85.9, 0.15) * 0.5];
+      P.flash = [1, 1, 1, H.pulse(t, CUT.v2b, 0.15) * 0.5];
       verse2Lyric(S, t, 19, { col: [0.7, 1, 1] });
       return;
     }
 
     // ---------- C: Madonna lace and a purple guitar (89.7 – 92.5)
-    if (t < 92.5) {
+    S.cut('v2d');
+    if (t < CUT.v2d) {
       const tg = H.w('Madonna lace', 'purple');
-      const grow = H.ramp(t, 89.7, 91.2, E.outCubic) * 1.25;
+      const grow = 0.12 + H.ramp(t, CUT.v2c, 91.1, E.outCubic) * 1.13;
       S.bg('lace', { u_grow: grow, u_rot: t * 0.15, u_sym: 12, u_zoom: 1 + H.ramp(t, 89.7, 92.5) * 0.4, u_col: [1, 0.85, 0.95], u_bgc: [0.06, 0.0, 0.07] });
       const rain = H.ramp(t, tg - 0.3, tg + 0.5);
       S.bg('rain', { u_amt: 1.6, u_speed: 3.0, u_col: [0.75, 0.3, 1.0], u_bgTop: [0.12, 0.0, 0.22], u_bgBot: [0.3, 0.05, 0.4], u_alpha: rain * 0.75 });
@@ -836,7 +856,8 @@
     }
 
     // ---------- D: A mirror and a hairbrush made a superstar (92.5 – 95.9)
-    if (t < 95.9) {
+    S.cut('v2e');
+    if (t < CUT.v2e) {
       const tSup = H.w('A mirror', 'superstar');
       const star = t > tSup - 0.05;
       if (star) S.bg('burst', { u_rays: 20, u_spin: t * 0.8, u_c1: hex('#c2185b'), u_c2: hex('#f5a300'), u_center: [0, 0.05], u_halftone: 1 });
@@ -866,7 +887,8 @@
     }
 
     // ---------- E: Fluoro leg warmers, a stonewashed vest (95.9 – 98.95)
-    if (t < 98.95) {
+    S.cut('v2f');
+    if (t < CUT.v2f) {
       const tSw = H.w('Fluoro leg', 'stonewashed');
       S.bg('stripes', { u_scroll: t * 1.6, u_bend: 1, u_scrunch: 0.8 + k, u_denim: t > tSw - 0.4 ? 1 : 0, u_mixp: M.mix(-0.25, 1.25, H.ramp(t, tSw - 0.35, tSw + 0.4)) });
       word(S, t, 'FLUORO!', 96.0, { font: 'comic', y: 0.2, size: 0.55, until: tSw - 0.1, st: ST.comicW, anim: 'slam', rot: -0.08, shadow: true, breathe: 0.08 });
@@ -877,7 +899,8 @@
     }
 
     // ---------- F: Whoever had the biggest fringe was looking their best (98.95 – 102.45)
-    if (t < 102.45) {
+    S.cut('v2g');
+    if (t < CUT.v2g) {
       S.bg('void', { u_c1: hex('#ff4fa0'), u_c2: hex('#3b0a5e'), u_stars: 0, u_warp: 0, u_grid: 0.4 });
       const tb = H.w('Whoever had', 'biggest');
       const blow = E.outCubic(H.seg(t, tb, tb + 0.6)) * (1 - H.seg(t, tb + 1.4, tb + 2.2));
@@ -906,6 +929,7 @@
     }
 
     // ---------- G/H: Polaroid faces slowly coming clear / we looked ridiculous (102.45 – 108.9)
+    S.cut('v2z');
     {
       S.bg('void', { u_c1: hex('#2a1238'), u_c2: hex('#0a0510'), u_stars: 0.2, u_warp: 0.1, u_grid: 0 });
       const portrait = S.capture((S2, tt) => {
@@ -1097,7 +1121,8 @@
     const k = H.kick(t, 0.12);
 
     // 137.9 – 140.27: pull back out of the chorus into a TV in a dark room; static; blue screen
-    if (t < 140.2) {
+    S.cut('brB');
+    if (t < CUT.brB) {
       const pb = E.inOutCubic(H.seg(t, 137.9, 139.6));
       const scr = tvScreen(S, t, (S2, tt) => chorus(S2, Math.min(tt, 137.85), 1));
       tvroom(S, t, scr, { scale: M.mix(3.3, 0.78, pb), stat: H.ramp(t, 139.3, 139.7) * (1 - H.ramp(t, 139.9, 140.1)), blue: H.ramp(t, 139.9, 140.05) });
@@ -1105,7 +1130,8 @@
       return;
     }
     // 140.2 – 143.4: Be kind, rewind — the weekend's here
-    if (t < 143.4) {
+    S.cut('brC');
+    if (t < CUT.brC) {
       const tr = Math.max(0, 5025 - (t - 140.2) * 900);
       const cnt = Math.floor(tr / 3600) + ':' + String(Math.floor((tr % 3600) / 60)).padStart(2, '0') + ':' + String(Math.floor(tr % 60)).padStart(2, '0');
       const scr = tvScreen(S, t, (S2, tt) => blueScreen(S2, tt, [['<< REWIND', -1.5, 0.72, 0.2], ['0' + cnt, 0.55, 0.72, 0.2], ['BE KIND,', -0.55, 0.05, 0.34], ['REWIND', -0.5, -0.35, 0.34]]));
@@ -1118,7 +1144,8 @@
       return;
     }
     // 143.4 – 146.6: three rented movies and a beanbag chair
-    if (t < 146.6) {
+    S.cut('brD');
+    if (t < CUT.brD) {
       const scr = tvScreen(S, t, (S2, tt) => blueScreen(S2, tt, [['PLAY >', -1.5, 0.72, 0.2], ['SP', 1.2, 0.72, 0.2]]));
       tvroom(S, t, scr, { scale: 0.78, blue: 0, glow: 1.2, wall: [0.1, 0.07, 0.14] });
       const cam = H.orbit(t, { amp: 0.25, z: 3.2 });
@@ -1146,7 +1173,8 @@
       return;
     }
     // 146.6 – 149.6: tracking lines rolling through the opening scene
-    if (t < 149.6) {
+    S.cut('brE');
+    if (t < CUT.brE) {
       const tt0 = 7.2 + (t - 146.6);
       const scr = tvScreen(S, t, (S2) => intro(S2, tt0));
       const roll = M.fract((t - 146.6) * 0.45) * (t < 148.8 ? 1 : 0);
@@ -1156,7 +1184,8 @@
       return;
     }
     // 149.6 – 153.05: whole worlds on a fourteen-inch screen (dolly into the set and back)
-    if (t < 153.05) {
+    S.cut('brF');
+    if (t < CUT.brF) {
       const tIn = E.inOutCubic(H.seg(t, 149.6, 150.7)), tOut = E.inOutCubic(H.seg(t, 151.7, 152.9));
       const sc = M.mix(0.88, 3.6, tIn * (1 - tOut));
       const world = (S2, tt) => {
@@ -1173,7 +1202,8 @@
       return;
     }
     // 153.05 – 156.35: the jackets don't fit and the photographs fade
-    if (t < 156.35) {
+    S.cut('brG');
+    if (t < CUT.brG) {
       S.bg('void', { u_c1: hex('#2b2233'), u_c2: hex('#07050a'), u_stars: 0, u_warp: 0, u_grid: 0 });
       const portrait = S.capture((S2, tt) => {
         S2.bg('burst', { u_rays: 16, u_spin: 0.3, u_c1: hex('#05d9e8'), u_c2: hex('#ff2a6d'), u_center: [0, 0], u_halftone: 1 });
@@ -1194,7 +1224,8 @@
       return;
     }
     // 156.35 – 159.05: I still know every song on that mixtape
-    if (t < 159.05) {
+    S.cut('brH');
+    if (t < CUT.brH) {
       S.bg('void', { u_c1: hex('#3a0b4a'), u_c2: hex('#07010f'), u_stars: 0.8, u_warp: 0.2, u_grid: 0 });
       const cam = H.orbit(t, { amp: 0.4, z: 3.2 });
       const nb = S.batch();
@@ -1219,7 +1250,8 @@
       return;
     }
     // 159.05 – 162.85: four drumbeats and a cheap guitar
-    if (t < 162.85) {
+    S.cut('brI');
+    if (t < CUT.brI) {
       S.bg('void', { u_c1: hex('#1a0536'), u_c2: hex('#000000'), u_stars: 0.3, u_warp: 0.5, u_grid: 0.5 });
       const hits = [159.1, 159.5, 159.92, 160.33];
       let last = -1;
@@ -1244,17 +1276,19 @@
       return;
     }
     // 162.85 – 166.44: I'm back on that street, wherever you are
+    S.cut('brZ');
     {
       const up = H.ramp(t, 164.8, 166.44, E.inQuad);
-      S.bg('street', { u_moon: [0.35, 0.5, 0.36], u_neon: 1, u_scroll: t * 0.4, u_hor: -0.45, u_sketch: 0, u_fogAmt: 1, u_winSeed: 5, u_skyTop: hex('#070320'), u_skyBot: hex('#3b1070') });
       const fly = H.ramp(t, 162.85, 166.44, E.inQuad);
-      const cam = St.camera({ eye: [Math.sin(t * 0.4) * 0.2, -0.35, 3.2 - fly * 12], at: [0, -0.25, -1 - fly * 12], roll: Math.sin(t * 0.3) * 0.04 });
+      const cam = St.camera({ eye: [Math.sin(t * 0.4) * 0.2, -0.35, 3.2 - fly * 12], at: [0, -0.25, -1 - fly * 12] });
+      S.bg('street', { u_moon: [0.35, 0.5, 0.36], u_neon: 1, u_scroll: t * 0.4, u_hor: horizonY(cam), u_zoom: 30 / (30 - fly * 12), u_sketch: 0, u_fogAmt: 1, u_winSeed: 5, u_skyTop: hex('#070320'), u_skyBot: hex('#3b1070') });
       const nb = S.batch();
       SH.street.strokes.forEach((s) => St.emitRaw(nb, [s], { color: s.c === C.orange ? [1, 0.6, 0.25] : [0.7, 0.55, 1], alpha: s.c === C.orange ? 1 : 0.6 }));
       [[163.0, -2.5, 0.8, C.cyan], [163.4, -5.0, 1.0, C.pink], [163.9, -8.0, 1.2, C.yellow]].forEach(([t0, z, sc, col]) => {
         const a = t - t0;
         if (a < 0 || a > 2.2) return;
-        St.emit(nb, SH.rider, null, 0, { model: Mat.mul(Mat.translate(M.mix(4.5, -4.5, a / 2.2), -0.95 + 0.6 * sc, z - fly * 12), Mat.scale(-sc * 0.6, sc * 0.6, 1)), color: col, time: t });
+        const x = M.mix(4.5, -4.5, a / 2.2);
+        riderStrokes(nb, Mat.mul(Mat.translate(x, -1 - Sh.BIKE_BOTTOM * 0.6 * sc, z - fly * 12), Mat.scale(-sc * 0.6, sc * 0.6, 1)), col, (4.5 - x) / (0.6 * sc), { time: t });
       });
       S.neon(nb, cam, { intensity: 1.35 });
       bridgeLyric(S, t, 41);
@@ -1294,7 +1328,8 @@
     const P = S.post;
     const flat = H.flat();
     P.bloom = 0.9; P.sat = 1.15; P.grain = 0.06;
-    if (t < 177.0) {
+    S.cut('bdB');
+    if (t < CUT.bdB) {
       const clap = Math.max(H.snare(t, 0.09), 0);
       const lights = H.ramp(t, 166.44, 167.6);
       S.bg('crowd', { u_clap: M.clamp(clap * 1.4), u_sway: 1, u_light: lights, u_c1: [0.95, 0.9, 1.0], u_c2: [0.85, 0.15, 0.7] });
@@ -1309,6 +1344,7 @@
       return;
     }
     // 177.0 – 182.64: somebody pass me a pencil — this tape's come loose!
+    S.cut('bdZ');
     S.bg('void', { u_c1: hex('#2a0845'), u_c2: hex('#040010'), u_stars: 1, u_warp: 0.4 + H.ramp(t, 180.5, 182.64) * 4, u_grid: 0.3 });
     const tp = H.w('Somebody pass', 'pencil'), tl = H.w('Somebody pass', 'loose');
     const zoomIn = E.inQuart(H.seg(t, 181.3, 182.64));
@@ -1322,13 +1358,15 @@
     // loose tape ribbon: a turtle path that curls with noise
     if (spill > 0.001) {
       const L = spill * 7.5;
-      const n = 160;
+      const ds = 7.5 / 160, n = Math.max(2, Math.ceil(L / ds));
       const edge1 = [], edge2 = [];
       let x = -0.55 + 0.33 * 0.62, y = 0.15 + 0.08 * 0.62 - 0.07, h = -0.3;
       for (let i = 0; i <= n; i++) {
-        const s = (i / n) * L;
-        h += R.perlin3(s * 0.55, 3.3, t * 0.35) * 0.35 + 0.02;
-        x += Math.cos(h) * (L / n); y += Math.sin(h) * (L / n) * 0.8;
+        const s = i * ds;
+        // the curl depends on the tape's own arc length, so tape already out keeps its shape
+        h += R.perlin3(s * 0.55, 3.3, t * 0.12) * 0.35 + 0.02;
+        const step = Math.min(ds, Math.max(0, L - (i - 1) * ds));
+        x += Math.cos(h) * step; y += Math.sin(h) * step * 0.8;
         const tw = Math.sin(s * 3 + t * 2) * 0.012;
         edge1.push([x - Math.sin(h) * tw, y + Math.cos(h) * tw, 0]);
         edge2.push([x + Math.sin(h) * 0.018, y - Math.cos(h) * 0.018, 0]);
@@ -1357,7 +1395,8 @@
     P.bloom = 1.0; P.sat = 1.2;
     const toks = D.TOK[52].toks;
     // 204.42 – 208.45: oh-oh-oh, oh-oh-oh
-    if (t < 208.45) {
+    S.cut('ouB');
+    if (t < CUT.ouB) {
       outrun(S, t, { u_speed: (t - 204.42) * 2.4 + 400, u_pulse: k, u_roll: Math.sin(t * 0.5) * 0.06, u_camX: Math.sin(t * 0.35) * 0.8, u_sunY: 0.3 });
       const oh = [toks[0].t0, toks[0].t0 + 0.25, toks[0].t0 + 0.5, toks[1].t0, toks[1].t0 + 0.4, toks[1].t0 + 0.9];
       const rb = S.batch();
@@ -1369,7 +1408,8 @@
       return;
     }
     // 208.45 – 213.1: never loud enough — the knob goes to eleven
-    if (t < 213.1) {
+    S.cut('ouC');
+    if (t < CUT.ouC) {
       S.bg('void', { u_c1: hex('#3b0a5e'), u_c2: hex('#050010'), u_stars: 0.5, u_warp: 1.0, u_grid: 0.6 });
       const tE = toks[4].t0;
       const val = t < tE ? M.mix(8.5, 10, E.outCubic(H.seg(t, 208.45, tE - 0.1))) : 10 + E.outElastic(H.seg(t, tE, tE + 0.8));
@@ -1403,7 +1443,8 @@
     // 213.1 – 217.7: one more time — TURN THE EIGHTIES UP!
     const L1 = D.TOK[53].toks;
     const tTurn = L1[3].t0, tUp = L1[6].t0;
-    if (t < 217.7) {
+    S.cut('ouD');
+    if (t < CUT.ouD) {
       outrun(S, t, { u_speed: (t - 213.1) * 3 + 500, u_pulse: k, u_roll: Math.sin(t * 0.5) * 0.05, u_camX: Math.sin(t * 0.35) * 0.6, u_sunY: 0.3,
         u_sun1: hex('#fff45c'), u_sun2: hex('#ff00e6'), u_skyTop: hex('#050016'), u_skyBot: hex('#27005a'), u_gridCol: hex('#b026ff') });
       word(S, t, 'One more time', L1[0].t0 - 0.05, { font: 'script', y: 0.62, size: 0.3, until: tTurn + 0.2, st: ST.neonCyan, anim: 'pop', rot: -0.05 });
@@ -1417,6 +1458,7 @@
       return;
     }
     // 217.7 – 226: pull back into the TV, then switch it off
+    S.cut('ouZ');
     const pb = E.inOutCubic(H.seg(t, 217.7, 220.2));
     const scr = tvScreen(S, t, (S2, tt) => outro(S2, 217.65));
     tvroom(S, t, scr, { scale: M.mix(3.3, 0.8, pb), glow: 1.3 });
@@ -1439,7 +1481,7 @@
     SH.titleOutline = D.outline('chrome', 'TURN THE\nEIGHTIES UP', 0.3, { col: C.pink, w: 0.007 });
     SH.phoneHall = Sh.phoneHall();
     SH.street = Sh.streetlights(7);
-    SH.rider = Sh.rider();
+    SH.rider = Sh.rider({ noSpokes: true });
     SH.town = Sh.town(85);
     SH.sneaker = Sh.sneaker(0, 0, 1, 1);
     SH.hairbrush = Sh.hairbrush();
@@ -1457,6 +1499,8 @@
       { shape: SH.cassette, t: 31.97 }, { shape: SH.deck, t: 34.99 }, { shape: SH.posters, t: 38.69 },
       { shape: SH.phoneHall, t: 41.48, dur: 1.3 },
     ];
+    for (const k in CUT) CUT[k] = nearestBeat(CUT[k]);
+    T.lines.forEach((L, i) => { LCUT[i] = T.beats.filter((b) => b <= L.s - 0.08).pop() || L.s - 0.3; });
     // precompute morph pairings so the first morph of each pair doesn't hitch during playback
     St.pair(SH.titleOutline, SH.bmx);
     for (let i = 0; i < V1.length - 1; i++) St.pair(V1[i].shape, V1[i + 1].shape);
@@ -1476,9 +1520,9 @@
     ];
     const rw = (a, b, f, u) => ({ a, b, map: (x) => Math.max(0.3, a - f(x)), overlay: (S, t) => rewindOverlay(S, t, u) });
     Shots.rewinds = [
-      rw(tokT(15, 0), tokT(15, 4), (u) => u * 6 + u * u * 14, 0),
-      rw(tokT(33, 0), tokT(33, 4), (u) => u * 7 + u * u * 16, 1),
-      rw(tokT(51, 0), tokT(51, 4), (u) => u * 20 + u * u * 80, 2),
+      rw(tokT(15, 0), tokT(15, 4), (u) => u * 5 + u * u * 8, 0),
+      rw(tokT(33, 0), tokT(33, 4), (u) => u * 5 + u * u * 8, 1),
+      rw(tokT(51, 0), tokT(51, 4), (u) => u * 6 + u * u * 9, 2),
     ];
   };
 })();

@@ -22,6 +22,8 @@
     textTop(L, o) { S._L.top.push(() => Tx.draw(L, o)); },
     // drawn on the final image after post-processing (crisp on-screen display)
     osd(fn) { D.screen.push(fn); },
+    // mark an internal hard cut (sub-scene) so feedback trails reset
+    cut(k) { D.sceneKey = D.current + ':' + k; },
     parts(cam, o) { S._L.over.push(() => V.Pt.draw(cam, o)); },
     box(cam, o) { S._L.scene.push(() => V.Ms.box(cam, o)); },
     card(cam, o, layer = 'over') { S._L[layer].push(() => V.Fx.card(cam, o)); },
@@ -241,6 +243,7 @@
   D.drawAt = function (S, t) {
     const s = D.shotAt(t);
     D.current = s.id;
+    D.sceneKey = s.id;
     s.draw(S, t, t - s.t0);
   };
 
@@ -261,6 +264,10 @@
       if (rw) rw.overlay(S2, t, t - rw.a);
     }, tr, Rn.T.comp, S);
     Rn.time = t;
+    // a hard cut starts with clean feedback so trails never bleed into the next scene
+    const key = (rw ? 'rw' : '') + D.sceneKey;
+    if (key !== D.lastKey) Rn.fbValid = false;
+    D.lastKey = key;
     if (D.gentle) {
       const P = Rn.post;
       P.flash[3] *= 0.35;

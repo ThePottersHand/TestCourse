@@ -16,9 +16,15 @@ uniform mat4 u_vp; uniform vec2 u_res; uniform float u_pxPerUnit, u_minPx, u_glo
 out vec2 v_px; out vec2 v_a; out vec2 v_b; out vec2 v_r; out vec4 v_col; out vec2 v_u;
 void main(){
   vec4 c0 = u_vp*vec4(a_p0,1.0), c1 = u_vp*vec4(a_p1,1.0);
-  if(c0.w < 0.05 || c1.w < 0.05){ gl_Position = vec4(2.0,2.0,2.0,1.0); return; }
+  // clip the segment against the near plane (a segment passing the camera keeps its visible part)
+  const float NEAR = 0.05;
+  if(c0.w < NEAR && c1.w < NEAR){ gl_Position = vec4(2.0,2.0,2.0,1.0); return; }
+  if(c0.w < NEAR) c0 = mix(c0, c1, (NEAR - c0.w)/(c1.w - c0.w));
+  else if(c1.w < NEAR) c1 = mix(c1, c0, (NEAR - c1.w)/(c0.w - c1.w));
   vec2 s0 = (c0.xy/c0.w*0.5+0.5)*u_res, s1 = (c1.xy/c1.w*0.5+0.5)*u_res;
-  float r0 = max(a_w.x*u_pxPerUnit/c0.w + a_w.y, u_minPx), r1 = max(a_w.x*u_pxPerUnit/c1.w + a_w.y, u_minPx);
+  // widths grow as 1/depth; cap them so lines brushing past the lens stay tubes, not smears
+  float rMax = u_res.y*0.03;
+  float r0 = clamp(a_w.x*u_pxPerUnit/c0.w + a_w.y, u_minPx, rMax), r1 = clamp(a_w.x*u_pxPerUnit/c1.w + a_w.y, u_minPx, rMax);
   float R = max(r0,r1)*u_glow + 2.0;
   vec2 d = s1-s0; float L = length(d); vec2 dir = L>1e-3? d/L : vec2(1.0,0.0); vec2 n = vec2(-dir.y,dir.x);
   vec2 p = (a_corner.x<0.0? s0 : s1) + dir*a_corner.x*R + n*a_corner.y*R;
