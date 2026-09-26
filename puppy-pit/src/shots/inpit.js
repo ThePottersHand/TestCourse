@@ -91,32 +91,65 @@ export async function noRescue(svg, ctx) {
 }
 
 // ------------------------------------------------------------------ coat
-// "One climbed into my coat."
+// "One climbed into my coat." Up on his lap, paws on his chest, a sniff at the
+// front of the coat, then nose-first in under the lapel, tail last. The coat
+// heaves while it turns round in there, and a head comes out.
 export async function coat(svg, ctx) {
   const cam = aim(3300, HIP[0] - 0.12, -D + 0.62, HIP[1], 1000, 560);
   const S = pitScene(svg, cam, { fence: false, twigs: false });
-  const { defs, mid, front } = S;
+  const { defs, world, mid, front } = S;
   const [nx, ny] = cam.p(HIP[0], -D, HIP[1]), ns = charScale(cam, HIP[1]);
   const n = narrator(defs, { seed: 17 });
   const inCoat = puppy(defs, { view: 'front', pose: 'sit', seed: 2 });
   n.slots.chest.appendChild(inCoat.root);
   mid.appendChild(n.root);
   const climber = puppy(defs, { view: 'side', pose: 'beg', seed: 2 });
-  front.appendChild(climber.root);
-  const tIn = ctx.W(14, 'coat') - ctx.shot.start + 0.1;
+  const climbG = g({}, climber.root);
+  // the coat heaving while the puppy turns round inside it
+  const lump = shape(ellipseD(0, 0, 16, 26), P.coat, { r: { amp: 0.6, wl: 14, seed: 31 }, line: '#1f2626', lw: 1.6 });
+  const lumpG = g({ style: 'display:none' }, g({ filter: paintFilter(defs, { freq: [0.07, 0.012], strength: 0.2, tooth: 0.1, seed: 17 }) }, lump));
+  front.append(climbG, lumpG);
+  const tDive = ctx.W(14, 'climbed') - ctx.shot.start + 0.12;  // nose goes in
+  const tGone = tDive + 0.46;                                   // tail's in
+  const tIn = ctx.W(14, 'coat') - ctx.shot.start + 0.1;        // head out
+  const pose = tt => ({ ...SITPOSE, x: nx, y: ny, scale: ns, chestPup: tt >= tIn, eyes: (tt > tGone + 0.05 && tt < tGone + 0.2) ? 'closed' : 'open', head: -1 - (tt >= tIn ? 3 : 0) });
+  // the front edge of his coat, lap to chest, in world space
+  n.set(pose(0));
+  const rel = e => world.getCTM().inverse().multiply(e.getCTM());
+  const M = rel(n.torsoG);
+  const edge = [[60, 22], [57, -10], [58, -50], [55, -100], [47, -145], [40, -165]].map(([x, y]) => new DOMPoint(x, y).matrixTransform(M));
+  const [top, bot] = [edge[edge.length - 1], edge[0]];
+  // outside the coat: in front of that edge, and anything below it (his lap)
+  const outD = `M-5000 -5000 L${top.x} -5000 ` + edge.slice().reverse().map(p => `L${p.x.toFixed(1)} ${p.y.toFixed(1)} `).join('') + `L5000 ${bot.y} L5000 5000 L-5000 5000Z`;
+  defs.appendChild(el('clipPath', { id: 'coatOutside' }, el('path', { d: outD })));
+  const along = u => {
+    const k = Math.min(edge.length - 2, Math.floor(u * (edge.length - 1))), f = u * (edge.length - 1) - k;
+    const a = edge[k], b = edge[k + 1];
+    return { x: lerp(a.x, b.x, f), y: lerp(a.y, b.y, f), ang: Math.atan2(b.x - a.x, -(b.y - a.y)) * 180 / Math.PI };
+  };
+  const chest = along(0.72);                   // where it goes in (and comes out)
+  const s = ns * 0.95;
+  const lapY = ny - 58 * ns;                   // top of his thighs, under the coat skirt
   return {
     update(t) {
       S.world.setAttribute('transform', camTransform(960, 540, kf(t, [[0, 1.0], [ctx.dur, 1.04, 'sine']])));
       const tt = on2(t);
-      const inside = tt >= tIn;
-      n.set({ ...SITPOSE, x: nx, y: ny, scale: ns, chestPup: inside, eyes: (tt > 1.6 && tt < 1.75) ? 'closed' : 'open', head: -1 - (inside ? 3 : 0) });
-      // climber scrambles up his front from his lap, then vanishes into the coat
-      const up = kf(tt, [[0, 0], [tIn - 0.1, 1, 'io']]);
-      const scr = Math.sin(tt * 20) * 4 * (1 - up);
-      climber.set({ x: nx - 118 * ns + up * 40 * ns, y: ny - 30 * ns - up * 125 * ns + scr, scale: ns * 0.95, flip: 1, headRot: -10 + scr, rot: 14 - up * 20, wag: Math.sin(tt * 14) * 30 });
-      climber.root.style.display = inside ? 'none' : '';
-      inCoat.root.style.display = inside ? '' : 'none';
+      n.set(pose(tt));
+      // standing on his lap, paws up on his chest; then up and in, head first
+      const dive = kf(tt, [[tDive, 0], [tGone, 1, 'in']]);
+      const sniff = tt < tDive ? Math.sin(tt * 19) * 2.5 : 0;
+      const bob = tt < tDive ? Math.abs(Math.sin(tt * 7)) * 4 * ns : 0;
+      const px = chest.x - 40 * s + dive * 62 * ns, py = lapY - bob - dive * 70 * ns;
+      climber.set({ x: px, y: py, scale: s, flip: 1, rot: 4 + dive * 26, headRot: -4 + sniff + dive * 10, wag: Math.sin(tt * (tt < tDive ? 14 : 26)) * (18 + dive * 14) });
+      if (tt >= tDive) climbG.setAttribute('clip-path', 'url(#coatOutside)'); else climbG.removeAttribute('clip-path');
+      climbG.style.display = tt < tGone ? '' : 'none';
+      // the coat heaves and wobbles at his chest while it turns round in there
+      const wr = tt >= tGone - 0.04 && tt < tIn + 0.05;
+      lumpG.style.display = wr ? '' : 'none';
+      const w = Math.sin((tt - tGone) * 34);
+      lumpG.setAttribute('transform', `translate(${chest.x} ${chest.y + w * 3 * ns}) rotate(${chest.ang + w * 8}) translate(${-6 * ns} ${8 * ns}) scale(${ns * (0.85 + Math.abs(w) * 0.08)} ${ns * 0.9})`);
       // head pops out of the coat, looks about, settles
+      inCoat.root.style.display = tt >= tIn ? '' : 'none';
       const pop = kf(tt, [[tIn, 0], [tIn + 0.35, 1, 'back']]);
       inCoat.set({ x: 10, y: 52 + (1 - pop) * 40, scale: 0.9, headRot: -10 + Math.sin(tt * 3) * 4, look: kf(tt, [[tIn + 0.5, 2.4], [tIn + 0.9, -1.5, 'io']]), lookY: -1 });
     },

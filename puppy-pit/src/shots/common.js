@@ -72,7 +72,13 @@ export function gardenSet(defs, cam, o = {}) {
   const hazeC = mode === 'dusk' ? '#8c8aa0' : mode === 'golden' ? '#e4cfae' : P.haze;
   const far = g({});
   for (let i = 0; i < 9; i++) far.appendChild(bareTree(defs, { x: -120 + i * 150 + r() * 60, y: cam.p(0, 0, 90)[1] + 20, h: 150 + r() * 90, seed: 40 + i, color: mix(P.treeFar, hazeC, 0.5), spread: 1.25, depth: 7 }));
-  L.far = g({ filter: blurFilter(defs, 1.4) }, far);
+  // the ground beyond Colin's fence out to the horizon (everybody else's gardens). It
+  // goes in first, so the far trees and the houses stand on it: from a high camera you
+  // see over the fence, and without it the houses float on a strip of sky.
+  const yF = cam.p(0, 0, fenceZ)[1];
+  const farGround = el('rect', { x: -1200, y: cam.cy - 1, width: 4320, height: Math.max(0, yF - cam.cy + 6),
+    fill: linGrad(defs, 0, 0, 0, 1, [[0, mix(P.lawn, hazeC, 0.75)], [1, mix(P.lawn, hazeC, 0.45)]]) });
+  L.far = g({}, farGround, g({ filter: blurFilter(defs, 1.4) }, far));
   L.houses = g({});
   if (houses) {
     const sH = cam.s(housesZ), [, hy] = cam.p(0, 0, housesZ);
@@ -89,6 +95,23 @@ export function gardenSet(defs, cam, o = {}) {
           L.houses.appendChild(el('ellipse', { cx: x0 + 0.55 * sH, cy: y0 + 0.6 * sH, rx: 1.5 * sH, ry: 1.3 * sH, fill: radGrad(defs, 0.5, 0.5, 0.5, [[0, '#ffcf80', 0.35], [1, '#ffcf80', 0]]) }));
         });
       });
+  }
+  if (houses) {
+    // their back-garden fences, a little way in front of the houses, and a line of hedges nearer in
+    const rg = rng(30 + seed), Zg = housesZ - 8, sg = cam.s(Zg), ygb = cam.p(0, 0, Zg)[1], ygt = ygb - 1.6 * sg;
+    const gardens = g({ filter: paintFilter(defs, { freq: [0.1, 0.02], strength: 0.18, tooth: 0.08, seed: 40 + seed }) });
+    for (let X = -34; X < 34; X += 1.83) {
+      const [xa] = cam.p(X, 0, Zg), [xb] = cam.p(X + 1.83, 0, Zg), dy = (rg() - 0.5) * 0.04 * sg;
+      gardens.appendChild(el('rect', { x: xa, y: ygt + dy, width: xb - xa + 0.6, height: ygb - ygt - dy, fill: mix(mix(P.wood, P.woodLight, rg()), hazeC, 0.6) }));
+      gardens.appendChild(el('rect', { x: xa - 0.04 * sg, y: ygt - 0.1 * sg, width: 0.08 * sg, height: ygb - ygt + 0.1 * sg, fill: mix(P.post, hazeC, 0.55) }));
+    }
+    L.houses.appendChild(gardens);
+    const Zh2 = Math.min(32, housesZ * 0.5), sh2 = cam.s(Zh2), yh2 = cam.p(0, 0, Zh2)[1];
+    for (let X = -26; X < 26; X += 3.2 + rg() * 4) {
+      if (rg() < 0.3) continue;
+      const w = 1.6 + rg() * 2.6, hgt = 1.1 + rg() * 0.8;
+      L.houses.appendChild(bush(defs, { x: cam.p(X + w / 2, 0, Zh2)[0], y: yh2, w: w * sh2, h: hgt * sh2, seed: 90 + Math.round(X * 7), haze: 0.5 }));
+    }
   }
   const [tx, ty] = cam.p(-4.2, 0, 17), [tx2, ty2] = cam.p(5.4, 0, 20);
   L.trees = g({},

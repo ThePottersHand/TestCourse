@@ -42,8 +42,8 @@ function presentWide(svg, { zoomFrom = 1, zoomTo = 1.06, focus = [900, 620] } = 
 
 // The garden in golden light with nothing in it but him: no hole, no sign, no
 // puppies (the pit is somewhere off to his left, below the frame).
-function goldenGarden(defs, world, cam, { blur = 0, seed = 2, fenceZ = 12 } = {}) {
-  const L = gardenSet(defs, cam, { mode: 'golden', fenceZ, housesZ: 70, pitX: [-40, -39], pitZ: [4.4, 6.6], signAt: null, leaves: 40, seed });
+function goldenGarden(defs, world, cam, { blur = 0, seed = 2, fenceZ = 12, houses = true } = {}) {
+  const L = gardenSet(defs, cam, { mode: 'golden', fenceZ, housesZ: 70, pitX: [-40, -39], pitZ: [4.4, 6.6], signAt: null, leaves: 40, seed, houses });
   world.appendChild(g(blur ? { filter: blurFilter(defs, blur) } : {}, L.sky, L.far, L.houses, L.trees, L.bushes, L.fence, L.lawn));
   return L;
 }
@@ -63,7 +63,9 @@ export async function open(svg, ctx) {
   const { defs, root } = stage(svg);
   const cam = camera({ f: 2300, H: 0.55, cx: 960, cy: 790 });
   const world = g({}); root.appendChild(world);
-  const L = goldenGarden(defs, world, cam);
+  // (from down here the houses are hidden by the fence, bar a few chimney pots that
+  // look as if they're sitting on it, so leave them out)
+  const L = goldenGarden(defs, world, cam, { houses: false });
   const Zn = 5.0, [nx, ny] = cam.p(0.95, 0, Zn), ns = charScale(cam, Zn);
   world.appendChild(contactShadow(defs, nx - 4, ny, 70 * ns, 'golden', 3.2));
   const n = narrator(defs, { seed: 17 });
