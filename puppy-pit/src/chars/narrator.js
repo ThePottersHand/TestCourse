@@ -1,6 +1,6 @@
 // The narrator (Harold, 72). Cut-out rig, profile facing right.
 // Units: ~720 = standing height. Root origin = ground under the hip.
-import { el, g, shape, ellipseD, circleD, T, paintFilter, clipTo, mix } from '../lib/core.js';
+import { el, g, shape, ellipseD, circleD, T, paintFilter, clipTo, mix, uid } from '../lib/core.js';
 import { P } from '../lib/palette.js';
 
 const LEN = { thigh: 188, shin: 188, upper: 140, fore: 120 };
@@ -168,6 +168,7 @@ export function narrator(defs, opts = {}) {
       if (q.armsBehind) { if (shoulderN.parentNode !== torsoG || shoulderN.nextSibling !== neck) torsoG.insertBefore(shoulderN, neck); }
       else if (torsoG.lastChild !== shoulderN) torsoG.appendChild(shoulderN);
       head.brow.setAttribute('transform', T(0, -q.brow, q.browTilt));
+      head.mous.setAttribute('transform', q.talk ? `translate(0 ${(-1.5 - q.talk * 2.5).toFixed(2)}) rotate(${(-q.talk * 3).toFixed(2)} 36 -24)` : '');
       head.eye.style.display = q.eyes === 'closed' ? 'none' : '';
       head.eyeClosed.style.display = q.eyes === 'closed' ? '' : 'none';
       head.tuft.style.display = q.tuft ? '' : 'none';
@@ -188,7 +189,7 @@ export const STAND = {
   thighF: -3, shinF: 2, footF: 1, thighN: 3, shinN: -2, footN: -1,
   // [shoulder, elbow, wrist, forearm-foreshortening]
   armF: [14, 70, 10, 0.5], armN: [16, 74, 16, 0.5],
-  brow: 0, browTilt: 0, eyes: 'open', tuft: false, shoeless: false, buttons: 5, glasses: false, armsBehind: false, chestPup: false,
+  brow: 0, browTilt: 0, eyes: 'open', tuft: false, shoeless: false, buttons: 5, glasses: false, armsBehind: false, chestPup: false, talk: 0,
 };
 // sitting on the ground, legs out in front
 export const SIT = {
@@ -197,3 +198,141 @@ export const SIT = {
   armF: [-30, -50, 0, 1], armN: [-34, -46, -10, 1],
 };
 export const LEGLEN = LEN;
+
+// ============================================================== FRONT VIEW
+// Standing, facing camera. Units 400 = 1 m, origin = between the feet.
+// Options: blanket (tartan cape clutched at the chest), shoeless (his left =
+// screen right), buttons (how many survive), tuft, glasses.
+export function narratorFront(defs, opts = {}) {
+  const seed = opts.seed || 71;
+  const texCoat = paintFilter(defs, { freq: [0.07, 0.012], strength: 0.2, tooth: 0.1, seed });
+  const texCloth = paintFilter(defs, { freq: [0.09, 0.02], strength: 0.18, tooth: 0.1, seed: seed + 1 });
+  const texSkin = paintFilter(defs, { freq: 0.06, strength: 0.14, tooth: 0.06, seed: seed + 3 });
+  let s = seed * 3;
+  const R = (amp = 1.1, wl = 24, more = {}) => ({ amp, wl, seed: ++s, ...more });
+  // tartan for the blanket
+  const tid = uid('tartan');
+  defs.appendChild(el('pattern', { id: tid, width: 72, height: 72, patternUnits: 'userSpaceOnUse', patternTransform: 'rotate(4)' },
+    el('rect', { width: 72, height: 72, fill: '#6f4a3f' }),
+    el('rect', { x: 0, y: 22, width: 72, height: 18, fill: '#434a3e', opacity: 0.55 }),
+    el('rect', { x: 22, y: 0, width: 18, height: 72, fill: '#434a3e', opacity: 0.4 }),
+    el('rect', { x: 0, y: 54, width: 72, height: 2.5, fill: '#cdbf9f', opacity: 0.32 }),
+    el('rect', { x: 54, y: 0, width: 2.5, height: 72, fill: '#cdbf9f', opacity: 0.25 }),
+    el('rect', { x: 0, y: 10, width: 72, height: 2, fill: '#2c2a26', opacity: 0.3 })));
+
+  // legs & feet
+  const shoeD = x => `M${x - 24} -4 C${x - 26} -18, ${x - 14} -26, ${x} -26 C${x + 14} -26, ${x + 26} -18, ${x + 24} -4 C${x + 20} 4, ${x - 20} 4, ${x - 24} -4Z`;
+  const legs = g({ filter: texCloth },
+    shape('M-46 -150 L-44 -22 L-6 -22 L-4 -150Z', P.trousers, { r: R(1), line: LINE.trousers }),
+    shape('M4 -150 L6 -22 L44 -22 L46 -150Z', P.trousers, { r: R(1), line: LINE.trousers }),
+    shape('M-46 -150 L-44 -22 L-32 -22 L-34 -150Z', P.trousersDark, { r: R(0.6), opacity: 0.5 }),
+    shape('M34 -150 L32 -22 L44 -22 L46 -150Z', P.trousersDark, { r: R(0.6), opacity: 0.5 }));
+  const shoeR = shape(shoeD(-27), P.shoe, { r: R(0.6, 10), line: LINE.shoe });
+  const shoeL = shape(shoeD(27), P.shoe, { r: R(0.6, 10), line: LINE.shoe });
+  const sockL = g({ style: 'display:none' },
+    shape(`M4 -6 C2 -20, 12 -26, 27 -26 C42 -26, 50 -18, 49 -6 C46 2, 8 2, 4 -6Z`, P.sock, { r: R(0.7, 10), line: '#555' }),
+    shape(ellipseD(27, -3, 6, 4), P.skin, { r: R(0.3, 6) }));
+  // coat
+  const coatD = 'M-66 -560 C-74 -520, -72 -420, -68 -330 C-66 -260, -70 -200, -76 -140 C-40 -132, 40 -132, 76 -140 C70 -200, 66 -260, 68 -330 C72 -420, 74 -520, 66 -560 C40 -574, -40 -574, -66 -560Z';
+  const coat = g({ filter: texCoat },
+    shape(coatD, P.coat, { r: R(1.2, 30), line: LINE.coat }),
+    shape('M-66 -560 C-74 -520, -72 -420, -68 -330 C-66 -260, -70 -200, -76 -140 L-52 -138 C-50 -220, -50 -330, -50 -460Z', P.coatDark, { r: R(1, 30), opacity: 0.5 }),
+    shape('M-76 -168 C-40 -160, 40 -160, 76 -168 L76 -140 C40 -132, -40 -132, -76 -140Z', P.coatDark, { r: R(1, 30), opacity: 0.5 }),
+    el('path', { d: 'M4 -470 L2 -140', stroke: P.coatDark, 'stroke-width': 3.5, opacity: 0.85 }),
+    // lapels
+    shape('M-40 -566 L-8 -470 L-2 -470 L-26 -560Z', P.coatDark, { r: R(0.6, 12), opacity: 0.8 }),
+    shape('M40 -566 L8 -470 L2 -470 L26 -560Z', P.coatDark, { r: R(0.6, 12), opacity: 0.8 }),
+    shape('M-56 -300 L-24 -302 L-24 -290 L-56 -288Z', P.coatDark, { r: R(0.5, 10), opacity: 0.7 }),
+    shape('M24 -302 L56 -300 L56 -288 L24 -290Z', P.coatDark, { r: R(0.5, 10), opacity: 0.7 }));
+  const btnY = [-450, -400, -350, -300, -250];
+  const buttons = btnY.map(y => g({}, el('path', { d: circleD(10, y, 5), fill: P.button }), el('path', { d: circleD(9, y - 1.5, 1.6), fill: '#6a615b', opacity: 0.8 })));
+  // loose threads where buttons were
+  const threads = btnY.map(y => el('path', { d: `M8 ${y} l4 5 M11 ${y - 2} l-3 6`, stroke: '#2a2522', 'stroke-width': 1.2, opacity: 0.8, style: 'display:none' }));
+  // shirt, tie, scarf
+  const chest = g({ filter: texCloth },
+    shape('M-24 -566 L0 -480 L24 -566Z', '#d9d4c7', { r: R(0.5, 10) }),
+    shape('M-5 -548 L5 -548 L7 -490 L0 -480 L-7 -490Z', '#4a4f5e', { r: R(0.4, 8) }),
+    shape('M-48 -588 C-30 -600, 30 -600, 48 -588 C50 -574, 44 -562, 36 -558 C12 -566, -12 -566, -36 -558 C-44 -562, -50 -574, -48 -588Z', P.scarf, { r: R(0.8, 12), line: LINE.scarf }),
+    shape('M16 -566 C22 -540, 24 -510, 22 -476 L40 -478 C40 -512, 36 -544, 30 -566Z', P.scarf, { r: R(0.7, 10), line: LINE.scarf }),
+    shape('M22 -484 L40 -486 L41 -470 L22 -468Z', P.scarfDark, { r: R(0.5, 6, { tufts: 1, tuftLen: 3 }) }));
+  // arms (sleeves hanging) + hands
+  const armD = sx => `M${sx * 60} -556 C${sx * 80} -540, ${sx * 90} -470, ${sx * 90} -400 C${sx * 90} -370, ${sx * 88} -345, ${sx * 86} -330 L${sx * 62} -330 C${sx * 64} -380, ${sx * 64} -440, ${sx * 58} -500Z`;
+  const arms = g({ filter: texCoat },
+    shape(armD(-1), P.coat, { r: R(1, 20), line: LINE.coat }), shape(armD(1), P.coat, { r: R(1, 20), line: LINE.coat }),
+    shape('M-90 -400 C-90 -370, -88 -345, -86 -330 L-62 -330 C-64 -350, -64 -380, -66 -400Z', P.coatDark, { r: R(0.6, 12), opacity: 0.45 }),
+    shape('M90 -400 C90 -370, 88 -345, 86 -330 L62 -330 C64 -350, 64 -380, 66 -400Z', P.coatDark, { r: R(0.6, 12), opacity: 0.45 }));
+  const handD = sx => `M${sx * 64} -334 C${sx * 62} -316, ${sx * 64} -296, ${sx * 72} -286 C${sx * 80} -280, ${sx * 90} -284, ${sx * 90} -298 C${sx * 92} -312, ${sx * 90} -326, ${sx * 86} -334Z`;
+  const hands = g({ filter: texSkin }, shape(handD(-1), P.skin, { r: R(0.4, 8), line: LINE.skin, lw: 1.3 }), shape(handD(1), P.skin, { r: R(0.4, 8), line: LINE.skin, lw: 1.3 }));
+  // head (front)
+  const face = g({ filter: texSkin },
+    shape(ellipseD(-43, -650, 9, 16, -10), P.skin, { r: R(0.4, 8), line: LINE.skin, lw: 1.2 }),
+    shape(ellipseD(43, -650, 9, 16, 10), P.skin, { r: R(0.4, 8), line: LINE.skin, lw: 1.2 }),
+    el('path', { d: 'M-45 -660 C-48 -652, -47 -644, -43 -638 M45 -660 C48 -652, 47 -644, 43 -638', stroke: P.skinDeep, 'stroke-width': 1.6, fill: 'none', opacity: 0.6 }),
+    shape('M-38 -640 C-42 -686, -26 -718, 0 -718 C26 -718, 42 -686, 38 -640 C36 -610, 22 -588, 0 -586 C-22 -588, -36 -610, -38 -640Z', P.skin, { r: R(0.6, 14), line: LINE.skin, lw: 1.4 }),
+    shape('M-38 -640 C-36 -612, -24 -592, -8 -588 C-20 -598, -30 -616, -32 -644Z', P.skinDark, { r: R(0.4, 10), opacity: 0.45 }),
+    el('path', { d: ellipseD(-22, -634, 10, 7), fill: P.blush, opacity: 0.28 }), el('path', { d: ellipseD(22, -634, 10, 7), fill: P.blush, opacity: 0.28 }),
+    el('path', { d: 'M-20 -700 C-8 -703, 8 -703, 20 -700 M-16 -692 C-6 -694, 6 -694, 16 -692', stroke: LINE.skin, 'stroke-width': 1.1, fill: 'none', opacity: 0.4 }),
+    // nose: narrow bridge, soft bulb
+    shape('M-5 -672 C-6 -660, -9 -648, -12 -636 C-15 -626, -10 -618, -3 -619 C-1 -616, 1 -616, 3 -619 C10 -618, 15 -626, 12 -636 C9 -648, 6 -660, 5 -672Z', P.skin, { r: R(0.35, 8), line: LINE.skin, lw: 1.2 }),
+    shape('M-5 -672 C-6 -660, -9 -648, -12 -636 C-14 -630, -12 -624, -8 -621 C-8 -632, -5 -652, -2 -670Z', P.skinDark, { r: R(0.3, 8), opacity: 0.5 }),
+    el('path', { d: ellipseD(0, -628, 8, 6.5), fill: P.nose, opacity: 0.5 }),
+    el('path', { d: 'M-7 -621 C-5 -619, -3 -619, -2 -620 M2 -620 C3 -619, 5 -619, 7 -621', stroke: LINE.skin, 'stroke-width': 1.4, fill: 'none', opacity: 0.8 }),
+    el('path', { d: 'M-27 -662 C-23 -659, -17 -659, -13 -662 M13 -662 C17 -659, 23 -659, 27 -662', stroke: LINE.skin, 'stroke-width': 1.2, fill: 'none', opacity: 0.55 }));
+  const hairF = g({ filter: texSkin },
+    shape('M-36 -628 C-44 -648, -44 -680, -34 -700 C-32 -690, -33 -664, -30 -640Z', P.hair, { r: R(0.6, 7, { tufts: 1.3, tuftLen: 5 }), line: LINE.hair, lw: 1 }),
+    shape('M36 -628 C44 -648, 44 -680, 34 -700 C32 -690, 33 -664, 30 -640Z', P.hair, { r: R(0.6, 7, { tufts: 1.3, tuftLen: 5 }), line: LINE.hair, lw: 1 }),
+    el('path', { d: 'M-18 -714 C-8 -722, 8 -722, 20 -712 M-10 -718 C0 -726, 12 -724, 18 -718', stroke: P.hair, 'stroke-width': 2.4, fill: 'none', 'stroke-linecap': 'round' }));
+  const tuftF = shape('M-4 -716 C-10 -732, -2 -746, 8 -748 C2 -738, 2 -728, 6 -718Z', P.hair, { r: R(0.4, 6), line: LINE.hair, lw: 1.1, style: 'display:none' });
+  const eyesF = g({}, el('path', { d: ellipseD(-18, -668, 3.4, 3.7), fill: P.ink }), el('path', { d: ellipseD(18, -668, 3.4, 3.7), fill: P.ink }),
+    el('path', { d: 'M-24 -674 C-20 -676, -15 -676, -12 -673 M12 -673 C15 -676, 20 -676, 24 -674', stroke: LINE.skin, 'stroke-width': 1.4, fill: 'none' }));
+  const eyesShutF = g({ style: 'display:none' }, el('path', { d: 'M-23 -667 C-20 -664, -16 -664, -13 -667 M13 -667 C16 -664, 20 -664, 23 -667', stroke: P.ink, 'stroke-width': 2.2, fill: 'none', 'stroke-linecap': 'round' }));
+  const browsF = g({},
+    shape('M-34 -682 C-28 -690, -14 -692, -6 -686 C-8 -682, -14 -680, -20 -680 C-26 -680, -30 -679, -34 -682Z', P.hair, { r: R(0.6, 5, { tufts: 1.5, tuftLen: 5 }), line: LINE.hair, lw: 1 }),
+    shape('M34 -682 C28 -690, 14 -692, 6 -686 C8 -682, 14 -680, 20 -680 C26 -680, 30 -679, 34 -682Z', P.hair, { r: R(0.6, 5, { tufts: 1.5, tuftLen: 5 }), line: LINE.hair, lw: 1 }));
+  const mousF = g({},
+    shape('M-4 -618 C-14 -622, -30 -618, -34 -604 C-34 -594, -28 -588, -22 -590 C-18 -598, -10 -602, 0 -602 C10 -602, 18 -598, 22 -590 C28 -588, 34 -594, 34 -604 C30 -618, 14 -622, 4 -618 C2 -616, -2 -616, -4 -618Z', P.hair, { r: R(0.7, 6, { tufts: 1.3, tuftLen: 4.5 }), line: LINE.hair, lw: 1.1 }),
+    shape('M-20 -600 C-10 -604, 10 -604, 20 -600 C10 -598, -10 -598, -20 -600Z', P.hairDark, { r: R(0.3, 5), opacity: 0.8 }));
+  const glassesF = g({ style: 'display:none' },
+    el('path', { d: 'M-30 -660 L-8 -660 C-8 -652, -12 -648, -19 -648 C-26 -648, -30 -652, -30 -660Z M8 -660 L30 -660 C30 -652, 26 -648, 19 -648 C12 -648, 8 -652, 8 -660Z', fill: '#dfe3df', 'fill-opacity': 0.2, stroke: '#3b302a', 'stroke-width': 2.2 }),
+    el('path', { d: 'M-8 -658 L8 -658', stroke: '#3b302a', 'stroke-width': 2 }));
+  const headG = g({}, face, hairF, tuftF, eyesF, eyesShutF, browsF, mousF, glassesF);
+  const headPiv = g({}, headG);
+  // blanket: cape over shoulders, clutched at the chest by his right hand
+  const blanket = g({ style: 'display:none' },
+    g({ filter: texCloth },
+      shape('M-92 -556 C-64 -596, 64 -596, 92 -556 C106 -480, 112 -360, 110 -236 C84 -228, 60 -232, 36 -240 C22 -330, 12 -420, 6 -500 L-6 -500 C-12 -420, -22 -330, -36 -240 C-60 -232, -84 -228, -110 -236 C-112 -360, -106 -480, -92 -556Z', `url(#${tid})`, { r: R(1.4, 26, { tufts: 1.6, tuftLen: 5 }), line: '#3a2420', lw: 1.8 }),
+      shape('M-92 -556 C-106 -480, -112 -360, -110 -236 C-100 -232, -94 -234, -86 -236 C-90 -360, -92 -470, -80 -548Z', '#2e1c18', { r: R(0.8, 20), opacity: 0.3 }),
+      shape('M92 -556 C106 -480, 112 -360, 110 -236 C104 -232, 98 -234, 92 -236 C96 -360, 98 -470, 86 -548Z', '#2e1c18', { r: R(0.8, 20), opacity: 0.2 }),
+      el('path', { d: 'M-48 -566 C-40 -500, -44 -410, -56 -300 M48 -566 C40 -500, 44 -410, 56 -300 M-6 -500 C-12 -420, -22 -330, -36 -240 M6 -500 C12 -420, 22 -330, 36 -240', stroke: '#2e1c18', 'stroke-width': 3, opacity: 0.3, fill: 'none' })),
+    g({ filter: texSkin }, shape('M-14 -520 C-22 -508, -20 -488, -10 -482 C0 -478, 12 -482, 15 -492 C17 -504, 11 -518, 0 -522Z', P.skin, { r: R(0.4, 8), line: LINE.skin, lw: 1.3 }),
+      el('path', { d: 'M-8 -506 C-2 -504, 6 -504, 12 -507 M-9 -496 C-3 -494, 5 -494, 12 -497', stroke: LINE.skin, 'stroke-width': 1.1, fill: 'none', opacity: 0.6 })));
+  const finger = g({ filter: texSkin, style: 'display:none' }, shape('M3 -516 C2 -532, 3 -552, 6 -562 C8 -566, 13 -566, 14 -561 C15 -550, 14 -532, 13 -516Z', P.skin, { r: R(0.25, 6), line: LINE.skin, lw: 1.2 }), el('path', { d: 'M7 -560 C8 -557, 11 -557, 12 -560', stroke: LINE.skin, 'stroke-width': 1, fill: 'none', opacity: 0.7 }));
+  blanket.appendChild(finger);
+  const root = g({ class: 'narrator-front' }, legs, shoeR, shoeL, sockL, coat, g({}, buttons), g({}, threads), chest, arms, hands, headPiv, blanket);
+  return {
+    root, head: headPiv,
+    set(q = {}) {
+      const { x = 0, y = 0, scale = 1, rot = 0, headTilt = 0, headY = 0, shoeless = false, nButtons = 5, tuft = false, glasses = false, blanket: bl = false, brow = 0, look = [0, 0], talk = 0, sway = 0, point = false, blink = false, frown = 0 } = q;
+      root.setAttribute('transform', `translate(${x} ${y}) rotate(${rot + sway}) scale(${scale})`);
+      headPiv.setAttribute('transform', `translate(0 ${headY}) rotate(${headTilt} 0 -590)`);
+      shoeL.style.display = shoeless ? 'none' : ''; sockL.style.display = shoeless ? '' : 'none';
+      // buttons lost from the middle outwards: keep top and bottom first
+      const keep = [0, 4, 2, 1, 3].slice(0, nButtons);
+      buttons.forEach((b, i) => b.style.display = keep.includes(i) ? '' : 'none');
+      threads.forEach((t, i) => t.style.display = keep.includes(i) ? 'none' : '');
+      tuftF.style.display = tuft ? '' : 'none';
+      glassesF.style.display = glasses ? '' : 'none';
+      blanket.style.display = bl ? '' : 'none';
+      hands.style.display = bl ? 'none' : '';
+      arms.style.display = bl ? 'none' : '';
+      browsF.setAttribute('transform', T(0, -brow));
+      browsF.children[0].setAttribute('transform', frown ? `rotate(${-frown * 6} -20 -684)` : '');
+      browsF.children[1].setAttribute('transform', frown ? `rotate(${frown * 6} 20 -684)` : '');
+      finger.style.display = point ? '' : 'none';
+      eyesF.style.display = blink ? 'none' : '';
+      eyesShutF.style.display = blink ? '' : 'none';
+      eyesF.setAttribute('transform', T(look[0], look[1]));
+      mousF.setAttribute('transform', talk ? `translate(0 ${(-1 - talk * 2).toFixed(2)})` : '');
+    },
+  };
+}

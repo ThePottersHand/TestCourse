@@ -1,0 +1,95 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>The Puppy Pit</title>
+<style>
+@font-face { font-family: 'EB Garamond'; src: url(fonts/eb-garamond-latin-400-normal.woff2) format('woff2'); font-weight: 400; font-style: normal; }
+@font-face { font-family: 'EB Garamond'; src: url(fonts/eb-garamond-latin-400-italic.woff2) format('woff2'); font-weight: 400; font-style: italic; }
+@font-face { font-family: 'EB Garamond'; src: url(fonts/eb-garamond-latin-500-normal.woff2) format('woff2'); font-weight: 500; font-style: normal; }
+html, body { margin: 0; background: #000; overflow: hidden; }
+#wrap { position: relative; width: 1920px; height: 1080px; overflow: hidden; background: #000; }
+#layers { position: absolute; inset: 0; filter: contrast(1.06) saturate(1.05); }
+#layers > svg { position: absolute; inset: 0; display: block; }
+.post { position: absolute; inset: 0; pointer-events: none; }
+#paper { background: url(tex/paper.png); background-size: 1024px; mix-blend-mode: multiply; opacity: 0.55; }
+#grain { background-size: 512px; mix-blend-mode: overlay; opacity: 0.35; }
+#vignette { background: radial-gradient(ellipse 75% 70% at 50% 48%, rgba(0,0,0,0) 55%, rgba(40,30,25,0.34) 100%); mix-blend-mode: multiply; }
+#grade { background: #f1e6d0; mix-blend-mode: soft-light; opacity: 0.35; }
+#fade { background: #000; opacity: 0; }
+#hud { position: absolute; left: 24px; bottom: 20px; font: 600 26px/1.2 'DejaVu Sans Mono', monospace; color: #fff;
+       background: rgba(0,0,0,0.55); padding: 6px 12px; border-radius: 6px; display: none; letter-spacing: 0.5px; }
+</style></head>
+<body>
+<div id="wrap">
+  <div id="layers"></div>
+  <div class="post" id="grade"></div>
+  <div class="post" id="paper"></div>
+  <div class="post" id="grain"></div>
+  <div class="post" id="vignette"></div>
+  <div class="post" id="fade"></div>
+  <div id="hud"></div>
+</div>
+<script type="module">
+import { SHOTS, DURATION, FPS, F, W, Ls, Le, PRE } from './timeline.js';
+import { clamp } from './lib/core.js';
+
+const NS = 'http://www.w3.org/2000/svg';
+const params = new URLSearchParams(location.search);
+const layersEl = document.getElementById('layers');
+const fadeEl = document.getElementById('fade');
+const grainEl = document.getElementById('grain');
+const hud = document.getElementById('hud');
+if (params.get('review')) hud.style.display = 'block';
+
+const cache = new Map();
+async function inst(i) {
+  const s = SHOTS[i];
+  if (cache.has(s.id)) return cache.get(s.id);
+  const mod = await import(`./shots/${s.mod}.js`);
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('width', 1920); svg.setAttribute('height', 1080); svg.setAttribute('viewBox', '0 0 1920 1080');
+  svg.style.zIndex = String(i);
+  layersEl.appendChild(svg);
+  const ctx = { shot: s, dur: s.end - s.start, F, W, Ls, Le, PRE };
+  const x = await mod[s.fn](svg, ctx);
+  x.svg = svg; x.index = i;
+  cache.set(s.id, x);
+  return x;
+}
+function dispose(keep) {
+  for (const [id, x] of cache) if (!keep.has(x.index)) {
+    if (Math.abs(x.index - Math.max(...keep)) > 1) { x.svg.remove(); cache.delete(id); } else x.svg.style.display = 'none';
+  }
+}
+const tc = t => { const f = Math.round(t * FPS); const s = Math.floor(f / FPS); return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}:${String(f % FPS).padStart(2, '0')}`; };
+
+window.FILM = { DURATION, SHOTS: SHOTS.map(s => ({ id: s.id, start: s.start, end: s.end })), FPS, PRE };
+window.seek = async t => {
+  let i = SHOTS.findIndex(s => t >= s.start && t < s.end);
+  if (i < 0) i = t < 0 ? 0 : SHOTS.length - 1;
+  const cur = SHOTS[i];
+  const show = [i];
+  if (cur.mix && i > 0 && t < cur.start + cur.mix) show.unshift(i - 1);
+  dispose(new Set(show));
+  for (const k of show) {
+    const x = await inst(k);
+    const s = SHOTS[k];
+    x.svg.style.display = '';
+    x.svg.style.opacity = (k === i && cur.mix && show.length > 1) ? String(clamp((t - cur.start) / cur.mix)) : '1';
+    x.update(t - s.start, t);
+  }
+  let fade = 0;
+  if (cur.fadeIn) fade = Math.max(fade, 1 - clamp((t - cur.start) / cur.fadeIn));
+  if (cur.fadeOut) fade = Math.max(fade, clamp((t - (cur.end - cur.fadeOut)) / cur.fadeOut));
+  fadeEl.style.opacity = String(fade);
+  const k = Math.floor(t * 12) % 6;
+  grainEl.style.backgroundImage = `url(tex/grain${k}.png)`;
+  grainEl.style.backgroundPosition = `${(k * 173) % 512}px ${(k * 311) % 512}px`;
+  hud.textContent = `${tc(t)}  ${cur.id}`;
+};
+await document.fonts.ready;
+let t0 = parseFloat(params.get('t') || '0');
+if (params.get('shot')) { const s = SHOTS.find(s => s.id === params.get('shot')); t0 = s.start + parseFloat(params.get('dt') || '0'); }
+await window.seek(t0);
+await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+window.__ready = true;
+</script>
+</body></html>

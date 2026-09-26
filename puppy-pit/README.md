@@ -1,22 +1,35 @@
 # The Puppy Pit — animated short
 
-Animation for the monologue *The Puppy Pit* (152.6 s voice track).
+Animation for the monologue *The Puppy Pit* (152.6 s voice track, `audio/the_puppy_pit.mp3`).
 
 Style: grounded British picture-book realism. Muted, overcast palette with gouache and paper
 texture, and still, deadpan compositions. The golden puppies carry the only saturated colour.
+Two lighting worlds: the overcast day it happened (then dusk for the rescue), and the golden
+evening of the present day, which bookends the film.
 
 ## Layout
-- `src/` — the film, drawn as SVG in the browser (cut-out rigs, environments, scenes)
-  - `lib/` core helpers (hand-cut edges, gouache filters, camera projection), palette
-  - `chars/` narrator, puppies, Colin · `props/` sign, shoe · `env/` garden kit
-  - `scenes/` one module per shot · `frame.html?scene=<name>&t=<sec>` renders a frame
-- `tools/` — `align.py` (script ↔ Whisper word timing), `snap.py` (headless frame render),
-  `make_textures.py` (paper/grain textures)
-- `timing/` — Whisper word timestamps and per-line timing of the script
-- `concepts/` — concept frames
+- `src/` — the film, drawn as SVG in headless Chromium
+  - `lib/` hand-cut edges, gouache filters, camera projection, animation helpers, palette
+  - `chars/` narrator (profile + front rigs), puppies (side/front/top views), Colin, his daughter
+  - `props/` sign, shoe, ladder, rope cordon, blanket · `env/` garden kit (fence, lawn, pit, houses)
+  - `shots/` one module per sequence; `timeline.js` is the cut (every cut/action keyed to words)
+  - `film.html?shot=<id>&dt=<sec>` renders any frame; `?review=1` burns in timecode
+- `tools/`
+  - `render.py` — parallel frame render + encode with the voice (offset by the 3 s pre-roll)
+  - `snap.py` — single frame · `contact.py` — contact sheets · `shotlist.py` — shot timecodes
+  - `align.py` / `make_timing.py` — script ↔ Whisper word timing → `src/data/timing.js`
+- `timing/` — Whisper word timestamps and per-line timing
+- `concepts/` — the two approved concept frames
 
-## Preview a frame
+## Render
 ```
 python3 -m http.server 8765 --directory src &
-python3 tools/snap.py "http://localhost:8765/frame.html" out.png --query "scene=sign&t=1"
+python3 tools/render.py --scale 0.6667 --review --name puppy_pit_review.mp4   # 720p + timecode
+python3 tools/render.py --scale 1 --png --crf 16 --name puppy_pit_1080p.mp4   # master
+python3 tools/render.py --shots reading,smell --no-encode                    # re-render shots
 ```
+Outputs land in `out/` (git-ignored).
+
+## Notes
+- The recording ends on "Recognition." — the last line of the text, "They're waiting for the
+  sequel.", is set as the end card. A short stray sound at 151 s (after the last word) is faded out.

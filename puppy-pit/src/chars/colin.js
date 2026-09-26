@@ -46,10 +46,17 @@ export function colinOverFence(defs, { seed = 60 } = {}) {
   const eyesG = g({}, eyes);
   const head = g({}, g({ filter: texSkin }, neck, ears, face, shade, shine, stubble), hair, brows, eyesG, nose, mouth, mouthO, glasses);
   const headPivot = g({}, head);
-  const root = g({ class: 'colin' }, body, headPivot, hands);
+  const mug = g({ style: 'display:none' },
+    shape('M14 -30 L44 -30 L42 8 C42 12, 16 12, 16 8Z', '#e9e6dc', { r: R(0.4, 8), line: '#8a857a', lw: 1.4 }),
+    el('path', { d: 'M15 -18 L43 -18 L43 -12 L15 -12Z', fill: '#6b4b55', opacity: 0.8 }),
+    el('path', { d: 'M44 -22 C56 -22, 56 0, 43 -2', stroke: '#d9d5ca', 'stroke-width': 5, fill: 'none' }),
+    el('path', { d: ellipseD(29, -30, 15, 3.5), fill: '#6a4b35' }));
+  const root = g({ class: 'colin' }, body, headPivot, hands, mug);
   return {
-    root, head: headPivot,
-    set({ x = 0, y = 0, scale = 1, tilt = 0, dip = 0, look = [0, 0], talk = false } = {}) {
+    root, head: headPivot, mug,
+    set({ x = 0, y = 0, scale = 1, tilt = 0, dip = 0, look = [0, 0], talk = false, tea = false, sip = 0 } = {}) {
+      mug.style.display = tea ? '' : 'none';
+      mug.setAttribute('transform', sip ? `translate(${-20 * sip} ${-60 * sip}) rotate(${-25 * sip} 30 0)` : '');
       root.setAttribute('transform', `translate(${x} ${y}) scale(${scale})`);
       headPivot.setAttribute('transform', `translate(0 ${dip}) rotate(${tilt} 0 -70)`);
       eyesG.setAttribute('transform', T(look[0], look[1]));

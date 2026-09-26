@@ -14,7 +14,7 @@ export function sky(defs, { W = 1920, H = 1080, top = P.skyHigh, mid = P.sky, lo
       cl.push(el('path', { d: ellipseD(cx, cy, rx, ry, (r() - 0.5) * 8), fill: r() < 0.5 ? '#e6e2d8' : '#c4c4bd', opacity: 0.35 + r() * 0.3 }));
     }
   }
-  return g({}, el('rect', { x: -200, y: -200, width: W + 400, height: H + 400, fill: grad }), g({ filter: blur }, cl));
+  return g({}, el('rect', { x: -1200, y: -1200, width: W + 2400, height: H + 2400, fill: grad }), g({ filter: blur }, cl));
 }
 
 // ---------------------------------------------------------------- bare tree
@@ -159,7 +159,7 @@ export function lawn(defs, cam, { yTop, W = 1920, H = 1080, seed = 4, leaves = 6
     const L = s * (0.028 + r() * 0.022);
     bits.push(shape(ellipseD(x, y, L, L * 0.45, r() * 180), leafCols[Math.floor(r() * leafCols.length)], { r: { amp: L * 0.08, wl: L, seed: 900 + i }, opacity: 0.85 }));
   }
-  const base = el('rect', { x: -50, y: yTop, width: W + 100, height: H - yTop + 50, fill: grad });
+  const base = el('rect', { x: -1200, y: yTop, width: W + 2400, height: H - yTop + 1200, fill: grad });
   return g({}, g({ filter: tex2 }, g({ filter: tex }, base)), bits);
 }
 

@@ -1,0 +1,30 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Sheet 2</title>
+<style>html,body{margin:0;background:#e9e5dc}svg{display:block}</style></head>
+<body>
+<svg id="stage" width="1920" height="1080" viewBox="0 0 1920 1080"></svg>
+<script type="module">
+import { el, g, T } from './lib/core.js';
+import { narratorFront, narrator, SIT } from './chars/narrator.js';
+import { puppy } from './chars/puppy.js';
+import { daughter } from './chars/daughter.js';
+import { colinOverFence } from './chars/colin.js';
+import { ladder, cordon, foldedBlanket } from './props/misc.js';
+const svg = document.getElementById('stage');
+const defs = el('defs'); svg.appendChild(defs);
+svg.appendChild(el('rect', { width: 1920, height: 1080, fill: '#ddd8cc' }));
+const a = narratorFront(defs); svg.appendChild(a.root); a.set({ x: 180, y: 1000, scale: 1.2 });
+const b = narratorFront(defs, { seed: 75 }); svg.appendChild(b.root); b.set({ x: 480, y: 1000, scale: 1.2, blanket: true, shoeless: true, nButtons: 2, tuft: true });
+const d1 = daughter(defs, { pose: 'phone' }); svg.appendChild(d1.root); d1.set({ x: 760, y: 1000, scale: 1.2 });
+const d2 = daughter(defs, { pose: 'puppy', seed: 81 }); svg.appendChild(d2.root); d2.set({ x: 980, y: 1000, scale: 1.2, laugh: 1 });
+const hp = puppy(defs, { view: 'front', pose: 'sit', seed: 6, harold: true }); d2.slot.appendChild(hp.root); hp.set({ x: 0, y: 30, scale: 1.0 });
+for (let i = 0; i < 5; i++) { const p = puppy(defs, { view: 'top', seed: i + 1, harold: i === 2 }); svg.appendChild(p.root); p.set({ x: 1220 + i * 130, y: 160, scale: 1.6, rot: [0, -20, 10, 25, -8][i], shine: i % 2 === 0 }); }
+const l1 = puppy(defs, { view: 'side', pose: 'lie', seed: 3 }); svg.appendChild(l1.root); l1.set({ x: 1300, y: 420, scale: 1.6 });
+const l2 = puppy(defs, { view: 'side', pose: 'lie', seed: 4 }); svg.appendChild(l2.root); l2.set({ x: 1560, y: 420, scale: 1.6, headRot: 20, blink: true });
+const st = puppy(defs, { view: 'side', pose: 'stand', seed: 5 }); svg.appendChild(st.root); st.set({ x: 1780, y: 420, scale: 1.6, trot: 0.2 });
+svg.appendChild(g({ transform: T(1250, 1000, 0, 0.25) }, ladder(defs)));
+svg.appendChild(cordon(defs, [[1360, 980], [1560, 960, 0.9], [1760, 990]], { s: 300 }));
+svg.appendChild(g({ transform: T(1650, 700, 0, 1.2) }, foldedBlanket(defs)));
+const c = colinOverFence(defs); svg.appendChild(c.root); c.set({ x: 1400, y: 760, scale: 1.1 });
+window.__ready = true;
+</script></body></html>
