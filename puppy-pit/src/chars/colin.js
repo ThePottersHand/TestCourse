@@ -21,12 +21,16 @@ export function colinOverFence(defs, { seed = 60 } = {}) {
     el('path', { d: 'M-96 272 L96 272 M-90 150 C-40 160, 40 160, 90 150', stroke: P.colinJumperDark, 'stroke-width': 2, fill: 'none', opacity: 0.5 }),
     shape('M-120 20 C-118 -20, -100 -48, -60 -58 C-30 -66, 30 -66, 60 -58 C100 -48, 118 -20, 120 20Z', P.colinJumper, { r: R(1, 20), line: LINE.jumper }),
     shape('M-26 -62 C-18 -48, 18 -48, 26 -62 C14 -58, -14 -58, -26 -62Z', P.colinJumperDark, { r: R(0.5, 8) }));
-  // forearms folded on the rail
-  const forearms = g({ filter: texCloth },
-    shape('M-128 18 C-110 -2, -40 -6, 20 2 C30 4, 32 16, 22 20Z', P.colinJumper, { r: R(0.8, 16), line: LINE.jumper }),
+  // forearms folded on the rail. The one whose hand ends by the mug (A) is its own
+  // group: when he drinks it lifts from the elbow, mug in hand.
+  const forearmA = g({ filter: texCloth },
+    shape('M-128 18 C-110 -2, -40 -6, 20 2 C30 4, 32 16, 22 20Z', P.colinJumper, { r: R(0.8, 16), line: LINE.jumper }));
+  const forearmB = g({ filter: texCloth },
     shape('M128 18 C110 -2, 40 -6, -20 2 C-30 4, -32 16, -22 20Z', P.colinJumperDark, { r: R(0.8, 16), line: LINE.jumper }));
-  const hands = g({ filter: texSkin },
-    shape(ellipseD(26, 10, 16, 11), P.colinSkin, { r: R(0.4, 8), line: LINE.skin, lw: 1.3 }),
+  const handA = g({ filter: texSkin },
+    shape('M14 2 C10 8, 12 18, 22 20 C32 21, 42 16, 43 8 C43 2, 38 -2, 30 -2 L20 -1 C17 -1, 15 0, 14 2Z', P.colinSkin, { r: R(0.4, 8), line: LINE.skin, lw: 1.3 }),
+    el('path', { d: 'M24 1 C26 4, 26 9, 24 12 M32 0 C34 3, 34 8, 32 11', stroke: LINE.skin, 'stroke-width': 1.1, fill: 'none', opacity: 0.6 }));
+  const handB = g({ filter: texSkin },
     shape(ellipseD(-30, 12, 15, 10), P.colinSkinDark, { r: R(0.4, 8), line: LINE.skin, lw: 1.3 }));
   // his phone, held up in both hands to take a picture (we see the back of it)
   const phoneArms = g({ filter: texCloth },
@@ -81,12 +85,14 @@ export function colinOverFence(defs, { seed = 60 } = {}) {
     el('path', { d: 'M15 -18 L43 -18 L43 -12 L15 -12Z', fill: '#6b4b55', opacity: 0.8 }),
     el('path', { d: 'M44 -22 C56 -22, 56 0, 43 -2', stroke: '#d9d5ca', 'stroke-width': 5, fill: 'none' }),
     el('path', { d: ellipseD(29, -30, 15, 3.5), fill: '#6a4b35' }));
-  const restArms = g({}, forearms, hands);
+  // the mug sits in hand A (drawn over the mug so the fingers wrap round it)
+  const sipArm = g({}, forearmA, mug, handA);
+  const restArms = g({}, forearmB, handB, sipArm);
   // reaching down (to haul someone up): two-point arms from the shoulders
   const reachL = limb(defs, { w0: 46, w1: 34, fill: P.colinJumper, dark: P.colinJumperDark, line: LINE.jumper, handFill: P.colinSkin, handLine: LINE.skin, seed: seed + 30, filter: texCloth, handFilter: texSkin, mitt: 1.15 });
   const reachR = limb(defs, { w0: 46, w1: 34, fill: P.colinJumperDark, dark: P.colinJumperDark, line: LINE.jumper, handFill: P.colinSkinDark, handLine: LINE.skin, seed: seed + 40, filter: texCloth, handFilter: texSkin, mitt: 1.15 });
   const reachG = g({ style: 'display:none' }, reachL.root, reachR.root);
-  const root = g({ class: 'colin' }, body, headPivot, restArms, mug, phoneG, reachG);
+  const root = g({ class: 'colin' }, body, headPivot, restArms, phoneG, reachG);
   return {
     root, head: headPivot, mug, reachG, SHOULDERS: [[-86, -40], [86, -40]],
     set({ x = 0, y = 0, scale = 1, tilt = 0, dip = 0, look = [0, 0], talk = false, tea = false, sip = 0, phone = false, phoneY = 0, phoneTilt = 0, flash = 0, reach = null } = {}) {
@@ -98,7 +104,10 @@ export function colinOverFence(defs, { seed = 60 } = {}) {
       flashGlow.style.display = flash > 0 ? '' : 'none';
       flashGlow.setAttribute('opacity', flash);
       mug.style.display = tea && !phone ? '' : 'none';
-      mug.setAttribute('transform', sip ? `translate(${-20 * sip} ${-60 * sip}) rotate(${-25 * sip} 30 0)` : '');
+      // drinking: the forearm swings up from the elbow bringing the mug to his mouth,
+      // and the wrist tips it a little further
+      sipArm.setAttribute('transform', sip ? `rotate(${(-29 * sip).toFixed(2)} -128 18)` : '');
+      mug.setAttribute('transform', sip ? `rotate(${(-14 * sip).toFixed(2)} 29 8)` : '');
       root.setAttribute('transform', `translate(${x} ${y}) scale(${scale})`);
       headPivot.setAttribute('transform', `translate(0 ${dip}) rotate(${tilt} 0 -70)`);
       eyesG.setAttribute('transform', T(look[0], look[1]));

@@ -104,17 +104,34 @@ export async function unharmed(svg, ctx) {
 }
 
 // ---------------------------------------------------------------- present day
+// His shoe is still down there. It lies on the floor off to one side and one of
+// them is always lying beside it, gnawing; it stays where it is when they get up.
+const SHOE = [0.74, -0.36];               // X, G on the floor
+const CHEW = [0.5, -0.25];                // where the chewer lies, nose to the toe of it
+const LEAD = 5;                           // which one it is
+const angleTo = ([x0, y0], [x1, y1]) => Math.atan2(x1 - x0, -(y1 - y0)) * 180 / Math.PI;
 function presentPit(svg, ctx, seed, layout = GATHER) {
   const { defs, root } = stage(svg);
   const set = topPitSet(defs, { mode: 'golden', cordonOn: true, seed });
-  const pups = cast(set, defs, layout, { harold: -1, seedOff: 20 });
+  // the shoe goes on the floor first, so the puppies are always on top of it
+  const [sx, sy, ssc] = set.floorAt(SHOE[0], SHOE[1], 0.04);
+  const [cx, cy] = set.floorAt(CHEW[0], CHEW[1]);
+  const toeDir = angleTo([sx, sy], [cx, cy]);                 // toe points at the chewer
+  const shoeSc = ssc * K * 0.8;
+  set.cast.appendChild(el('ellipse', { cx: sx + 5 * shoeSc, cy: sy + 7 * shoeSc, rx: 20 * shoeSc, ry: 50 * shoeSc, transform: `rotate(${toeDir} ${sx} ${sy})`, fill: '#0e0a07', opacity: 0.3, filter: blurFilter(defs, 5) }));
   const shoeG = g({}, shoeTop(defs));
   set.cast.appendChild(shoeG);
+  const pups = cast(set, defs, layout, { harold: -1, seedOff: 20 });
   root.appendChild(set.root);
   root.appendChild(tint(defs, 'golden', { sun: [-300, 300] }));
-  return { defs, root, set, pups, shoeG };
+  const chewer = pups.find(q => q.i === LEAD);
+  // tug: 0..1 how hard it is worrying the toe right now; the shoe twists a little about its heel
+  const shoeAt = (tug = 0) => shoeG.setAttribute('transform',
+    `translate(${sx} ${sy}) rotate(${(toeDir + tug * 5).toFixed(2)}) translate(0 ${(-tug * 6).toFixed(2)}) scale(${shoeSc})`);
+  const chewPos = { x: cx, y: cy, rot: angleTo([cx, cy], [sx, sy]) };
+  return { defs, root, set, pups, shoeG, shoeAt, chewer, chewPos };
 }
-// playing: wandering, wrestling, one worrying the shoe (positions relative to GATHER homes)
+// playing: wandering, wrestling (positions relative to GATHER homes)
 function play(q, tt) {
   const r = q.i * 1.37;
   const dx = Math.sin(tt * 1.1 + r) * 70 + Math.sin(tt * 2.3 + r * 2) * 16;
@@ -122,23 +139,26 @@ function play(q, tt) {
   const vx = Math.cos(tt * 1.1 + r) * 77, vy = -Math.sin(tt * 0.9 + r * 1.3) * 54;
   return { x: q.x + dx, y: q.y + dy, rot: Math.atan2(vx, -vy) * 180 / Math.PI };
 }
-const LEAD = 5;
-function carryShoe(shoeG, q, pos) {
-  const a = pos.rot * Math.PI / 180;
-  shoeG.setAttribute('transform', `translate(${pos.x + Math.sin(a) * 70 * q.sc} ${pos.y - Math.cos(a) * 70 * q.sc}) rotate(${pos.rot + 90}) scale(${q.sc * 0.8})`);
+// the chewer, head down at the toe of the shoe, worrying it in bursts
+function gnaw(q, pos, tt) {
+  const burst = Math.max(0, Math.sin(tt * 1.7 + 0.6));
+  const shake = Math.sin(tt * 17) * burst;
+  q.p.set({ x: pos.x, y: pos.y, scale: q.sc, rot: pos.rot + Math.sin(tt * 1.1) * 3, up: false, headRot: shake * 9, wag: Math.sin(tt * 9) * 18 });
+  place(q, pos.x, pos.y, pos.rot);
+  return shake;
 }
 
 export async function watch(svg, ctx) {
-  const { set, pups, shoeG } = presentPit(svg, ctx, 11);
+  const { set, pups, shoeAt, chewPos } = presentPit(svg, ctx, 11);
   return {
     update(t) {
       set.update(kf(t, [[0, 2.5], [ctx.dur, 2.3, 'sine']]));
       const tt = on2(t) + 3;
       pups.forEach(q => {
+        if (q.i === LEAD) { shoeAt(gnaw(q, chewPos, tt)); return; }
         const pos = play(q, tt);
         q.p.set({ x: pos.x, y: pos.y, scale: q.sc, rot: pos.rot, up: false, wag: Math.sin(tt * 16 + q.i) * 26, headRot: Math.sin(tt * 7 + q.i) * 10 });
         place(q, pos.x, pos.y, pos.rot);
-        if (q.i === LEAD) carryShoe(shoeG, q, pos);
       });
     },
   };
@@ -146,7 +166,7 @@ export async function watch(svg, ctx) {
 
 // "They remember me. Whenever I arrive, they look up with that same bright expression."
 export async function remember(svg, ctx) {
-  const { set, pups, shoeG } = presentPit(svg, ctx, 11);
+  const { set, pups, shoeAt, chewPos } = presentPit(svg, ctx, 11);
   const freeze = ctx.W(40, 'remember') - ctx.shot.start;
   const bright = ctx.W(41, 'bright') - ctx.shot.start;
   const cont = ctx.shot.start - (ctx.W(39, 'and') - 0.21) + 3; // continue the play clock from "watch"
@@ -156,27 +176,28 @@ export async function remember(svg, ctx) {
       const tt = on2(t);
       pups.forEach((q, j) => {
         const tf = freeze + (j % 3) * 0.05;
-        const frozen = play(q, Math.min(tt, tf) + cont);
+        const up = tt >= tf;
+        if (q.i === LEAD && !up) { shoeAt(gnaw(q, chewPos, tt + cont)); return; }
+        if (q.i === LEAD) shoeAt(0);                     // it lets go; the shoe stays put
+        const frozen = q.i === LEAD ? chewPos : play(q, Math.min(tt, tf) + cont);
         // after they look up, they shuffle in together beneath him
         const u = kf(tt, [[tf + 0.5, 0], [tf + 2.6, 1, 'io']]);
         const step = Math.floor(u * 6) / 6;
         const x = lerp(frozen.x, q.x, step), y = lerp(frozen.y, q.y, step);
-        const up = tt >= tf;
         const rot = up ? lerp(frozen.rot, q.rot, Math.min(1, u * 1.5)) : frozen.rot;
         q.p.set({ x, y: y - (up && u > 0 && u < 1 ? Math.abs(Math.sin(tt * 14 + j)) * 3 : 0), scale: q.sc, rot, up,
           wag: up ? Math.sin(tt * 3 + q.i) * 4 : Math.sin(tt * 16 + q.i) * 26, headRot: up ? 0 : Math.sin(tt * 7 + q.i) * 10,
           shine: tt >= bright + (j % 4) * 0.07 });
         place(q, x, y, rot);
-        if (q.i === LEAD) { if (!up) carryShoe(shoeG, q, frozen); else if (tt < tf + 0.1) carryShoe(shoeG, q, frozen); }
       });
     },
   };
 }
 
-// "Recognition."
+// "Recognition." (the shoe is still lying where it was left)
 export async function recognition(svg, ctx) {
-  const { set, pups, shoeG } = presentPit(svg, ctx, 11);
-  shoeG.setAttribute('transform', 'translate(-9999 0)');
+  const { set, pups, shoeAt } = presentPit(svg, ctx, 11);
+  shoeAt(0);
   return {
     update(t) {
       set.update(kf(t, [[0, 0.42], [ctx.dur, 0.32, 'sine']]), [0, -30]);
