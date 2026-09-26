@@ -16,6 +16,9 @@
     neon(b, cam, o = {}) { S._L.neon.push(() => St.draw(b, cam, o)); },
     solid(b, cam, o = {}) { S._L.over.push(() => St.draw(b, cam, Object.assign({ style: 'solid', blend: 'premul' }, o))); },
     neonOver(b, cam, o = {}) { S._L.over.push(() => St.draw(b, cam, Object.assign({ blend: 'add' }, o))); },
+    // pencil objects in front of everything else: `fill` hides what is behind them, `pencil` draws their lines
+    fill(poly, cam, o = {}) { S._L.over.push(() => St.fill(poly, cam, o)); },
+    pencil(b, cam, o = {}) { S._L.over.push(() => St.draw(b, cam, Object.assign({ style: 'pencil', minPx: 1.0, intensity: Rn.post.inkAmt, inkCol: Rn.post.inkCol }, o))); },
     over(fn) { S._L.over.push(fn); },
     top(fn) { S._L.top.push(fn); },
     text(L, o) { S._L.over.push(() => Tx.draw(L, o)); },

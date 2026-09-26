@@ -36,6 +36,7 @@ void main(){
 ${G.GLSL_COMMON}
 in vec2 v_px; in vec2 v_a; in vec2 v_b; in vec2 v_r; in vec4 v_col; in vec2 v_u; out vec4 o;
 uniform float u_style, u_intensity, u_halo, u_time, u_core;
+uniform vec3 u_inkCol; uniform vec2 u_res; uniform sampler2D u_bg;
 void main(){
   vec2 pa = v_px - v_a, ba = v_b - v_a;
   float h = clamp(dot(pa,ba)/max(dot(ba,ba),1e-4), 0.0, 1.0);
@@ -54,14 +55,33 @@ void main(){
     float tooth = vnoise(gl_FragCoord.xy*0.45)*0.65 + hash21(floor(gl_FragCoord.xy))*0.45;
     float ink = cov*v_col.a*mix(0.45, 1.0, smoothstep(0.2,0.8,tooth))*u_intensity;
     o = vec4(ink);
-  } else {
+  } else if(u_style < 2.5){
     // solid marker (flat colour, crisp edge) used for silhouettes/laser cores
     float cov = 1.0 - smoothstep(r-0.8, r+0.8, d);
     o = vec4(v_col.rgb*cov*v_col.a*u_intensity, cov*v_col.a);
+  } else {
+    // graphite drawn straight onto the frame, for pencil objects in front of everything: the same
+    // mix toward the ink colour the composite applies to the ink layer, written for a MIN blend so
+    // overlapping segments never double up.
+    float cov = 1.0 - smoothstep(r-0.6, r+0.6, d);
+    float tooth = vnoise(gl_FragCoord.xy*0.45)*0.65 + hash21(floor(gl_FragCoord.xy))*0.45;
+    float ink = clamp(cov*v_col.a*mix(0.45, 1.0, smoothstep(0.2,0.8,tooth))*u_intensity, 0.0, 1.0);
+    o = vec4(mix(texture(u_bg, gl_FragCoord.xy/u_res).rgb, u_inkCol, ink), 1.0);
   }
 }`;
 
-  let prog, vao, ibuf, cornerBuf, cap = 0;
+  // filled polygons painted with the background layer, so a pencil object can hide what is behind it
+  const FILL_VS = `#version 300 es
+layout(location=0) in vec3 a_p;
+uniform mat4 u_vp;
+void main(){ gl_Position = u_vp*vec4(a_p,1.0); }`;
+  const FILL_FS = `#version 300 es
+precision highp float;
+uniform sampler2D u_bg; uniform vec2 u_res; uniform float u_alpha;
+out vec4 o;
+void main(){ o = vec4(texture(u_bg, gl_FragCoord.xy/u_res).rgb*u_alpha, u_alpha); }`;
+
+  let prog, vao, ibuf, cornerBuf, cap = 0, fillProg, fillVao, fillBuf;
 
   St.init = function () {
     const gl = G.gl;
@@ -82,6 +102,14 @@ void main(){
       gl.vertexAttribDivisor(loc, 1);
     };
     attr(1, 3, 0); attr(2, 3, 3); attr(3, 4, 6); attr(4, 2, 10); attr(5, 2, 12);
+    gl.bindVertexArray(null);
+    fillProg = G.program(FILL_VS, FILL_FS, 'fill');
+    fillVao = gl.createVertexArray();
+    gl.bindVertexArray(fillVao);
+    fillBuf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, fillBuf);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
     gl.bindVertexArray(null);
   };
 
@@ -144,16 +172,37 @@ void main(){
     const bytes = batch.n * STRIDE;
     if (bytes > cap) { gl.bufferData(gl.ARRAY_BUFFER, batch.d.byteLength, gl.DYNAMIC_DRAW); cap = batch.d.length; }
     gl.bufferSubData(gl.ARRAY_BUFFER, 0, batch.d, 0, bytes);
-    const style = o.style === 'ink' ? 1 : o.style === 'solid' ? 2 : 0;
-    G.blend(o.blend || (style === 2 ? 'add' : 'max'));
+    const style = o.style === 'ink' ? 1 : o.style === 'solid' ? 2 : o.style === 'pencil' ? 3 : 0;
+    G.blend(o.blend || (style === 2 ? 'add' : style === 3 ? 'min' : 'max'));
     const H = V.Rn.H;
     prog.use({
       u_vp: cam.vp, u_res: [V.Rn.W, V.Rn.H], u_pxPerUnit: (H / 2) * cam.f, u_minPx: o.minPx == null ? 0.6 : o.minPx,
       u_glow: o.glow || (style === 0 ? 3.2 : 1.3), u_style: style, u_intensity: o.intensity == null ? 1 : o.intensity,
-      u_halo: o.halo || 1.4, u_time: V.Rn.time, u_core: o.core == null ? 0.8 : o.core,
+      u_halo: o.halo || 1.4, u_time: V.Rn.time, u_core: o.core == null ? 0.8 : o.core, u_inkCol: o.inkCol || [0.13, 0.12, 0.14],
+      // only the pencil style reads the scene layer; others unbind it so drawing into that layer never loops
+      u_bg: style === 3 ? V.Rn.T.scene : null,
     });
     gl.bindVertexArray(vao);
     gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, batch.n);
+    gl.bindVertexArray(null);
+  };
+
+  // Fill a polygon (star-shaped about its centroid) with whatever the scene layer holds underneath,
+  // i.e. blank paper: drawn before an object's pencil outline it hides the lines behind the object.
+  St.fill = function (poly, cam, o = {}) {
+    const n = poly.length;
+    if (n < 3) return;
+    const gl = G.gl, v = new Float32Array((n + 2) * 3);
+    let cx = 0, cy = 0, cz = 0;
+    for (const p of poly) { cx += p[0]; cy += p[1]; cz += p[2] || 0; }
+    v.set([cx / n, cy / n, cz / n], 0);
+    for (let i = 0; i <= n; i++) { const p = poly[i % n]; v.set([p[0], p[1], p[2] || 0], (i + 1) * 3); }
+    G.blend('premul');
+    fillProg.use({ u_vp: cam.vp, u_bg: V.Rn.T.scene, u_res: [V.Rn.W, V.Rn.H], u_alpha: o.alpha == null ? 1 : o.alpha });
+    gl.bindVertexArray(fillVao);
+    gl.bindBuffer(gl.ARRAY_BUFFER, fillBuf);
+    gl.bufferData(gl.ARRAY_BUFFER, v, gl.DYNAMIC_DRAW);
+    gl.drawArrays(gl.TRIANGLE_FAN, 0, n + 2);
     gl.bindVertexArray(null);
   };
 

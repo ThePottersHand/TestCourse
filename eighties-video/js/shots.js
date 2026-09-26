@@ -63,15 +63,54 @@
     St.emitRaw(b, Sh.spokes(-roll / 0.36), { model, color: col, alpha: o.alpha, wscale: o.wscale });
   }
 
-  // morph chain: list of {shape, t (arrival), dur}; returns [A, B, k]
+  // morph chain: list of {shape, t (arrival), lead (morph starts this long before t), dur}; returns [A, B, k]
   function chainAt(list, t) {
+    const start = (e) => e.t - (e.lead == null ? 0.45 : e.lead), dur = (e) => e.dur || 1.0;
     let i = 0;
-    while (i < list.length - 1 && t >= list[i + 1].t - (list[i + 1].lead || 0.45)) i++;
-    if (i === 0 && t < list[0].t) return [list[0].shape, null, 0, 0];
+    // hold shape i until the morph into shape i+1 has finished
+    while (i < list.length - 1 && t >= start(list[i + 1]) + dur(list[i + 1])) i++;
     const cur = list[i], nxt = list[i + 1];
     if (!nxt) return [cur.shape, null, 0, i];
-    const a = nxt.t - (nxt.lead || 0.45), k = M.clamp((t - a) / (nxt.dur || 1.0));
+    const k = M.clamp((t - start(nxt)) / dur(nxt));
     return k > 0 ? [cur.shape, nxt.shape, k, i] : [cur.shape, null, 0, i];
+  }
+
+  // ---- geometry for pencil objects that occlude (fills are drawn under their outlines)
+  // Sutherland-Hodgman against one half-plane: keeps the part of `poly` where f(p) >= 0 (f linear)
+  function clipPoly(poly, f) {
+    const out = [];
+    for (let i = 0; i < poly.length; i++) {
+      const p = poly[i], q = poly[(i + 1) % poly.length], fp = f(p), fq = f(q);
+      if (fp >= 0) out.push(p);
+      if ((fp >= 0) !== (fq >= 0)) { const k = fp / (fp - fq); out.push([p[0] + (q[0] - p[0]) * k, p[1] + (q[1] - p[1]) * k, 0]); }
+    }
+    return out;
+  }
+  // splits a polyline into the runs where f(p) >= 0 (f linear)
+  function clipRuns(pts, closed, f) {
+    const P = closed ? pts.concat([pts[0]]) : pts, runs = [];
+    let cur = null;
+    for (let i = 0; i < P.length; i++) {
+      const p = P[i], fp = f(p);
+      if (i > 0) {
+        const q = P[i - 1], fq = f(q);
+        if ((fq >= 0) !== (fp >= 0)) {
+          const k = fq / (fq - fp), x = [q[0] + (p[0] - q[0]) * k, q[1] + (p[1] - q[1]) * k, 0];
+          if (cur) { cur.push(x); runs.push(cur); cur = null; } else cur = [x];
+        }
+      }
+      if (fp >= 0) (cur || (cur = [])).push(p);
+    }
+    if (cur && cur.length > 1) runs.push(cur);
+    return runs;
+  }
+  function hull2(pts) { // convex hull (x, y), points keep their z
+    const P = pts.slice().sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+    const cr = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+    const lo = [], hi = [];
+    for (const p of P) { while (lo.length >= 2 && cr(lo[lo.length - 2], lo[lo.length - 1], p) <= 0) lo.pop(); lo.push(p); }
+    for (let i = P.length - 1; i >= 0; i--) { const p = P[i]; while (hi.length >= 2 && cr(hi[hi.length - 2], hi[hi.length - 1], p) <= 0) hi.pop(); hi.push(p); }
+    return lo.slice(0, -1).concat(hi.slice(0, -1));
   }
 
   // ================================================================ INTRO 0 – 18.64
@@ -226,24 +265,24 @@
     // Colour accents. On paper, colour is laid down as marker (solid) with a faint neon halo;
     // the bw grade is lifted locally by keeping these saturated.
     const nb = S.batch(), mk = S.batch(), hb = S.batch();
-    // --- BMX wheels still spinning in the pile
-    const bw = H.env(t, 19.3, 21.9, 0.3, 0.3);
+    let finger = null;
+    // --- the bike dropped on top still has its front wheel spinning, winding down
+    const bw = H.env(t, 19.3, 21.45, 0.3, 0.2);
     if (bw > 0) {
-      const wheels = [
-        ...Sh.tf([[-0.62, -0.25], [0.62, -0.25]], { x: -0.25, y: 0.05, s: 1.05, r: -0.08 }).map((c) => [c, 0.36 * 1.05, 1.4]),
-        ...Sh.tf([[-0.62, -0.25], [0.62, -0.25]], { x: 0.55, y: -0.18, s: 0.85, r: 0.35, sx: -1 }).map((c) => [c, 0.36 * 0.85, -2.1]),
-      ];
+      const spin = 10 * 1.8 * (1 - Math.exp(-(t - 18.6) / 1.8)); // 10 rad/s when dropped, winding down over ~2 s
       const spokes = [];
-      wheels.forEach(([c, r, sp], wi) => {
+      for (const w of SH.bmx.wheels) {
+        if (w.still) continue;
+        const [cx, cy] = w.c, r = w.r * 0.84;
         for (let q = 0; q < 3; q++) {
-          const a = t * sp + q * (Math.PI / 3) + wi;
-          spokes.push({ p: [[c[0] - Math.cos(a) * r * 0.84, c[1] - Math.sin(a) * r * 0.84, 0], [c[0] + Math.cos(a) * r * 0.84, c[1] + Math.sin(a) * r * 0.84, 0]], w: 0.004 });
+          const a = spin + q * (Math.PI / 3);
+          spokes.push({ p: [w.map(cx - Math.cos(a) * r, cy - Math.sin(a) * r), w.map(cx + Math.cos(a) * r, cy + Math.sin(a) * r)], w: 0.004 });
         }
-      });
+      }
       St.emitRaw(hb, spokes, { alpha: bw, jitter: 0.003, time: t });
     }
     // --- Pac-Man glowing on the arcade screen (a dark CRT so the neon can glow)
-    const ar = H.env(t, 25.25, 28.45, 0.3, 0.35);
+    const ar = H.env(t, 25.25, 28.15, 0.3, 0.3);
     if (ar > 0) {
       const am = ARCADE_M;
       S.card(cam, { mode: 'flat', tint: [0.02, 0.02, 0.06], model: Mat.mul(am, Mat.translate(0, 0.36, 0)), size: [0.8, 0.44], alpha: ar * 0.95 }, 'scene');
@@ -260,7 +299,7 @@
       if (t > 25.9) S.text(D.txt('pixel', 'HI 99990', 0.035), { cam, style: 'fill', col: [1, 0.3, 0.3], glowCol: [1, 0.2, 0.2], glow: 3, model: Mat.mul(am, Mat.translate(0, 0.52, 0.01)), alpha: on });
     }
     // --- twenty cents: gold coins drop into the slots, credit counter on a dark LED panel
-    const cn = H.env(t, 28.2, 31.95, 0.2, 0.4);
+    const cn = H.env(t, 28.2, 31.75, 0.2, 0.3);
     if (cn > 0) {
       S.card(cam, { mode: 'flat', tint: [0.03, 0.02, 0.05], model: Mat.translate(0, -0.35, 0), size: [0.76, 0.26], alpha: cn }, 'scene');
       const drops = [[H.w('Twenty cents', 'twenty'), -0.28], [H.w('Twenty cents', 'cents'), 0.28]];
@@ -281,7 +320,7 @@
       S.text(D.txt('pixel', credit, 0.055), { cam, style: 'fill', col: [0.4, 1, 1], glowCol: [0, 0.8, 1], glow: 3, intensity: 1.4, model: Mat.translate(0, -0.35, 0.01), alpha: cn * bl });
     }
     // --- cassette: spinning reels + handwritten name in red marker
-    const cs = H.env(t, 32.1, 35.2, 0.3, 0.35);
+    const cs = H.env(t, 32.1, 34.85, 0.3, 0.3);
     if (cs > 0) {
       St.emitRaw(hb, Sh.reels(-t * 4, { col: [1, 1, 1] }), { alpha: cs, jitter: 0.004, passes: 1, time: t });
       const lab = D.txt('marker', 'MIXTAPE ’85', 0.12);
@@ -289,35 +328,27 @@
       S.text(lab, { cam, style: 'fill', col: [0.85, 0.05, 0.25], col2: [0.85, 0.05, 0.25], model: Mat.mul(Mat.translate(0, 0.37, 0.01), Mat.rotZ(-0.03)), anim: writeOn(wk, lab), alpha: cs });
     }
     // --- tape deck: a finger lands on RECORD, the VU needles dance to the song
-    const dk = H.env(t, 35.4, 38.55, 0.3, 0.2);
+    const dk = H.env(t, 35.4, 38.45, 0.3, 0.2);
     if (dk > 0) {
       const tr = H.w('Finger on', 'record');
       const press = E.outCubic(H.seg(t, tr - 0.35, tr)) * (1 - H.seg(t, tr + 1.4, tr + 1.8));
       const f = T.feat(t);
       const needles = [Sh.vuNeedle(0.62, M.clamp(f.bands[3] * 1.1)), Sh.vuNeedle(1.12, M.clamp(f.bands[9] * 1.2))];
       St.emitRaw(hb, needles.map((p) => ({ p, w: 0.006 })), { alpha: dk });
-      St.emitRaw(hb, Sh.finger(-1.25, -0.4 + 0.45 * (1 - press) - 0.02 * press), { alpha: dk * H.ramp(t, tr - 0.9, tr - 0.4), jitter: 0.004, time: t });
+      finger = { strokes: Sh.finger(-1.25, -0.4 + 0.45 * (1 - press) - 0.02 * press), a: dk * H.ramp(t, tr - 0.9, tr - 0.4) };
       if (t > tr) {
         const bl = Math.floor((t - tr) * 2.5) % 2 ? 0.35 : 1;
         St.emitRaw(mk, [{ p: Sh.circ(-1.25, -0.42, 0.045, 16), c: [0.95, 0.08, 0.08], w: 0.03, closed: true }], { alpha: dk });
         St.emitRaw(nb, [{ p: Sh.circ(-1.25, -0.42, 0.045, 16), c: C.red, w: 0.012, closed: true }], { alpha: dk * 0.7 });
-        S.text(D.txt('vhs', 'REC', 0.12), { cam, style: 'fill', col: [0.95, 0.1, 0.1], model: Mat.translate(-1.0, 0.52, 0.01), alpha: dk * bl });
-        St.emitRaw(mk, [{ p: Sh.circ(-1.19, 0.527, 0.02, 12), c: [0.95, 0.08, 0.08], w: 0.02, closed: true }], { alpha: dk * bl });
+        S.text(D.txt('vhs', 'REC', 0.12), { cam, style: 'fill', col: [0.95, 0.1, 0.1], model: Mat.translate(-0.38, 0.52, 0.01), alpha: dk * bl });
+        St.emitRaw(mk, [{ p: Sh.circ(-0.57, 0.527, 0.02, 12), c: [0.95, 0.08, 0.08], w: 0.02, closed: true }], { alpha: dk * bl });
       }
-    }
-    // --- posters: the right-hand poster's corner peels
-    const ps = H.env(t, 38.9, 41.3, 0.2, 0.2);
-    if (ps > 0) {
-      const cu = E.inOutQuad(H.seg(t, H.w('Posters peeling', 'peeling'), H.w('Posters peeling', 'wall')));
-      const cx = 1.08 + 0.375, cy = 0.08 - 0.5;
-      const L = 0.1 + cu * 0.45;
-      St.emitRaw(hb, [{ p: [[cx - L, cy, 0], [cx - L * 0.4, cy + L * 0.25, 0.05], [cx, cy + L, 0]], w: 0.008 }, { p: [[cx - L, cy, 0], [cx, cy, 0], [cx, cy + L, 0]], w: 0.006 }], { alpha: ps, jitter: 0.004, time: t });
     }
     // --- phone cord in hot-pink marker, running down the hall to a lit doorway
     const ph = H.env(t, 41.9, 45.3, 0.4, 0.2);
     if (ph > 0) {
       const cord = SH.phoneHall.strokes[SH.phoneHall.strokes.length - 1];
-      const to = H.ramp(t, 42.2, 43.8);
+      const to = H.ramp(t, 42.45, 43.9);
       St.emitRaw(mk, [{ p: cord.p, c: [0.95, 0.1, 0.45], w: 0.007 }], { alpha: ph, to });
       St.emitRaw(nb, [{ p: cord.p, c: C.pink, w: 0.004 }], { alpha: ph * 0.5, to });
       St.emitRaw(nb, [{ p: [[-0.4, -1.0, -14], [0.4, -1.0, -14], [0.4, 0.6, -14], [-0.4, 0.6, -14]], c: C.yellow, w: 0.03, closed: true }], { alpha: ph * H.ramp(t, 43.3, 44.3) });
@@ -325,6 +356,14 @@
     S.neon(nb, cam, { intensity: 1.3 });
     S.solid(mk, cam, { minPx: 1.2 });
     S.ink(hb, cam);
+    // --- solid pencil objects in front of everything: the finger and the poster coming off the wall
+    if (finger && finger.a > 0.01) {
+      S.fill(finger.strokes[0].p, cam, { alpha: finger.a });
+      const fb = S.batch();
+      St.emitRaw(fb, finger.strokes, { alpha: finger.a, jitter: 0.004, time: t });
+      S.pencil(fb, cam);
+    }
+    if (t >= POSTER.swap) peelingPoster(S, t, cam);
     // --- lyrics as comic captions (pencil box + hand lettering)
     const li = D.lineIndexAt(t, 0.25);
     if (D.captions && li >= 0 && li <= 7) {
@@ -340,6 +379,74 @@
       D.lyric(S, li, t, { caption: true, font: 'hand', size: 0.125, maxW: 2.9, y: cy, style: 'fill', col: [0.07, 0.06, 0.09], anim: 'pop', hold: 0.55, jitter: 0.004 });
     }
     P.fb = { amt: 0, zoom: 1, rot: 0, decay: 0.9, hue: 0, dx: 0, dy: 0, mode: 0 };
+  }
+
+  // ---- "Posters peeling off the bedroom wall": the right-hand poster curls away from its bottom-right
+  // corner, then lets go and drops out of frame before the hall. In poster space the fold is the line
+  // a = s, a measured from the corner along the peel direction; paper with a < s has lifted and rolled
+  // over a cylinder of radius r back onto the poster's face.
+  const POSTER = { swap: 39.24, peel0: 39.3, peel1: 40.55, fall: 40.62, r: 0.035 };
+  function peelTo(a, s, r) { // -> [a after rolling, height off the wall]
+    const d = s - a;
+    if (d <= 0) return [a, 0];
+    if (d < Math.PI * r) return [s - r * Math.sin(d / r), r * (1 - Math.cos(d / r))];
+    return [s + d - Math.PI * r, 2 * r];
+  }
+  function peelingPoster(S, t, cam) {
+    const P = Sh.POSTER3, W = P.w, Hh = P.h, r = POSTER.r;
+    const f = Math.max(0, t - POSTER.fall);
+    if (f > 0.7) return;
+    const s = 0.5 * E.inOutQuad(H.seg(t, POSTER.peel0, POSTER.peel1)) + 0.1 * H.seg(f, 0, 0.5);
+    const ang = 2.2 + 0.12 * H.seg(t, POSTER.peel0, POSTER.peel1);
+    const Dv = [Math.cos(ang), Math.sin(ang)], Nv = [-Dv[1], Dv[0]], C0 = [W / 2, -Hh / 2];
+    const A = (p) => (p[0] - C0[0]) * Dv[0] + (p[1] - C0[1]) * Dv[1];
+    const B = (p) => (p[0] - C0[0]) * Nv[0] + (p[1] - C0[1]) * Nv[1];
+    const at = (a, b, z) => [C0[0] + a * Dv[0] + b * Nv[0], C0[1] + a * Dv[1] + b * Nv[1], z];
+    const roll = (p) => { const [a, z] = peelTo(A(p), s, r); return at(a, B(p), z); };
+    // the line a = a0 across the poster (null if it misses)
+    const chord = (a0) => {
+      let lo = -9, hi = 9;
+      const p0 = at(a0, 0, 0);
+      for (const [k, lim, sg] of [[0, W / 2, 1], [0, -W / 2, -1], [1, Hh / 2, 1], [1, -Hh / 2, -1]]) {
+        const n = Nv[k] * sg, room = (lim - p0[k]) * sg;
+        if (Math.abs(n) < 1e-9) { if (room < 0) return null; continue; }
+        const b = room / n;
+        if (n > 0) hi = Math.min(hi, b); else lo = Math.max(lo, b);
+      }
+      return hi - lo > 1e-4 ? [at(a0, lo, 0), at(a0, hi, 0)] : null;
+    };
+    // when it lets go, the top tips forward off the wall as the sheet drops
+    const model = Mat.chain(
+      Mat.translate(P.x - 0.3 * f, P.y - 8 * f * f, 0.25 * f), Mat.rotZ(P.r - 0.8 * f * f),
+      Mat.translate(0, -Hh / 2, 0), Mat.rotX(2.2 * f * f), Mat.translate(0, Hh / 2, 0));
+    const toW = (p) => Mat.apply(model, p);
+    const rect = [[-W / 2, -Hh / 2, 0], [W / 2, -Hh / 2, 0], [W / 2, Hh / 2, 0], [-W / 2, Hh / 2, 0]];
+    const stuck = (p) => A(p) - s;
+    const pen = { model, jitter: 0.0055, passes: 2, time: t };
+    // the face still flat on the wall
+    S.fill(clipPoly(rect, stuck).map(toW), cam);
+    const fb = S.batch(), front = [];
+    for (const st of SH.poster3.strokes) for (const p of clipRuns(st.p, st.closed, stuck)) front.push({ p, w: st.w, a: st.a });
+    St.emitRaw(fb, front, pen);
+    S.pencil(fb, cam);
+    // the flap: back of the poster, rolled over the face
+    const lifted = s > 0.004 ? clipPoly(rect, (p) => s - A(p)) : [];
+    if (lifted.length < 3) return;
+    const edges = [];
+    for (let i = 0; i < lifted.length; i++) {
+      const p = lifted[i], q = lifted[(i + 1) % lifted.length];
+      if (Math.abs(A(p) - s) < 1e-5 && Math.abs(A(q) - s) < 1e-5) continue; // the crease, hidden under the roll
+      const e = [];
+      for (let k = 0; k <= 40; k++) e.push(roll([p[0] + ((q[0] - p[0]) * k) / 40, p[1] + ((q[1] - p[1]) * k) / 40, 0]));
+      edges.push({ p: e, w: 0.011 });
+    }
+    const rim = chord(s - (Math.PI * r) / 2);
+    if (rim) edges.push({ p: rim.map(roll), w: 0.01 });
+    S.fill(hull2(edges.flatMap((e) => e.p)).map(toW), cam);
+    for (const k of [0.66, 0.84]) { const c = chord(s - Math.PI * r * k); if (c) edges.push({ p: c.map(roll), w: 0.004, a: 0.55 }); }
+    const pb = S.batch();
+    St.emitRaw(pb, edges, pen);
+    S.pencil(pb, cam);
   }
 
   // ================================================================ PRE-CHORUS 1 45.12 – 51.74 (night street)
@@ -1491,13 +1598,15 @@
       SH.boxWire.push({ p: [v(a), v(b)], w: 0.01 });
     }
     makeCovers();
-    SH.carousel = ['bmx', 'arcade', 'cassette', 'guitar', 'tv', 'knob', 'star', 'shades', 'heart', 'vhs'].map((k) => SH[k]);
+    SH.carousel = ['bike', 'arcade', 'cassette', 'guitar', 'tv', 'knob', 'star', 'shades', 'heart', 'vhs'].map((k) => SH[k]);
     buildRubik();
     SH.arcadeS = Sh.xform(SH.arcade, { s: 0.82, y: -0.05 });
     V1 = [
       { shape: SH.bmx, t: 18.64 }, { shape: SH.face, t: 21.75 }, { shape: SH.arcadeS, t: 25.04 }, { shape: SH.coins, t: 28.29 },
       { shape: SH.cassette, t: 31.97 }, { shape: SH.deck, t: 34.99 }, { shape: SH.posters, t: 38.69 },
-      { shape: SH.phoneHall, t: 41.48, dur: 1.3 },
+      // the right-hand poster leaves the chain once it has formed, so it can peel off on its own
+      { shape: SH.postersBare, t: POSTER.swap, lead: 0, dur: 0.001 },
+      { shape: SH.phoneHall, t: 41.48, lead: 0.3, dur: 1.3 },
     ];
     for (const k in CUT) CUT[k] = nearestBeat(CUT[k]);
     T.lines.forEach((L, i) => { LCUT[i] = T.beats.filter((b) => b <= L.s - 0.08).pop() || L.s - 0.3; });

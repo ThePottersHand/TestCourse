@@ -97,9 +97,12 @@
     S.closed(Sh.circ(front[0], front[1], R, 40), wc);
     S.closed(Sh.circ(rear[0], rear[1], R * 0.86, 36), wc, { w: 0.006 });
     S.closed(Sh.circ(front[0], front[1], R * 0.86, 36), wc, { w: 0.006 });
-    for (let k = 0; k < (o.noSpokes ? 0 : 3); k++) {
+    const spokes = o.noSpokes ? [false, false] : o.spokes || [true, true]; // [rear, front]
+    for (let k = 0; k < 3; k++) {
       const a = (k * Math.PI) / 3 + 0.3;
-      for (const w of [rear, front]) S.add(Sh.line(w[0] - Math.cos(a) * R * 0.84, w[1] - Math.sin(a) * R * 0.84, w[0] + Math.cos(a) * R * 0.84, w[1] + Math.sin(a) * R * 0.84), wc, { w: 0.004 });
+      [rear, front].forEach((w, wi) => {
+        if (spokes[wi]) S.add(Sh.line(w[0] - Math.cos(a) * R * 0.84, w[1] - Math.sin(a) * R * 0.84, w[0] + Math.cos(a) * R * 0.84, w[1] + Math.sin(a) * R * 0.84), wc, { w: 0.004 });
+      });
     }
     const bb = [-0.12, -0.3], seat = [-0.25, 0.22], head = [0.4, 0.2];
     S.add(Sh.pl([rear, bb, head, seat, rear]), f, { w: 0.014 });
@@ -120,21 +123,99 @@
     S.add(Sh.pl([[bb[0], bb[1] - 0.08], [rear[0], rear[1] - 0.05]]), f, { w: 0.004 });
     return S;
   };
+  // BMX bikes dumped on a front lawn, seen from above. Built in lawn space (x across, h up off the grass,
+  // d away from the viewer) and tipped toward the camera, so the grass reads as ground and the bikes lie on it.
+  Sh.LAWN = { tilt: 0.62, y: -0.08 };
+  Sh.lawnPt = (x, h, d) => {
+    const c = Math.cos(Sh.LAWN.tilt), s = Math.sin(Sh.LAWN.tilt);
+    return [x, h * c + d * s + Sh.LAWN.y, h * s - d * c];
+  };
+  // a bike lying on its side: bike space (bx, by) -> lawn, rotated by `yaw`, mirrored by `mx`, front end
+  // propped `lift` high (resting on the other bike)
+  Sh.lyingBike = (o) => (bx, by) => {
+    const x = bx * o.s * (o.mx || 1), y = by * o.s, c = Math.cos(o.yaw), sn = Math.sin(o.yaw);
+    const h = 0.012 + (o.lift || 0) * M.clamp((bx - (o.pivot == null ? -0.2 : o.pivot)) / 0.9);
+    return Sh.lawnPt(o.x + x * c - y * sn, h, o.d + x * sn + y * c);
+  };
+  // the second bike was dropped on top of the first, its front wheel propped up on it
+  Sh.BMX_LAWN = [
+    { x: -0.62, d: 0.3, yaw: -0.12, s: 0.95, col: C.cyan, wcol: C.pink, spokes: [true, true] },
+    { x: 0.3, d: -0.32, yaw: 0.3, s: 0.88, mx: -1, lift: 0.14, pivot: -0.1, col: C.yellow, wcol: C.purple, spokes: [true, false] },
+  ];
+  // distance (screen x/y) from q to the nearest segment of `strokes`
+  const distTo = (strokes, q) => {
+    let best = 1e9;
+    for (const st of strokes) {
+      const p = st.p, n = st.closed ? p.length : p.length - 1;
+      for (let i = 0; i < n; i++) {
+        const a = p[i], b = p[(i + 1) % p.length], dx = b[0] - a[0], dy = b[1] - a[1];
+        const k = M.clamp(((q[0] - a[0]) * dx + (q[1] - a[1]) * dy) / (dx * dx + dy * dy || 1e-12));
+        best = Math.min(best, Math.hypot(q[0] - a[0] - dx * k, q[1] - a[1] - dy * k));
+      }
+    }
+    return best;
+  };
+  // hidden lines: break `below` strokes where `above` strokes pass over them, leaving a small gap
+  Sh.occlude = (below, above, gap) => {
+    const out = [];
+    for (const st of below) {
+      const src = st.closed ? st.p.concat([st.p[0]]) : st.p, pts = [src[0]];
+      for (let i = 1; i < src.length; i++) {
+        const a = src[i - 1], b = src[i], n = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1], b[2] - a[2]) / 0.008));
+        for (let k = 1; k <= n; k++) pts.push([a[0] + ((b[0] - a[0]) * k) / n, a[1] + ((b[1] - a[1]) * k) / n, a[2] + ((b[2] - a[2]) * k) / n]);
+      }
+      const hid = pts.map((q) => distTo(above, q) < gap);
+      if (!hid.some(Boolean)) { out.push(st); continue; }
+      let run = [];
+      pts.forEach((q, i) => {
+        if (hid[i]) { if (run.length > 5) out.push(Object.assign({}, st, { p: run, closed: false })); run = []; } else run.push(q);
+      });
+      if (run.length > 5) out.push(Object.assign({}, st, { p: run, closed: false }));
+    }
+    return out;
+  };
   Sh.bmxPile = () => {
     const S = Sh.make();
-    S.merge(Sh.bike({ col: C.cyan, wcol: C.pink }), { x: -0.25, y: 0.05, s: 1.05, r: -0.08 });
-    S.merge(Sh.bike({ col: C.yellow, wcol: C.purple }), { x: 0.55, y: -0.18, s: 0.85, r: 0.35, sx: -1 });
-    // grass + fence
-    for (let i = 0; i < 9; i++) {
-      const x = -1.5 + i * 0.37;
-      S.add(Sh.pl([[x - 0.05, -0.72], [x, -0.6], [x + 0.03, -0.72], [x + 0.09, -0.63], [x + 0.11, -0.72]]), C.lime, { w: 0.006 });
+    const wheels = [], bikes = [];
+    for (const o of Sh.BMX_LAWN) {
+      const f = Sh.lyingBike(o);
+      bikes.push(Sh.bike({ col: o.col, wcol: o.wcol, spokes: o.spokes }).strokes.map((st) => Object.assign({}, st, { p: st.p.map((p) => f(p[0], p[1])) })));
+      [[-0.62, -0.25], [0.62, -0.25]].forEach((c, wi) => wheels.push({ c, r: 0.36, map: f, still: o.spokes[wi] }));
     }
-    for (let i = 0; i < 8; i++) {
-      const x = -1.55 + i * 0.44;
-      S.add(Sh.pl([[x, -0.72], [x, 0.62], [x + 0.08, 0.72], [x + 0.16, 0.62], [x + 0.16, -0.72]]), C.white, { w: 0.005, a: 0.5 });
+    for (const st of Sh.occlude(bikes[0], bikes[1], 0.024).concat(bikes[1])) S.add(st.p, st.c, st);
+    // grass: tufts of three blades, thick around the bikes, thinning out toward the edges of the frame
+    const rnd = V.R.rng(1985);
+    const allBike = bikes[0].concat(bikes[1]);
+    const inWheel = (x, d) => {
+      const q = Sh.lawnPt(x, 0, d);
+      return distTo(allBike, q) < 0.07 || wheels.some((w) => {
+        const p = w.map(w.c[0], w.c[1]);
+        return Math.hypot(p[0] - q[0], (p[1] - q[1]) / Math.sin(Sh.LAWN.tilt)) < w.r * 1.05;
+      });
+    };
+    const tuft = (x, d, k) => {
+      const hgt = (0.1 + rnd() * 0.07) * k, lean = (rnd() - 0.5) * 0.06, sp = 0.028 * k;
+      S.add([
+        Sh.lawnPt(x - sp * 1.6 + lean - 0.02, hgt * 0.75, d), Sh.lawnPt(x - sp * 0.5, 0, d), Sh.lawnPt(x + lean, hgt, d),
+        Sh.lawnPt(x + sp * 0.5, 0, d), Sh.lawnPt(x + sp * 1.6 + lean + 0.02, hgt * 0.7, d),
+      ], C.lime, { w: 0.0045 });
+    };
+    let placed = 0;
+    for (let tries = 0; placed < 46 && tries < 8000; tries++) {
+      // the visible lawn runs from just below the frame to far behind the bikes, wider with distance
+      const d = -0.85 + rnd() * 3.4, x = -0.1 + (rnd() - 0.5) * (4.2 + d * 0.8);
+      const r = Math.hypot((x + 0.1) / (2.1 + d * 0.4), (d - 0.55) / 2.0);
+      if (r > 1 || rnd() > 1.2 - r * 0.8 || inWheel(x, d)) continue;
+      tuft(x, d, 1.25 - r * 0.45);
+      placed++;
     }
-    S.add(Sh.line(-1.7, 0.4, 1.7, 0.4), C.white, { w: 0.005, a: 0.5 });
-    S.add(Sh.line(-1.7, -0.45, 1.7, -0.45), C.white, { w: 0.005, a: 0.5 });
+    // a few daisies in the grass
+    for (const [x, d] of [[-1.62, -0.55], [1.25, 0.72], [-0.7, 1.3]]) {
+      const top = Sh.lawnPt(x, 0.1, d);
+      S.add([Sh.lawnPt(x, 0, d), top], C.lime, { w: 0.004 });
+      S.closed(Sh.star(top[0], top[1] + 0.02, 0.036, 0.014, 6, 0, top[2]), C.white, { w: 0.0045 });
+    }
+    S.wheels = wheels;
     return S;
   };
 
@@ -288,33 +369,48 @@
   };
   // finger pressing a key (line art)
   Sh.finger = (x, y) => [
-    { p: Sh.spline([[x - 0.095, y + 1.0], [x - 0.09, y + 0.3], [x - 0.08, y + 0.1], [x - 0.045, y + 0.025], [x, y + 0.01], [x + 0.045, y + 0.025], [x + 0.08, y + 0.1], [x + 0.09, y + 0.3], [x + 0.095, y + 1.0]], 6), w: 0.012 },
+    { p: Sh.spline([[x - 0.1, y + 2.4], [x - 0.095, y + 1.0], [x - 0.09, y + 0.3], [x - 0.08, y + 0.1], [x - 0.045, y + 0.025], [x, y + 0.01], [x + 0.045, y + 0.025], [x + 0.08, y + 0.1], [x + 0.09, y + 0.3], [x + 0.095, y + 1.0], [x + 0.1, y + 2.4]], 6), w: 0.012 },
     { p: Sh.rrect(x, y + 0.11, 0.1, 0.13, 0.045), w: 0.008, closed: true },
     { p: Sh.arc(x, y + 0.43, 0.06, Math.PI * 0.2, Math.PI * 0.8, 8), w: 0.006 },
     { p: Sh.arc(x, y + 0.48, 0.05, Math.PI * 0.25, Math.PI * 0.75, 8), w: 0.006 },
     { p: Sh.arc(x, y + 0.72, 0.06, Math.PI * 0.2, Math.PI * 0.8, 8), w: 0.006 },
   ];
 
-  // bedroom wall with three posters
-  Sh.posters = () => {
+  // bedroom wall with three posters. The right-hand one is also available on its own, in poster space
+  // (centre at the origin, unrotated), so it can peel off the wall; `o.bare` leaves it out.
+  Sh.POSTER3 = { x: 1.08, y: 0.08, r: 0.06, w: 0.75, h: 1.0 };
+  const tapes = (S, w, h) => {
+    for (const [sx, sy] of [[-1, 1], [1, 1], [-1, -1], [1, -1]])
+      S.closed(Sh.tf(Sh.rrect(0, 0, 0.1, 0.04, 0), { x: sx * (w / 2 - 0.015), y: sy * (h / 2 - 0.015), r: -0.7 * sx * sy }), C.white, { w: 0.005, a: 0.7 });
+  };
+  Sh.poster3 = () => {
+    const S = Sh.make(), P = Sh.POSTER3;
+    S.closed(Sh.rrect(0, 0, P.w, P.h, 0.01), C.yellow, { w: 0.011 });
+    tapes(S, P.w, P.h);
+    // wedge car under a striped sunset
+    S.closed(Sh.tf(Sh.pl([[-0.3, -0.05], [-0.25, 0.05], [0.0, 0.1], [0.2, 0.05], [0.3, -0.05]]), { y: -0.28 }), C.cyan, { w: 0.009 });
+    S.closed(Sh.circ(0, 0.17, 0.18, 24), C.orange, { w: 0.009 });
+    for (let i = 0; i < 3; i++) S.add(Sh.line(-0.16, 0.12 - i * 0.06, 0.16, 0.12 - i * 0.06), C.purple, { w: 0.006 });
+    return S;
+  };
+  Sh.posters = (o = {}) => {
     const S = Sh.make();
     const post = (cx, cy, w, h, c, tilt) => {
-      S.closed(Sh.tf(Sh.rrect(0, 0, w, h, 0.01), { x: cx, y: cy, r: tilt }), c, { w: 0.011 });
-      for (const [sx, sy] of [[-1, 1], [1, 1], [-1, -1], [1, -1]]) S.closed(Sh.tf(Sh.rrect(sx * (w / 2 - 0.02), sy * (h / 2 - 0.02), 0.1, 0.04, 0), { x: cx, y: cy, r: tilt + 0.6 * sx * sy }), C.white, { w: 0.005, a: 0.7 });
+      const P = Sh.make();
+      P.closed(Sh.rrect(0, 0, w, h, 0.01), c, { w: 0.011 });
+      tapes(P, w, h);
+      S.merge(P, { x: cx, y: cy, r: tilt });
     };
     post(-1.05, 0.12, 0.8, 1.1, C.pink, -0.05);
     post(0.05, 0.2, 0.9, 1.25, C.cyan, 0.02);
-    post(1.08, 0.08, 0.75, 1.0, C.yellow, 0.06);
+    const P3 = Sh.POSTER3;
+    if (!o.bare) S.merge(Sh.poster3(), { x: P3.x, y: P3.y, r: P3.r });
     // poster 1: lightning bolt + stars
     S.closed(Sh.tf(Sh.pl([[0.05, 0.4], [-0.15, 0.0], [0.0, 0.0], [-0.08, -0.4], [0.18, 0.08], [0.02, 0.08], [0.15, 0.4]]), { x: -1.05, y: 0.15, r: -0.05 }), C.yellow, { w: 0.01 });
     S.closed(Sh.star(-1.3, 0.48, 0.07, 0.03), C.white, { w: 0.006 });
     S.closed(Sh.star(-0.8, -0.3, 0.06, 0.025), C.white, { w: 0.006 });
     // poster 2: guitar hero silhouette (simplified guitar)
     S.merge(Sh.guitar({ col: C.pink, simple: true }), { x: 0.05, y: 0.2, s: 0.5, r: 0.5 });
-    // poster 3: wedge car + sun
-    S.closed(Sh.tf(Sh.pl([[-0.3, -0.05], [-0.25, 0.05], [0.0, 0.1], [0.2, 0.05], [0.3, -0.05]]), { x: 1.08, y: -0.2, r: 0.06 }), C.cyan, { w: 0.009 });
-    S.closed(Sh.circ(1.08, 0.25, 0.18, 24), C.orange, { w: 0.009 });
-    for (let i = 0; i < 3; i++) S.add(Sh.line(0.92, 0.2 - i * 0.06, 1.24, 0.2 - i * 0.06), C.purple, { w: 0.006 });
     // wall + bed headboard hint
     S.add(Sh.line(-1.78, -0.72, 1.78, -0.72), C.white, { w: 0.006, a: 0.6 });
     return S;
@@ -583,7 +679,8 @@
 
   // group builder helpers for scenes that want a scattered "memory collage" of every object
   Sh.all = () => ({
-    bmx: Sh.bmxPile(), face: Sh.kidFace(), arcade: Sh.arcade(), cassette: Sh.cassette(), deck: Sh.tapeDeck(), posters: Sh.posters(),
+    bmx: Sh.bmxPile(), bike: Sh.bike(), face: Sh.kidFace(), arcade: Sh.arcade(), cassette: Sh.cassette(), deck: Sh.tapeDeck(),
+    posters: Sh.posters(), postersBare: Sh.posters({ bare: true }), poster3: Sh.poster3(),
     car: Sh.car(), guitar: Sh.guitar(), mirror: Sh.mirror(), star: Sh.bigStar(), tv: Sh.tv(), vhs: Sh.vhs(), pencil: Sh.pencil(),
     knob: Sh.knob(), shades: Sh.shades(), heart: Sh.heart(), lightning: Sh.lightning(), polaroid: Sh.polaroid(), coins: Sh.coins(),
   });
