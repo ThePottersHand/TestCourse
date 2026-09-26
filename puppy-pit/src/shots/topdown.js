@@ -37,9 +37,8 @@ const place = (q, x, y, rot) => { q.sh.setAttribute('cx', x); q.sh.setAttribute(
 // "Not a metaphorical pit. Not a difficult period in my life." — descending into the dark
 export async function abyss(svg, ctx) {
   const { defs, root } = stage(svg);
-  const set = topPitSet(defs, { mode: 'golden', cordonOn: true, seed: 5 });
+  const set = topPitSet(defs, { mode: 'overcast', seed: 5 });
   root.appendChild(set.root);
-  root.appendChild(tint(defs, 'golden', { sun: [-300, 300] }));
   const dark = el('rect', { x: 0, y: 0, width: 1920, height: 1080, fill: '#050303', opacity: 0 });
   root.appendChild(dark);
   return {
@@ -63,7 +62,7 @@ export async function reveal(svg, ctx) {
   return {
     update(t) {
       black.setAttribute('opacity', kf(t, [[0, 1], [0.7, 0, 'out']]));
-      set.update(kf(t, [[0, 2.6], [ctx.dur, 1.9, 'sine']]));
+      set.update(kf(t, [[0, 2.2], [ctx.dur, 1.6, 'sine']]));
       const tt = on2(t);
       pups.forEach((q, j) => {
         const { p, i, x, y, sc, rot } = q;
