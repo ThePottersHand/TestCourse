@@ -53,6 +53,8 @@
     font: inherit; color: #fff; background: none; border: 1px solid transparent; border-radius: 4px; cursor: pointer; padding: 2px 10px; min-width: 44px;
   }
   #bar button:hover, #bar button:focus-visible { border-color: var(--cyan); outline: none; color: var(--cyan); }
+  #cc { font-size: 18px; letter-spacing: .08em; border-color: rgba(255, 255, 255, .35) !important; }
+  #cc[aria-pressed="true"] { color: var(--ink); background: var(--cyan); border-color: var(--cyan) !important; }
   #time { font-variant-numeric: tabular-nums; min-width: 9.5ch; text-align: center; color: var(--paper); }
   #track { position: relative; flex: 1; height: 26px; cursor: pointer; touch-action: none; }
   #track .rail { position: absolute; left: 0; right: 0; top: 11px; height: 4px; background: rgba(255, 255, 255, .18); border-radius: 2px; }
@@ -76,7 +78,7 @@
     <div class="sub">a music video · rendered live in WebGL</div>
     <button id="play" disabled>▶ PLAY</button>
     <div id="status">Loading tape…</div>
-    <div id="hint"><kbd>Space</kbd> play/pause · <kbd>←</kbd><kbd>→</kbd> seek 5s · <kbd>F</kbd> fullscreen · <kbd>H</kbd> hide controls</div>
+    <div id="hint"><kbd>Space</kbd> play/pause · <kbd>←</kbd><kbd>→</kbd> seek 5s · <kbd>F</kbd> fullscreen · <kbd>C</kbd> lyric captions · <kbd>H</kbd> hide controls</div>
   </div>
 </div>
 
@@ -87,6 +89,7 @@
     <div class="rail"></div><div class="fill"></div>
   </div>
   <span id="sec">intro</span>
+  <button id="cc" aria-label="Lyric captions" aria-pressed="false" title="Lyric captions (C)">CC</button>
   <button id="fs" aria-label="Fullscreen">⛶</button>
 </div>
 <div id="debug" hidden></div>

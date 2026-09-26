@@ -315,7 +315,7 @@
     S.ink(hb, cam);
     // --- lyrics as comic captions (pencil box + hand lettering)
     const li = D.lineIndexAt(t, 0.25);
-    if (li >= 0 && li <= 7) {
+    if (D.captions && li >= 0 && li <= 7) {
       const r = D.lyricLayout(li, 'hand', 0.125, 2.9);
       const bw = r.L.width * r.fit + 0.2, bh = r.L.height * r.fit + 0.12;
       const L = T.lines[li];
@@ -325,7 +325,7 @@
       S.card(H.flat(), { mode: 'flat', tint: [0.99, 0.97, 0.9], model: Mat.translate(0, cy - 0.005, 0), size: [bw, bh], alpha: a * 0.92 }, 'scene');
       St.emitRaw(bx, [{ p: Sh.rrect(0, cy - 0.005, bw, bh, 0.0), w: 0.004, closed: true }], { alpha: a, jitter: 0.004, passes: 2, time: t });
       S.ink(bx, H.flat());
-      D.lyric(S, li, t, { font: 'hand', size: 0.125, maxW: 2.9, y: cy, style: 'fill', col: [0.07, 0.06, 0.09], anim: 'pop', hold: 0.55, jitter: 0.004 });
+      D.lyric(S, li, t, { caption: true, font: 'hand', size: 0.125, maxW: 2.9, y: cy, style: 'fill', col: [0.07, 0.06, 0.09], anim: 'pop', hold: 0.55, jitter: 0.004 });
     }
     P.fb = { amt: 0, zoom: 1, rot: 0, decay: 0.9, hue: 0, dx: 0, dy: 0, mode: 0 };
   }
@@ -384,7 +384,7 @@
     // lyrics: neon marker
     const li = D.lineIndexAt(t, 0.25);
     if (li === 8 || li === 9) {
-      D.lyric(S, li, t, { font: 'marker', size: 0.135, maxW: 3.0, y: -0.72, style: 'fill', col: [1, 0.96, 1], col2: [0.1, 0, 0.12], outline: 2, glow: 3, glowCol: M.mix3(C.orange, C.pink, 1 - sk), anim: 'rise', hold: 0.4, layer: 'top' });
+      D.lyric(S, li, t, { caption: true, font: 'marker', size: 0.135, maxW: 3.0, y: -0.72, style: 'fill', col: [1, 0.96, 1], col2: [0.1, 0, 0.12], outline: 2, glow: 3, glowCol: M.mix3(C.orange, C.pink, 1 - sk), anim: 'rise', hold: 0.4, layer: 'top' });
     }
     // build-up to the chorus
     const up = H.ramp(t, 50.1, 51.74, E.inQuad);
@@ -568,13 +568,13 @@
         // bright lights: stage beams + flashes on each word
         const bl = H.env(t, t2 - 0.1, t4 + 0.25, 0.1, 0.3);
         if (bl > 0) S.scene(() => Bg.draw('beams', { add: 1, u_n: 7, u_spread: 0.22, u_sweep: 1.6, u_int: (v === 1 ? 0.45 : 0.9) * bl, u_srcY: 1.15, u_c1: vc.acc, u_c2: [1, 1, 1] }));
-        word(S, t, 'BRIGHT', t2, { font: 'chrome', y: 0.36, size: 0.36, until: t4 - 0.25, st: ST.chrome, anim: 'pop', exitGrow: 0.6 });
-        word(S, t, 'LIGHTS!', tokT(c0 + 1, 3), { font: 'chrome', y: -0.08, size: 0.42, until: t4 - 0.25, st: v === 1 ? ST.hotCyan : ST.hot, anim: 'slam', exitGrow: 0.6 });
+        word(S, t, 'BRIGHT', t2, { font: 'chrome', y: 0.36, size: 0.36, until: t4 - 0.22, exitDur: 0.15, st: ST.chrome, anim: 'pop', exitGrow: 0.6 });
+        word(S, t, 'LIGHTS!', tokT(c0 + 1, 3), { font: 'chrome', y: -0.08, size: 0.42, until: t4 - 0.22, exitDur: 0.15, st: v === 1 ? ST.hotCyan : ST.hot, anim: 'slam', exitGrow: 0.6 });
         P.flash = [1, 1, 1, (H.pulse(t, t2, 0.1) + H.pulse(t, tokT(c0 + 1, 3), 0.1)) * 0.3];
         P.exposure = 1 + bl * (v === 1 ? 0.0 : 0.1);
       }
       // let the good times roll (text rides a barrel roll while the world rolls)
-      D.lyric(S, c0 + 1, t, { range: [4, 8], font: 'chrome', size: 0.24, maxW: 3.1, y: -0.5, style: 'chrome', col2: [0.03, 0, 0.1], outline: 3, glow: 3, anim: 'roll', hold: 0.25, upper: true });
+      D.lyric(S, c0 + 1, t, { range: [4, 8], font: 'chrome', size: 0.31, maxW: 3.2, y: 0.12, style: 'chrome', col2: [0.03, 0, 0.1], outline: 3, glow: 3, anim: 'roll', hold: 0.25, upper: true });
       P.fb = { amt: 0.4 * rollK * (1 - rollK) * 4, zoom: 1.0, rot: 0.01, decay: 0.8, hue: 0.03, dx: 0, dy: 0, mode: 0 };
     }
     // ---------------- line 2: We were NEON in a black-and-white town
@@ -593,7 +593,7 @@
       SH.town.forEach((s, i) => { if (s.lit && t > tn + R.hash(i) * 1.2) St.emitRaw(nb, [s], { color: [C.pink, C.cyan, C.yellow, C.purple][i % 4], alpha: flicker(t, tn + R.hash(i) * 1.2, i, 0.3) }); });
       S.neon(nb, tc, { intensity: 1.3 });
       word(S, t, 'NEON', tn - 0.02, { font: 'neon', y: 0.28, size: 0.62, until: lend(2) + 0.2, st: Object.assign({}, ST.neonPink, { intensity: 1.5 * flicker(t, tn - 0.02, 2, 0.4) }), anim: 'fade' });
-      D.lyric(S, c0 + 2, t, { font: 'hand', size: 0.16, maxW: 3.1, y: -0.74, style: 'fill', col: [0.95, 0.95, 0.92], col2: [0, 0, 0], outline: 3, anim: 'pop', hold: 0.2, jitter: 0.004 });
+      D.lyric(S, c0 + 2, t, { caption: true, font: 'hand', size: 0.16, maxW: 3.1, y: -0.74, style: 'fill', col: [0.95, 0.95, 0.92], col2: [0, 0, 0], outline: 3, anim: 'pop', hold: 0.2, jitter: 0.004 });
       P.sat = 1.3; P.bloom = 1.1;
     }
     // ---------------- line 3: TOO MUCH COLOUR to ever tone it down
@@ -607,7 +607,7 @@
       const tone = t > tDown ? 1 - 0.55 * E.outCubic(H.seg(t, tDown, tDown + 0.25)) + 0.55 * E.outElastic(H.seg(t, tDown + 0.35, tDown + 1.2)) : 1;
       word(S, t, 'TOO MUCH', t0, { font: 'comic', y: 0.42, size: 0.36, until: lend(3) + 0.15, st: ST.comicW, anim: 'drop', shadow: true });
       word(S, t, 'COLOUR', burst, { font: 'comic', y: 0.0, size: 0.62 * tone, until: lend(3) + 0.15, st: ST.rainbow, anim: 'slam', breathe: 0.06 });
-      D.lyric(S, c0 + 3, t, { range: [3, 7], font: 'comic', size: 0.2, maxW: 3.0, y: -0.6, style: 'fill', col: [1, 1, 1], col2: [0.05, 0, 0.08], outline: 4, anim: 'pop', hold: 0.15, upper: true });
+      D.lyric(S, c0 + 3, t, { caption: true, range: [3, 7], font: 'comic', size: 0.2, maxW: 3.0, y: -0.6, style: 'fill', col: [1, 1, 1], col2: [0.05, 0, 0.08], outline: 4, anim: 'pop', hold: 0.15, upper: true });
       P.sat = 1.35; P.bloom = 0.9;
     }
     // ---------------- line 4: HEY! HEY! We couldn't get enough—
@@ -616,12 +616,12 @@
       chorusBg(S, t, v, c0, { boost: H.ramp(t, w0, lend(4), E.inQuad) * 10, low: -0.1 * H.ramp(t, w0, lend(4)) });
       const bursting = (t > h1 - 0.05 && t < h1 + 0.2) || (t > h2 - 0.05 && t < h2 + 0.2);
       if (bursting) S.bg('burst', { u_rays: 24, u_spin: t * 2, u_c1: vc.acc2, u_c2: [0.05, 0, 0.1], u_center: [t < h2 - 0.05 ? -0.6 : 0.6, 0.05], u_halftone: 1, u_alpha: 0.85 });
-      word(S, t, 'HEY!', h1, { font: 'comic', x: -0.72, y: 0.12, size: 0.72, until: w0 + 0.3, st: ST.comic, anim: 'slam', rot: -0.12, shadow: true });
-      word(S, t, 'HEY!', h2, { font: 'comic', x: 0.72, y: -0.02, size: 0.72, until: w0 + 0.3, st: ST.comicW, anim: 'slam', rot: 0.1, shadow: true });
+      word(S, t, 'HEY!', h1, { font: 'comic', x: -0.72, y: 0.12, size: 0.72, until: w0 - 0.12, exitDur: 0.15, st: ST.comic, anim: 'slam', rot: -0.12, shadow: true });
+      word(S, t, 'HEY!', h2, { font: 'comic', x: 0.72, y: -0.02, size: 0.72, until: w0 - 0.12, exitDur: 0.15, st: ST.comicW, anim: 'slam', rot: 0.1, shadow: true });
       P.flash = [1, 1, 1, (H.pulse(t, h1, 0.09) + H.pulse(t, h2, 0.09)) * 0.45];
       P.zoom = 1 + (H.pulse(t, h1, 0.15) + H.pulse(t, h2, 0.15)) * 0.06 + k * 0.01;
       P.shake = H.shake((H.pulse(t, h1, 0.2) + H.pulse(t, h2, 0.2)) * 1.6, t);
-      D.lyric(S, c0 + 4, t, { range: [2, 5], font: 'chrome', size: 0.2, maxW: 3.2, y: -0.62, style: 'chrome', col2: [0.03, 0, 0.1], outline: 3, glow: 3, anim: 'pop', hold: 0.2, upper: true });
+      D.lyric(S, c0 + 4, t, { range: [2, 5], font: 'chrome', size: 0.3, maxW: 3.2, y: 0.18, style: 'chrome', col2: [0.03, 0, 0.1], outline: 3, glow: 3, anim: 'pop', hold: 0.2, upper: true });
       lasers(S, t, flat, 8, H.ramp(t, w0, lend(4)), [vc.acc, vc.acc2, C.white, C.yellow]);
       P.fb = { amt: 0.5 * H.ramp(t, w0, lend(4)), zoom: 1.02, rot: 0, decay: 0.8, hue: 0.02, dx: 0, dy: 0, mode: 0 };
     }
@@ -718,7 +718,7 @@
     return St.camera({ fov: Math.PI / 2, eye: [camX, camH, 0], at: [camX, camH - hor, -1], near: 0.02 });
   }
   function verse2Lyric(S, t, li, o = {}) {
-    D.lyric(S, li, t, Object.assign({ font: 'comic', size: 0.15, maxW: 3.1, y: -0.76, style: 'fill', col: [1, 1, 1], col2: [0.03, 0, 0.06], outline: 5, anim: 'pop', hold: 0.35, layer: 'top' }, o));
+    D.lyric(S, li, t, Object.assign({ caption: true, font: 'comic', size: 0.15, maxW: 3.1, y: -0.76, style: 'fill', col: [1, 1, 1], col2: [0.03, 0, 0.06], outline: 5, anim: 'pop', hold: 0.35, layer: 'top' }, o));
   }
 
   function verse2(S, t) {
@@ -934,7 +934,7 @@
         const m = Mat.chain(Mat.translate(x * k2 * (1 + fly * 2), y * k2 + fly * (i % 2 ? 2 : -2), z + fly * 2), Mat.rotZ(r * k2 + wob + (i === 0 ? Math.sin(t * 0.7) * 0.05 : 0)), Mat.rotY(i === 0 ? Math.sin(t * 0.5) * 0.25 : 0), Mat.scale(s, s, s));
         S.card(cam, { tex: portrait, mode: 'polaroid', develop: i === 0 ? dev : 1, model: m, size: [1.0, 1.2], crop: cards[i][5], alpha: 1 }, 'over');
       });
-      if (t > tr - 0.05) word(S, t, 'RIDICULOUS!', tr, { font: 'comic', y: -0.72, size: 0.32, until: 107.0, st: ST.comic, anim: 'pop', rot: -0.05, shadow: true, anim2: (g, i) => ({ y: Math.sin(t * 10 + i * 0.8) * 0.03, rot: Math.sin(t * 7 + i) * 0.1 }) });
+      if (t > tr - 0.05) word(S, t, 'RIDICULOUS!', tr, { font: 'comic', y: 0.72, size: 0.34, until: 107.0, st: ST.comic, anim: 'pop', rot: -0.05, shadow: true, anim2: (g, i) => ({ y: Math.sin(t * 10 + i * 0.8) * 0.03, rot: Math.sin(t * 7 + i) * 0.1 }) });
       if (t > 107.0) {
         const nb = S.batch();
         const g = E.outBack(H.seg(t, 107.1, 107.6));
@@ -1034,8 +1034,8 @@
         S.text(D.txt('comic', '?', 0.5), { style: 'fill', col: [C.yellow, C.pink, C.cyan][i % 3], col2: [0.02, 0, 0.05], outline: 5, model: Mat.chain(Mat.translate(x, y, 0), Mat.rotZ(Math.sin(t * 3 + i) * 0.3), Mat.scale(a, a, 1)) });
       }
     }
-    D.lyric(S, 26, t, { font: 'comic', size: 0.15, maxW: 3.1, y: -0.78, style: 'fill', col: [1, 1, 1], col2: [0.03, 0, 0.06], outline: 5, anim: 'pop', hold: 0.3, layer: 'top' });
-    D.lyric(S, 27, t, { font: 'comic', size: 0.17, maxW: 3.1, y: -0.78, style: 'fill', col: [1, 0.95, 0.3], col2: [0.03, 0, 0.06], outline: 5, anim: 'pop', hold: 0.3, layer: 'top' });
+    D.lyric(S, 26, t, { caption: true, font: 'comic', size: 0.15, maxW: 3.1, y: -0.78, style: 'fill', col: [1, 1, 1], col2: [0.03, 0, 0.06], outline: 5, anim: 'pop', hold: 0.3, layer: 'top' });
+    D.lyric(S, 27, t, { caption: true, font: 'comic', size: 0.17, maxW: 3.1, y: -0.78, style: 'fill', col: [1, 0.95, 0.3], col2: [0.03, 0, 0.06], outline: 5, anim: 'pop', hold: 0.3, layer: 'top' });
     const up = H.ramp(t, 114.2, 115.84, E.inQuad);
     P.fb = { amt: 0.55 * up, zoom: 1.0 + 0.04 * up, rot: 0.01 * up, decay: 0.84, hue: 0.02, dx: 0, dy: 0, mode: 0 };
     P.flash = [1, 1, 1, H.ramp(t, 115.45, 115.84, E.inCubic) * 0.85 + H.pulse(t, 108.9, 0.2) * 0.5];
@@ -1080,6 +1080,7 @@
     lines.forEach(([str, x, y, sz]) => S2.text(D.txt('vhs', str, sz, { align: 'left' }), { style: 'fill', col: [1, 1, 1], col2: [0, 0, 0.2], outline: 2, model: Mat.translate(x, y, 0) }));
   }
   function bridgeLyric(S, t, li, o = {}) {
+    if (!D.captions) return;
     // closed-caption style: white VHS text on a black box
     const r = D.lyricLayout(li, 'vhs', 0.145, 3.1);
     const L = T.lines[li];
@@ -1343,7 +1344,7 @@
       St.emit(nb, SH.pencil, null, 0, { model: m, time: t });
     }
     S.neon(nb, cam, { intensity: 1.4 });
-    D.lyric(S, 45, t, { font: 'marker', size: 0.14, maxW: 3.1, y: -0.75, style: 'fill', col: [1, 0.96, 1], col2: [0.1, 0, 0.12], outline: 2, glow: 3, glowCol: C.orange, anim: 'rise', hold: 0.3, layer: 'top' });
+    D.lyric(S, 45, t, { caption: true, font: 'marker', size: 0.14, maxW: 3.1, y: -0.75, style: 'fill', col: [1, 0.96, 1], col2: [0.1, 0, 0.12], outline: 2, glow: 3, glowCol: C.orange, anim: 'rise', hold: 0.3, layer: 'top' });
     P.fb = { amt: 0.35 + zoomIn * 0.4, zoom: 1.0 + zoomIn * 0.05, rot: 0.01 * zoomIn, decay: 0.8, hue: 0.02, dx: 0, dy: 0, mode: 0 };
     P.flash = [1, 1, 1, H.ramp(t, 182.3, 182.64, E.inCubic) * 0.9];
   }
@@ -1374,11 +1375,12 @@
       const val = t < tE ? M.mix(8.5, 10, E.outCubic(H.seg(t, 208.45, tE - 0.1))) : 10 + E.outElastic(H.seg(t, tE, tE + 0.8));
       const shake = t > tE ? 1 : 0;
       const cam = H.orbit(t, { amp: 0.2, z: 3.0 });
-      knob(S, t, cam, val, 0, 0.12, 1.25, 1, C.cyan);
+      const KY = -0.2, KS = 0.8;
+      knob(S, t, cam, val, 0, KY, KS, 1, C.cyan);
       for (let i = 0; i <= 11; i++) {
         const a = Sh.knobAngle(i);
-        const r = 1.25 * 0.98;
-        S.text(D.txt('pixel', String(i), i === 11 ? 0.09 : 0.06), { cam, style: 'fill', col: i === 11 ? [1, 0.2, 0.2] : [0.9, 0.9, 1], glowCol: [1, 0.1, 0.1], glow: i === 11 ? 4 : 0, intensity: i === 11 && t > tE ? 1.8 : 1, model: Mat.translate(Math.cos(a) * r, 0.12 + Math.sin(a) * r, 0) });
+        const r = KS * 0.98;
+        S.text(D.txt('pixel', String(i), i === 11 ? 0.09 : 0.06), { cam, style: 'fill', col: i === 11 ? [1, 0.2, 0.2] : [0.9, 0.9, 1], glowCol: [1, 0.1, 0.1], glow: i === 11 ? 4 : 0, intensity: i === 11 && t > tE ? 1.8 : 1, model: Mat.translate(Math.cos(a) * r, KY + Math.sin(a) * r, 0) });
       }
       // VU meters peg on both sides
       const vb = S.batch();
@@ -1392,8 +1394,8 @@
         }
       }
       S.neon(vb, flat, { intensity: 1.3 });
-      if (t > tE) S.parts(cam, { mode: 'sparks', count: 400, origin: [-0.4, 0.5, 0], origin2: [0.4, 0.6, 0], spread: 1.2, grav: 1.4, life: 0.9, size: 0.02, seed: 23 });
-      D.lyric(S, 52, t, { range: [2, 4], font: 'chrome', size: 0.24, maxW: 2.8, y: -0.66, style: 'hot', col: [1, 0.92, 0.3], col2: [1, 0.12, 0.45], outline: 4, glow: 4, glowCol: [1, 0.3, 0.15], anim: 'slam', upper: true, until: 212.8, layer: 'top' });
+      if (t > tE) S.parts(cam, { mode: 'sparks', count: 400, origin: [0.02, KY - 0.3, 0], origin2: [0.3, KY - 0.42, 0], spread: 1.2, grav: 1.4, life: 0.9, size: 0.02, seed: 23 });
+      D.lyric(S, 52, t, { range: [2, 4], font: 'chrome', size: 0.26, maxW: 3.3, y: 0.8, style: 'hot', col: [1, 0.92, 0.3], col2: [1, 0.12, 0.45], outline: 4, glow: 4, glowCol: [1, 0.3, 0.15], anim: 'slam', upper: true, until: 212.8, layer: 'top' });
       P.shake = H.shake(shake * (0.5 + k * 1.5), t);
       P.flash = [1, 0.3, 0.3, H.pulse(t, tE, 0.15) * 0.4];
       return;

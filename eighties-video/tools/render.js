@@ -6,8 +6,9 @@
  *
  *   npm i -D playwright            # once (or use a global install)
  *   node tools/render.js --out turn-the-eighties-up.mp4 [--fps 30] [--width 1920 --height 1080]
- *                        [--start 0 --end 226] [--gpu] [--ffmpeg /path/to/ffmpeg] [--crf 16]
+ *                        [--start 0 --end 226] [--gpu] [--captions] [--ffmpeg /path/to/ffmpeg] [--crf 16]
  *
+ * --captions  burns in the lyric captions along the bottom of the frame (off by default).
  * --gpu  uses the machine's GPU (much faster). Without it Chromium falls back to SwiftShader (CPU),
  *        which works anywhere but takes a few seconds per 1080p frame.
  */
@@ -32,6 +33,7 @@ const START = +opt('start', 0), END = +opt('end', 226);
 const FFMPEG = opt('ffmpeg', process.env.FFMPEG || 'ffmpeg');
 const CRF = String(opt('crf', 16));
 const GPU = !!opt('gpu', false);
+const CAPTIONS = !!opt('captions', false);
 
 let chromium;
 try { ({ chromium } = require('playwright')); } catch (e) {
@@ -63,7 +65,7 @@ function serve() {
   const browser = await chromium.launch({ headless: true, args: launchArgs });
   const page = await browser.newPage({ viewport: { width: W, height: H }, deviceScaleFactor: 1 });
   page.on('pageerror', (e) => console.error('page error:', e.message));
-  await page.addInitScript((o) => { window.__MV_OPTS = o; }, { render: true, w: W, h: H });
+  await page.addInitScript((o) => { window.__MV_OPTS = o; }, { render: true, w: W, h: H, captions: CAPTIONS });
   await page.goto(url);
   await page.waitForFunction(() => window.__MV && window.__MV.ready, null, { timeout: 180000 });
 

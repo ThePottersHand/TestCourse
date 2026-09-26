@@ -15,8 +15,12 @@ song's tracked beats and to word-level lyric timings.
   # open http://localhost:8000
   ```
 
-Controls: `Space` play/pause · `←`/`→` seek 5 s · `F` fullscreen · `H` hide controls · `D` debug readout.
-Click or drag the timeline to scrub; section markers show verse/chorus/bridge. Add `#t52` to the URL to start at 0:52.
+Controls: `Space` play/pause · `←`/`→` seek 5 s · `C` lyric captions · `F` fullscreen · `H` hide controls ·
+`D` debug readout. Click or drag the timeline to scrub; section markers show verse/chorus/bridge.
+
+Lyrics are carried by the big kinetic type (chorus slams, call-and-response, title cards). Line-by-line captions
+along the bottom of the frame are off by default. Turn them on with `C` or the **CC** button, or open the page with
+`#cc` in the URL. Add `#t52` to start at 0:52; the two combine as `#t52-cc`.
 Rendering resolution adapts to keep playback smooth on slower GPUs. If the viewer prefers reduced motion,
 flashes and camera shake are toned down.
 
@@ -27,6 +31,7 @@ npm i -D playwright && npx playwright install chromium   # once
 node tools/render.js --gpu --out turn-the-eighties-up.mp4               # 1920x1080, 30 fps
 node tools/render.js --gpu --fps 60 --crf 14 --out ttu-60fps.mp4         # smoother / higher quality
 node tools/render.js --start 51.7 --end 73.2 --out chorus.mp4            # a section only
+node tools/render.js --gpu --captions --out ttu-captions.mp4             # with lyric captions burned in
 ```
 
 Frames are rendered in order, one at a time, and piped to `ffmpeg` (must be on `PATH`, or pass `--ffmpeg`).

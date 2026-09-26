@@ -75,6 +75,7 @@
       await new Promise((r) => setTimeout(r, 0));
       for (const k in FONTS) V.Tx.buildFont(k, FONTS[k]);
       V.Dir.init();
+      V.Dir.captions = OPTS.captions === true || /(?:^#|[-_.])cc(?:$|[-_.])/.test(location.hash || '');
       window.__MV = {
         ready: true,
         renderAt(t) { renderAt(t); return true; },
@@ -126,6 +127,9 @@
     };
     $('play').addEventListener('click', start);
     $('pp').addEventListener('click', toggle);
+    const setCC = (on) => { V.Dir.captions = on; $('cc').setAttribute('aria-pressed', on ? 'true' : 'false'); lastT = -1; };
+    setCC(V.Dir.captions);
+    $('cc').addEventListener('click', () => { setCC(!V.Dir.captions); showUI(); });
     $('fs').addEventListener('click', () => {
       const el = document.documentElement;
       if (!document.fullscreenElement) (el.requestFullscreen ? el.requestFullscreen() : Promise.reject()).catch(() => {});
@@ -154,6 +158,7 @@
       else if (e.key === 'f' || e.key === 'F') $('fs').click();
       else if (e.key === 'h' || e.key === 'H') { $('bar').classList.toggle('hidden'); }
       else if (e.key === 'd' || e.key === 'D') { $('debug').hidden = !$('debug').hidden; }
+      else if (e.key === 'c' || e.key === 'C') { $('cc').click(); }
     });
     P.onEnd = () => { $('pp').textContent = '▶'; showUI(); };
     window.addEventListener('resize', () => applySize());

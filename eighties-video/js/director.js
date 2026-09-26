@@ -2,7 +2,8 @@
 (function () {
   'use strict';
   const V = window.V, M = V.M, E = V.E, R = V.R, Rn = V.Rn, St = V.St, Tx = V.Tx, Bg = V.Bg, Mat = V.Mat, T = V.T;
-  const D = (V.Dir = { gentle: false, current: '' });
+  // captions: the sung line as a subtitle at the bottom of the frame (off by default; C key / CC button)
+  const D = (V.Dir = { gentle: false, current: '', captions: false });
 
   // ------------------------------------------------------------ scene API handed to shots
   const pool = [];
@@ -159,6 +160,7 @@
   // o: font,size,maxW,x,y,style,col,col2,glowCol,glow,outline,thick,anim('pop'|'drop'|'type'|'rise'|'slam'),hold,lead,cam,model,upper,layer,exitDur,wave
   D.lyric = function (S, i, t, o = {}) {
     if (i < 0 || i >= T.lines.length) return;
+    if (o.caption && !D.captions) return;
     const info = TOK[i], Lx = info.L;
     const lead = o.lead == null ? 0.06 : o.lead;
     const hold = o.hold == null ? 0.5 : o.hold;
