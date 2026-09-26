@@ -30,13 +30,17 @@ WCAG 2.3.1 general-flash threshold; no one-second window has more than three fla
 ```sh
 npm i -D playwright && npx playwright install chromium   # once
 node tools/render.js --gpu --out turn-the-eighties-up.mp4               # 1920x1080, 30 fps
-node tools/render.js --gpu --fps 60 --crf 14 --out ttu-60fps.mp4         # smoother / higher quality
+node tools/render.js --gpu --fps 60 --crf 16 --out ttu-60fps.mp4         # smoother / higher quality
 node tools/render.js --start 51.7 --end 73.2 --out chorus.mp4            # a section only
 node tools/render.js --gpu --captions --out ttu-captions.mp4             # with lyric captions burned in
+node tools/render.js --crf 20 --maxrate 16M --out ttu.mp4                # cap the bitrate (grain is costly)
 ```
 
-Frames are rendered in order, one at a time, and piped to `ffmpeg` (must be on `PATH`, or pass `--ffmpeg`).
-Drop `--gpu` to render on the CPU (SwiftShader). That works on any machine but takes a few seconds per 1080p frame.
+The timeline is split across several headless browsers (`--workers`, default: CPU cores − 1, up to 4). Each
+renders its stretch in order after a one-second pre-roll that rebuilds the video-feedback trails, so the joins
+are seamless. The parts are then joined and encoded once by `ffmpeg` (must be on `PATH`, or pass `--ffmpeg`).
+Drop `--gpu` to render on the CPU (SwiftShader). That works on any machine: about 0.6 s per 1080p frame per
+worker, so the whole song takes a little over an hour with three workers on four cores.
 
 ## Storyboard
 
