@@ -34,6 +34,7 @@ node tools/render.js --gpu --fps 60 --crf 16 --out ttu-60fps.mp4         # smoot
 node tools/render.js --start 51.7 --end 73.2 --out chorus.mp4            # a section only
 node tools/render.js --gpu --captions --out ttu-captions.mp4             # with lyric captions burned in
 node tools/render.js --crf 20 --maxrate 16M --out ttu.mp4                # cap the bitrate (grain is costly)
+node tools/render.js --youtube --out ttu-youtube.mp4                     # YouTube's recommended upload settings (~237 MB)
 ```
 
 The timeline is split across several headless browsers (`--workers`, default: CPU cores − 1, up to 4). Each

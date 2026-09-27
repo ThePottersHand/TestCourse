@@ -9,13 +9,16 @@
  *   npm i -D playwright            # once (or use a global install)
  *   node tools/render.js --out turn-the-eighties-up.mp4 [--fps 30] [--width 1920 --height 1080]
  *                        [--start 0 --end 226] [--workers 3] [--gpu] [--captions] [--ffmpeg /path/to/ffmpeg]
- *                        [--crf 20] [--preset slow] [--maxrate 24M] [--intermediate master.mp4]
+ *                        [--crf 20] [--preset slow] [--maxrate 24M] [--youtube] [--intermediate master.mp4]
  *
  * --captions      burns in the lyric captions along the bottom of the frame (off by default).
  * --gpu           uses the machine's GPU. Without it Chromium falls back to SwiftShader (CPU), which works
  *                 anywhere but is slow: about 0.6 s per 1080p frame per worker.
  * --workers       browsers rendering in parallel (default: CPU cores - 1, at most 4).
  * --maxrate       caps the video bitrate (the film grain is expensive to encode); off by default.
+ * --youtube       encodes to YouTube's recommended upload settings instead of --crf: two-pass H.264 High at
+ *                 8 Mb/s (12 Mb/s above 30 fps), closed GOP of half the frame rate, 2 B-frames, AAC-LC
+ *                 stereo 384 kb/s at 48 kHz. About 237 MB for the song at 1080p30.
  * --intermediate  also keeps the joined near-lossless render, for re-encoding without rendering again.
  */
 'use strict';
@@ -44,6 +47,7 @@ const MAXRATE = opt('maxrate', null);
 const INTERMEDIATE = opt('intermediate', null);
 const GPU = !!opt('gpu', false);
 const CAPTIONS = !!opt('captions', false);
+const YOUTUBE = !!opt('youtube', false);
 const WORKERS = Math.max(1, +opt('workers', Math.min(4, Math.max(1, os.cpus().length - 1))));
 
 let chromium;
@@ -138,11 +142,20 @@ async function renderPart(part, url, onFrame) {
   const list = path.join(tmp, 'parts.txt');
   fs.writeFileSync(list, parts.map((p) => `file '${p.file}'`).join('\n') + '\n');
   if (INTERMEDIATE) await run(['-v', 'error', '-y', '-f', 'concat', '-safe', '0', '-i', list, '-c', 'copy', path.resolve(INTERMEDIATE)]);
-  const rate = MAXRATE ? ['-maxrate', String(MAXRATE), '-bufsize', String(parseFloat(MAXRATE) * 2) + String(MAXRATE).replace(/[\d.]/g, '')] : [];
-  await run(['-v', 'error', '-stats', '-y', '-f', 'concat', '-safe', '0', '-i', list,
-    '-ss', String(START), '-t', String(END - START), '-i', path.join(ROOT, 'audio', 'turn-the-eighties-up.mp3'),
-    '-map', '0:v', '-map', '1:a', '-c:v', 'libx264', '-preset', PRESET, '-crf', CRF, ...rate, '-profile:v', 'high', '-pix_fmt', 'yuv420p',
-    '-c:a', 'aac', '-b:a', '320k', '-movflags', '+faststart', '-shortest', OUT]);
+  const song = ['-ss', String(START), '-t', String(END - START), '-i', path.join(ROOT, 'audio', 'turn-the-eighties-up.mp3')];
+  if (YOUTUBE) {
+    const mbps = FPS > 30 ? 12 : 8, gop = String(Math.round(FPS / 2)), log = path.join(tmp, 'x264');
+    const v = ['-c:v', 'libx264', '-preset', PRESET, '-profile:v', 'high', '-pix_fmt', 'yuv420p', '-b:v', mbps + 'M',
+      '-maxrate', mbps * 1.5 + 'M', '-bufsize', mbps * 2 + 'M', '-g', gop, '-keyint_min', gop, '-bf', '2', '-flags', '+cgop'];
+    await run(['-v', 'error', '-stats', '-y', '-f', 'concat', '-safe', '0', '-i', list, '-map', '0:v', ...v, '-pass', '1', '-passlogfile', log, '-an', '-f', 'mp4', os.devNull]);
+    await run(['-v', 'error', '-stats', '-y', '-f', 'concat', '-safe', '0', '-i', list, ...song, '-map', '0:v', '-map', '1:a', ...v, '-pass', '2', '-passlogfile', log,
+      '-c:a', 'aac', '-b:a', '384k', '-ar', '48000', '-ac', '2', '-movflags', '+faststart', '-shortest', OUT]);
+  } else {
+    const rate = MAXRATE ? ['-maxrate', String(MAXRATE), '-bufsize', String(parseFloat(MAXRATE) * 2) + String(MAXRATE).replace(/[\d.]/g, '')] : [];
+    await run(['-v', 'error', '-stats', '-y', '-f', 'concat', '-safe', '0', '-i', list, ...song,
+      '-map', '0:v', '-map', '1:a', '-c:v', 'libx264', '-preset', PRESET, '-crf', CRF, ...rate, '-profile:v', 'high', '-pix_fmt', 'yuv420p',
+      '-c:a', 'aac', '-b:a', '320k', '-movflags', '+faststart', '-shortest', OUT]);
+  }
   fs.rmSync(tmp, { recursive: true, force: true });
   console.log('wrote ' + OUT);
 })().catch((e) => { console.error(e); process.exit(1); });
