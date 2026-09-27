@@ -1,0 +1,295 @@
+# Erdős Problem #7: is there a covering system with only odd moduli?
+
+**Short answer: nobody knows, and this work does not settle it.** The question — does
+some finite set of congruences `a_i (mod m_i)` with *distinct odd* moduli `m_i > 1` cover
+every integer? — is the Erdős–Selfridge *odd covering problem*. It has been open since the
+1960s and is still listed as open on [erdosproblems.com/7](https://www.erdosproblems.com/7)
+(Erdős offered \$25 for a proof that no such system exists; Selfridge offered \$300 for an
+example, later raised to \$2000). The expected answer is *no*.
+
+What this directory contains is a set of **new, fully rigorous partial results**. The main
+tool is **Shearer's sharp form of the Lovász Local Lemma** (the Local Lemma already drives
+Hough's solution of Erdős's minimum-modulus problem), applied *exactly*: a congruence system
+is a family of events in the probability space `Z/NZ`, two events are dependent only when
+their moduli share a prime, and Shearer's criterion becomes a positivity test for one
+explicit polynomial. The payoff:
+
+| | statement | status before this work |
+|---|---|---|
+| **Theorem A** | An odd covering system needs **at least 5 distinct primes** in the lcm of its moduli. In fact a system with distinct odd moduli > 1 and at most 4 primes leaves at least **1/32** of the integers uncovered. | ≥ 3 primes is immediate from abundancy; for *square-free* moduli ≥ 22 primes (Guo–Sun), and in fact no covering exists (Balister et al.) |
+| **Theorem B** | If it uses exactly 5 primes, they are **3, 5, 7, 11, 13**, with **9·25·49 \| lcm**, and the lcm is at least **91,307,341,125**. | – |
+| **Theorem C** (computer-assisted, exact arithmetic) | **No odd covering number below 80,405,325**. Every odd `N ≤ 10^8` other than `80405325 = 3³·5²·7²·11·13·17` is ruled out, and so is every odd `N ≤ 10^9` outside an explicit list of 48 numbers, each with 6 or 7 prime factors (`results/`). | 10^6 (McNew–Setty 2025, Gurobi MIP), 10^4 (Mian–Siddique 2026, Lean) |
+| **Literature notes** | Lemma 4.10 and Theorem 4.11 of McNew–Setty (2025) are false as stated; Problem 4 of Harrington–Klein–Lowrance–Trifonov (2026) has a negative answer. Explicit counterexamples are verified in `scripts/literature_checks.py`. | – |
+
+A number `N` is a *covering number* if some covering system uses distinct moduli `> 1`
+that all divide `N`. The odd covering problem asks exactly whether an odd covering number
+exists, so "no odd covering number below `X`" is the same as "every odd covering system has
+lcm of its moduli at least `X`".
+
+Every certificate is computed with exact rational arithmetic; the whole pipeline to `10^8`
+runs in about 35 seconds on a laptop. The tests and scripts cross-check the bounds against
+exact optima (CP-SAT) and against ~900 known covering numbers.
+
+---
+
+## 1. What was known
+
+* **Origin.** Erdős asked the question in 1965 and at one point conjectured such systems
+  exist; Selfridge believed they do not. Schinzel (1967) showed that the non-existence would
+  imply an irreducibility statement for polynomials `x^n + f(x)`.
+* **Square-free moduli.** Simpson–Zeilberger (1991): an odd square-free covering needs at
+  least 18 primes; Guo–Sun (2005): at least 22. Balister, Bollobás, Morris, Sahasrabudhe and
+  Tiba ([arXiv:1901.11465](https://arxiv.org/abs/1901.11465)) proved there is **no** odd
+  covering with square-free moduli; their proof only needs square-freeness at the primes
+  `≤ 73`.
+* **Divisibility restrictions.** Hough–Nielsen (Duke 2019): every distinct covering system
+  has a modulus divisible by 2 or 3. The same five authors
+  ([arXiv:1811.03547](https://arxiv.org/abs/1811.03547)): a distinct covering has an even
+  modulus, or one divisible by 9, or moduli divisible by 3 and by 5. So the lcm of an odd
+  covering is divisible by 9 or by 15.
+* **Computation.** McNew–Setty ([arXiv:2507.23041](https://arxiv.org/abs/2507.23041))
+  classified covering numbers below `10^6` with a Gurobi MIP pipeline and found no odd one.
+  Mian–Siddique ([arXiv:2607.25628](https://arxiv.org/abs/2607.25628), July 2026) verified
+  in Lean 4 that an odd covering has lcm `> 10^4`.
+* **Relaxations.** Harrington et al. study coverings where one odd modulus may repeat
+  ([arXiv:2104.00602](https://arxiv.org/abs/2104.00602),
+  [arXiv:2507.16135](https://arxiv.org/abs/2507.16135)).
+
+---
+
+## 2. The method: coverings as events, and Shearer's lemma
+
+Fix `N` and let `D = {d : d | N, d > 1}`. Without loss of generality a system uses *every*
+`d ∈ D` exactly once (extra classes never hurt), say with residues `a_d`.
+
+**Probability space.** Take `Ω = Z/NZ` with the uniform measure and the events
+`A_d = {n : n ≡ a_d (mod d)}`, so `P(A_d) = 1/d`. By the Chinese Remainder Theorem, `Ω` is
+the product of the spaces `Z/p^eZ` (`p^e || N`) with product measure, and `A_d` depends
+only on the coordinates `p | d`. Hence `A_d` is independent of the σ-algebra generated by
+`{A_d' : gcd(d, d') = 1}`: the graph `G_N` on `D` with `d ~ d'` iff `gcd(d, d') > 1` is a
+*dependency graph*. The system covers `Z` iff `P(no A_d occurs) = 0`.
+
+**Independence polynomial.** For `W ⊆ D` let `Z_W(y) = Σ_I Π_{i∈I} y_i`, the sum over
+independent sets `I` of `G_N[W]` (sets of pairwise coprime moduli). Write `p = (1/d)_d`.
+
+**Lemma 1 (Shearer 1985).** Let `G` be a dependency graph for events `A_v` with
+`P(A_v) ≤ p_v`. If `Z_W(−p) > 0` for all `W ⊆ V`, then `P(∩ Ā_v) ≥ Z_V(−p) > 0`.
+
+*Proof.* Put `Q_W = P(∩_{w∈W} Ā_w)`. We show by induction on `|W|` that
+`Q_{W+v}/Q_W ≥ Z_{W+v}(−p)/Z_W(−p)` for `v ∉ W`. Since `A_v` is independent of the events
+in `W \ N(v)`,
+`Q_{W+v} = Q_W − P(A_v ∩ ∩_W Ā) ≥ Q_W − P(A_v ∩ ∩_{W\N(v)} Ā) ≥ Q_W − p_v Q_{W\N(v)}`.
+Adding the elements of `W ∩ N(v)` one at a time to `W \ N(v)` and using the induction
+hypothesis gives `Q_W / Q_{W\N(v)} ≥ Z_W / Z_{W\N(v)}`, so
+`Q_{W+v}/Q_W ≥ 1 − p_v Z_{W\N(v)}/Z_W = Z_{W+v}/Z_W`, by the identity
+`Z_{W+v}(−p) = Z_W(−p) − p_v Z_{W\N(v)}(−p)`. Multiply the ratios. ∎
+
+**Lemma 2 (one-parameter criterion; cf. Scott–Sokal 2005).** If `Z_V(−λp) > 0` for every
+`λ ∈ [0, 1]`, then `Z_W(−p) ≥ Z_V(−p) > 0` for every `W ⊆ V`.
+
+*Proof.* Let `λ*` be the supremum of `λ ≤ 1` such that `Z_W(−μp) > 0` for all `W` and all
+`μ ≤ λ`. For `μ < λ*` the identity above gives `Z_{W+v}(−μp) ≤ Z_W(−μp)`, so
+`Z_W(−μp) ≥ Z_V(−μp)`. Letting `μ → λ*` gives `Z_W(−λ*p) ≥ Z_V(−λ*p) > 0` for all `W`, and by
+continuity positivity persists slightly beyond `λ*`; hence `λ* = 1` and the bound holds at 1. ∎
+
+**Lemma 3 (block formula).** Grouping independent sets by the prime supports of their
+elements,
+
+```
+Z_D(−λp) = F_λ(x) := Σ_π Π_{B∈π} ( −λ Π_{p∈B} x_p ),      x_p = Σ_{i=1}^{e_p} p^{−i}  (p^{e_p} || N),
+```
+
+where `π` runs over families of pairwise disjoint non-empty sets of primes of `N`. The
+polynomial is computed exactly by a subset dynamic programme (`oddcover/shearer.py`) and
+checked against brute-force enumeration in the tests.
+
+**Theorem 1 (Shearer certificate).** If `F_λ(x(N)) > 0` for all `λ ∈ [0, 1]`, then no
+system with distinct moduli `> 1` dividing `N` covers `Z`, and every such system misses a
+set of density at least `F_1(x(N))`. Positivity on `[0, 1]` is certified exactly with
+Bernstein coefficients and de Casteljau subdivision (`oddcover/poly.py`).
+
+**Lemma 4 (whole families at once).** For fixed `λ`, `F_λ(x)` is affine in each `x_p`
+(every prime lies in at most one block). So its minimum over a box `Π_p [0, X_p]` is
+attained at a corner. Taking `X_p = 1/(p − 1)`, the supremum of `x_p` over all exponents,
+a check at `2^k` corners certifies *every* `N` built from `k` given primes, with arbitrary
+exponents. Because `F` is symmetric and the caps decrease with `p`, a certified prime set
+`{p_1 < … < p_k}` certifies every `{q_1 < … < q_k}` with `q_i ≥ p_i`.
+
+### 2.1 Theorem A
+
+At the 16 corners of the box for the primes `(3, 5, 7, 11)` with caps
+`(1/2, 1/4, 1/6, 1/10)` all polynomials `λ ↦ F_λ` are positive on `[0,1]`; the smallest
+value of `F_1` is `1/32`, at the full corner. By Lemma 4 this covers every set of at most
+four odd primes, so:
+
+> **Theorem A.** Any system of congruences with distinct odd moduli `> 1` whose lcm has at
+> most four prime factors leaves a set of integers of density `≥ 1/32` uncovered. In
+> particular an odd covering system must involve at least five primes.
+
+(For five primes the method cannot work unconditionally: at the full corner for
+`{3,5,7,11,13}`, `F_1 = −0.0201…`.)
+
+### 2.2 Slices and trees: going beyond the plain lemma
+
+Write `N = L·M` with `gcd(L, M) = 1`, `L = Π_{q∈Q} q^{f_q}`, and identify
+`Z/N = Z/L × Z/M`. A class `a (mod ℓm)` with `ℓ | L`, `m | M` is
+`{(y, z) : y ≡ a (mod ℓ), z ≡ a (mod m)}`. For each *leaf* `y ∈ Z/L`, the classes with
+`y ≡ a (mod ℓ)` restrict to classes mod `m` on the copy `{y} × Z/M`, and the system covers
+`Z` iff it covers every leaf. Classes with `ℓ = 1` (the *base*: all divisors of `M`) are
+present on every leaf; a class with `ℓ > 1, m = 1` (a *killer*) covers `L/ℓ` whole leaves;
+the others (*items* `(ℓ, m)`, `m > 1`) are active on `L/ℓ` leaves.
+
+**Lemma 5 (adding events).** Let `F(μ)` be the Shearer polynomial of the base and, for a
+set `B` of primes, `G_B(μ)` that of the base divisors coprime to `B`. If
+`g(μ) = F(μ) − μ Σ_e G_{supp e}(μ)/m_e > 0` on `[0,1]` (sum over the items `e` present on a
+leaf, `m_e` the modulus of `e` restricted to the leaf), then that leaf is not covered.
+
+*Proof.* Add the items `e_1, e_2, …` to the base one at a time. With `W_i` the base plus
+`e_1, …, e_{i−1}`, the identity gives `Z_{W_i+e_i} = Z_{W_i} − μ p_{e_i} Z_{W_i\N(e_i)}`, and
+`W_i \ N(e_i) ⊇ base \ N(e_i)`, so by the monotonicity in Lemma 2 (valid while all
+`Z_W(−μp) > 0`) `Z_{W_i\N(e_i)} ≤ Z_{base\N(e_i)} = G_{supp e_i}`. Summing, the leaf's
+polynomial is at least `g(μ)`. The continuity argument of Lemma 2 then shows the whole
+configuration of the leaf satisfies Shearer's condition at `μ = 1`, and Lemma 1 applies. ∎
+
+So with `K_B ≥ max_{μ∈[0,1]} μ G_B(μ)/F(μ)` (computed as a rigorous upper bound) and
+*item sizes* `s_m = K_{supp m}/m`, **every covered leaf that is not killed carries total
+item size `≥ 1`.** Counting (with `min(1, a + b) ≤ min(1, a) + min(1, b)`):
+
+**Lemma 6 (tree bound).** If `N` is a covering number then
+`T := Σ_{m|M, m>1} min(1, s_m) ≥ (2 − h(L)) / (h(L) − 1)`, where `h(L) = σ(L)/L`.
+If `L = q` is prime (a *slice* bound): `#{m : s_m ≥ 1} + ⌊Σ_{s_m<1} s_m⌋ ≥ q − 1`,
+because the `q − 1` slices not killed by the class mod `q` need disjoint sets of items of
+total size `≥ 1`.
+
+For whole families (Lemma 4 again): for fixed `μ`, `μG_B/F` is a ratio of multi-affine
+functions, hence monotone in each `x_p`, so its maximum over the exponent box is at a
+corner. This gives constants `K_B` valid for all exponents simultaneously
+(`oddcover/families.py`).
+
+### 2.3 Theorem B
+
+* A breadth-first search over 5-sets of odd primes (they form a down-set under Lemma 4)
+  shows that the only ones **not** certified by the plain lemma are `{3,5,7,11,13}`,
+  `{3,5,7,11,17}` and `{3,5,7,11,19}`.
+* For `{3,5,7,11,17}` the tree bound over `L = 17^f` (any `f`) with base primes
+  `{3,5,7,11}` (any exponents) gives `T ≤ 12.69`, while the threshold
+  `(2 − h(17^f))/(h(17^f) − 1)` exceeds `17 − 2 = 15` for every `f`; so these are excluded.
+  Likewise `{3,5,7,11,19}` (`12.69 < 17`).
+* For `{3,5,7,11,13}`, the slice bound excludes `3 || N` (at most 1 of 2 slices coverable),
+  `5 || N` (3 of 4) and `7 || N` (5 of 6).
+
+> **Theorem B.** If an odd covering system uses exactly five primes, the lcm of its moduli
+> is `3^a 5^b 7^c 11^d 13^e` with `a, b, c ≥ 2` and `d, e ≥ 1`. A further finite search
+> with the same certificates shows the lcm is then at least
+> `91,307,341,125 = 3^6·5^3·7^2·11^2·13^2`.
+
+### 2.4 Theorem C (all odd `N` up to `10^8`)
+
+All odd abundant `N ≤ X` are enumerated exactly (depth-first search with a provable pruning
+rule and a proven bound on the largest prime factor; checked against a divisor-sum sieve up
+to `10^7`). Odd non-abundant `N` are never covering numbers (the moduli have total density
+`h(N) − 1 ≤ 1`, and a distinct covering cannot be exact by Davenport–Mirsky–Newman–Radó).
+Each odd abundant `N` gets the cheapest certificate that works:
+
+| range | odd abundant `N` | plain Shearer | slice | tree | not certified |
+|---|---:|---:|---:|---:|---|
+| `N ≤ 10^8` | 205,366 | 205,355 | 9 | 1 | `80405325` |
+| `N ≤ 10^9` | 2,048,662 | 2,048,435 | 176 | 3 | 48 numbers, all with ω = 6 or 7 |
+
+> **Theorem C.** There is no odd covering number below `80,405,325`. Every odd `N ≤ 10^8`
+> except `N = 80405325 = 3^3·5^2·7^2·11·13·17` is not a covering number.
+
+The first nine odd `N` that the plain lemma misses are all handled by slices, e.g.
+`11486475 = 3^3·5^2·7·11·13·17` (slice over 7: at most 5 of the 6 slices can be covered).
+Up to `10^9` the only odd `N` not ruled out are the 48 numbers in
+`results/sweep_odd_upto_1e9.json`; the smallest are `80405325`, `103378275 = 3^5·5^2·7·11·13·17`
+and `172297125 = 3^4·5^3·7·11·13·17`.
+
+### 2.5 Where the method stops
+
+For `N = 80405325` the plain lemma fails (`F_1 = −0.0166`), every slice/tree bound fails,
+and even the *exact*, non-linearised Shearer test on each slice does not help: a
+(floating-point) greedy search finds 4 + 6 = 10 disjoint item sets for the 10 slices over
+`q = 11`, each pushing its slice out of Shearer's region. Any further progress needs information that the
+dependency graph and the marginals `1/d` do not carry, e.g. the arithmetic structure of
+the uncovered set exploited by the distortion method of Balister et al., or exact
+computation on part of the primes.
+
+---
+
+## 3. Notes on the recent literature
+
+These do not affect Erdős #7 directly, but they concern tools one would naturally use.
+
+1. **McNew–Setty, Lemma 4.10** states that for *any* set or multiset of moduli the covered
+   proportion is at most `Σ_{S pairwise coprime} (−1)^{|S|+1}/lcm S`. In the language above,
+   this is the Shearer bound `1 − Z(−p)`, which is only valid inside Shearer's region.
+   Counterexamples: the multiset `{2,2,2,3,3,3,3}` (bound `5/6`, but two classes mod 2
+   cover everything); and, with distinct moduli, `{2,3,4,6,12} ∪ {5k : k ≤ 529841,
+   gcd(k,6) = 1}` (176,614 moduli with `Σ 1/(5k) > 1`), whose bound is
+   `13/12 − Σ/12 < 1` although `{2,3,4,6,12}` alone covers `Z`.
+2. Consequently **Theorem 4.11** of the same paper fails as stated: for `n = 960`,
+   `ℓ = 64` (an almost-covering number, `τ(64) = 7`) and `b = 15` it gives
+   `c(960) ≤ 1919/960 < 2`, but `960` is a multiple of `12`, so `c(960) = 2`. (Their
+   Definition 5.1 happens to assign `c′(960) = 2` by a separate rule, and for odd `n` their
+   bound *is* valid whenever Shearer's condition holds — which our computation verifies for
+   every odd abundant `n < 11,486,475` — so their conclusion that no odd covering number is
+   below `10^6` stands. We have not checked whether their density bounds are affected.)
+3. **Harrington–Klein–Lowrance–Trifonov, Problem 4** asks whether their Theorem 1.9 (the
+   same bound truncated after triples) holds without the hypothesis that the lcm is
+   `2^a 3^b 5^c`. The distinct-moduli example in item 1 has no four pairwise coprime moduli,
+   so the truncated and full bounds coincide there: the answer is **no**.
+
+---
+
+## 4. Reproducing everything
+
+Requirements: Python 3.10+, `numpy`; `ortools` only for the exact cross-checks and tests.
+
+```bash
+cd erdos-problem-7
+pip install numpy ortools pytest
+
+python3 -m pytest -q tests                        # 33 tests, ~2 s
+python3 scripts/prime_set_certificates.py         # Theorems A and B (~5 s)
+python3 scripts/sweep.py 1e8 --lo 0               # Theorem C (~35 s)
+python3 scripts/sweep.py 1e9 --lo 0              # all odd N <= 1e9 (~7 min)
+python3 scripts/literature_checks.py              # counterexamples of Section 3 (~1 min)
+python3 scripts/validate_shearer_small.py 1 200   # Shearer bound vs exact optima (~2 min)
+python3 scripts/soundness_even.py                 # certificates never fire on ~900 known covering numbers
+```
+
+| path | contents |
+|---|---|
+| `oddcover/arith.py` | primes, factorisation, abundancy, exact enumeration of odd abundant numbers |
+| `oddcover/shearer.py` | block form of the independence polynomial, Shearer certificates, box certificates |
+| `oddcover/poly.py` | exact positivity on `[0,1]` and rigorous ratio maxima via Bernstein coefficients |
+| `oddcover/slices.py` | slice and tree bounds (Lemmas 5 and 6) for a single `N` |
+| `oddcover/families.py` | family versions over all exponents (Theorems A and B) |
+| `oddcover/exact.py` | independent covering verifier and CP-SAT maximum coverage (cross-checks only) |
+| `results/` | outputs of the scripts above, including every non-trivial certificate |
+
+**How much to trust this.** The mathematics is Lemmas 1–6 above, each with a short proof.
+The computations use only integer/rational arithmetic; no floating point enters any
+certificate. Independent checks: the block polynomial agrees with brute-force enumeration;
+on 196 random small instances the exact optimum never beats the Shearer bound (and meets it
+in 165 of them); no certificate ever fires on a known covering number; the odd-abundant
+enumerator matches a sieve up to `10^7`. What has *not* been done is a formal (Lean/Coq)
+verification of the code.
+
+## References
+
+* P. Erdős, problem statements collected at [erdosproblems.com/7](https://www.erdosproblems.com/7).
+* A. Schinzel, Reducibility of polynomials and covering systems of congruences, *Acta Arith.* 13 (1967).
+* R. J. Simpson, D. Zeilberger, Necessary conditions for distinct covering systems with square-free moduli, *Acta Arith.* 59 (1991).
+* S. Guo, Z.-W. Sun, On odd covering systems with distinct moduli, *Adv. Appl. Math.* 35 (2005).
+* R. Hough, P. Nielsen, Covering systems with restricted divisibility, *Duke Math. J.* 168 (2019); [arXiv:1703.02133](https://arxiv.org/abs/1703.02133).
+* P. Balister, B. Bollobás, R. Morris, J. Sahasrabudhe, M. Tiba, On the Erdős covering problem: the density of the uncovered set, [arXiv:1811.03547](https://arxiv.org/abs/1811.03547).
+* P. Balister, B. Bollobás, R. Morris, J. Sahasrabudhe, M. Tiba, The Erdős–Selfridge problem with square-free moduli, [arXiv:1901.11465](https://arxiv.org/abs/1901.11465).
+* N. McNew, J. Setty, On the densities of covering numbers and abundant numbers, [arXiv:2507.23041](https://arxiv.org/abs/2507.23041).
+* I. Mian, S. Siddique, Kernel-checked exclusions for the Erdős–Selfridge odd covering problem, [arXiv:2607.25628](https://arxiv.org/abs/2607.25628).
+* J. Harrington, J. Klein, J. Lowrance, O. Trifonov, Covering systems where the prime divisors of all moduli are only 2, 3, or 5, [arXiv:2605.18644](https://arxiv.org/abs/2605.18644).
+* J. Harrington, Y. Sun, T. W. H. Wong, Covering systems with odd moduli, [arXiv:2104.00602](https://arxiv.org/abs/2104.00602).
+* C. Bispels et al., A further investigation on covering systems with odd moduli, [arXiv:2507.16135](https://arxiv.org/abs/2507.16135).
+* J. B. Shearer, On a problem of Spencer, *Combinatorica* 5 (1985).
+* A. D. Scott, A. D. Sokal, The repulsive lattice gas, the independent-set polynomial, and the Lovász local lemma, *J. Stat. Phys.* 118 (2005).

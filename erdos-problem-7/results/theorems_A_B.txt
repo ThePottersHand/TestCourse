@@ -1,0 +1,23 @@
+Theorem A: every set of <= 4 odd primes is Shearer-certified for all exponents;
+           worst case {3,5,7,11}: every system misses density >= 1/32
+5-sets of odd primes not Shearer-certified (all exponents): [(3, 5, 7, 11, 13), (3, 5, 7, 11, 17), (3, 5, 7, 11, 19)]
+  (3, 5, 7, 11, 17): 17-adic tree bound over base {3,5,7,11}: T = 12.6889 <= 15  -> certified
+  (3, 5, 7, 11, 19): 19-adic tree bound over base {3,5,7,11}: T = 12.6889 <= 17  -> certified
+  (3, 5, 7, 11, 13) with 3 || N: slice bound, at most 1 of the 2 slices coverable -> certified
+  (3, 5, 7, 11, 13) with 5 || N: slice bound, at most 3 of the 4 slices coverable -> certified
+  (3, 5, 7, 11, 13) with 7 || N: slice bound, at most 5 of the 6 slices coverable -> certified
+  (3, 5, 7, 11, 13): remaining tree bounds (not certified):
+      Q=(3,): T = 1.098 vs threshold 1.000 
+      Q=(5,): T = 3.204 vs threshold 3.000 
+      Q=(7,): T = 5.290 vs threshold 5.000 
+      Q=(11,): T = 10.148 vs threshold 9.000 
+      Q=(13,): T = 12.689 vs threshold 11.000 
+      Q=(11, 13): T = 5.133 vs threshold 4.217 
+Theorem B: an odd covering system with exactly 5 primes has lcm 3^a 5^b 7^c 11^d 13^e, a, b, c >= 2.
+smallest 5-prime candidates not excluded by the finite certificates:
+    91307341125 = 3^6 5^3 7^2 11^2 13^2
+    152178901875 = 3^5 5^4 7^2 11^2 13^2
+    213050462625 = 3^5 5^3 7^3 11^2 13^2
+    273922023375 = 3^7 5^3 7^2 11^2 13^2
+    456536705625 = 3^6 5^4 7^2 11^2 13^2
+(5.3s)
