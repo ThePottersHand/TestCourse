@@ -210,10 +210,19 @@ and `172297125 = 3^4·5^3·7·11·13·17`.
 For `N = 80405325` the plain lemma fails (`F_1 = −0.0166`), every slice/tree bound fails,
 and even the *exact*, non-linearised Shearer test on each slice does not help: a
 (floating-point) greedy search finds 4 + 6 = 10 disjoint item sets for the 10 slices over
-`q = 11`, each pushing its slice out of Shearer's region. Any further progress needs information that the
-dependency graph and the marginals `1/d` do not carry, e.g. the arithmetic structure of
-the uncovered set exploited by the distortion method of Balister et al., or exact
-computation on part of the primes.
+`q = 11`, each pushing its slice out of Shearer's region.
+
+Yet `80405325` does not look close to being a covering number: a simple greedy
+(`scripts/greedy_experiment.py`) still leaves 4.65% of the residues uncovered, while
+Shearer's bound for this `N` would permit 0%. The gap is structural. Shearer's bound is
+exactly what one gets when *every* two classes whose moduli share a prime are disjoint, and
+in `Z/NZ` that is often impossible: the classes mod `15, 21, 33, 39` pairwise share only the
+prime 3, so they can be pairwise disjoint only by lying in four different residue classes
+mod 3. Shearer's lemma sees only the dependency graph and the marginals `1/d`, never this
+"residue budget". Going further needs a tool that does, for example the variable-version
+Local Lemma (He, Li, Liu, Wang and Xia, FOCS 2017), whose sharp region is strictly larger
+than Shearer's when the event–variable graph has cycles, as it does here; or the
+distortion method of Balister et al. combined with exact computation on the small primes.
 
 ---
 
@@ -257,6 +266,7 @@ python3 scripts/sweep.py 1e9 --lo 0              # all odd N <= 1e9 (~7 min)
 python3 scripts/literature_checks.py              # counterexamples of Section 3 (~1 min)
 python3 scripts/validate_shearer_small.py 1 200   # Shearer bound vs exact optima (~2 min)
 python3 scripts/soundness_even.py                 # certificates never fire on ~900 known covering numbers
+python3 scripts/greedy_experiment.py 80405325     # heuristic only: greedy leaves 4.65% uncovered (~30 s)
 ```
 
 | path | contents |
@@ -293,3 +303,5 @@ verification of the code.
 * C. Bispels et al., A further investigation on covering systems with odd moduli, [arXiv:2507.16135](https://arxiv.org/abs/2507.16135).
 * J. B. Shearer, On a problem of Spencer, *Combinatorica* 5 (1985).
 * A. D. Scott, A. D. Sokal, The repulsive lattice gas, the independent-set polynomial, and the Lovász local lemma, *J. Stat. Phys.* 118 (2005).
+* K. He, L. Li, X. Liu, Y. Wang, M. Xia, Variable-version Lovász local lemma: beyond Shearer's bound, *FOCS* 2017.
+* R. Hough, Solution of the minimum modulus problem for covering systems, *Ann. of Math.* 181 (2015).
