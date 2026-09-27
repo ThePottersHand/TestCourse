@@ -230,7 +230,7 @@ distortion method of Balister et al. combined with exact computation on the smal
 
 These do not affect Erdős #7 directly, but they concern tools one would naturally use.
 
-1. **McNew–Setty, Lemma 4.10** states that for *any* set or multiset of moduli the covered
+1. **McNew–Setty (arXiv v2, Feb 2026), Lemma 4.10** states that for *any* set or multiset of moduli the covered
    proportion is at most `Σ_{S pairwise coprime} (−1)^{|S|+1}/lcm S`. In the language above,
    this is the Shearer bound `1 − Z(−p)`, which is only valid inside Shearer's region.
    Counterexamples: the multiset `{2,2,2,3,3,3,3}` (bound `5/6`, but two classes mod 2
