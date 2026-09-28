@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Wheel of Invention</title>
+<meta name="description" content="An animated blueprint of human invention: fifteen breakthroughs from the wheel to AI, each drafted on a blueprint and then brought to life.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Big+Shoulders+Display:wght@100..900&family=Spectral:ital,wght@0,600;1,300;1,400&family=VT323&display=swap" rel="stylesheet">
+<style>
+  :root {
+    color-scheme: dark;
+    --bp: #0c2b62;
+    --bp-deep: #061634;
+    --ink: #e6f1ff;
+    --ink-dim: #9fc3f5;
+    --warm: #fff4e2;
+    --parch: #efe2c8;
+    --spark: #ffc46b;
+    --rule: rgba(190, 220, 255, 0.34);
+    --display: "Big Shoulders Display", "Barlow Condensed", Impact, sans-serif;
+    --tech: "Barlow Condensed", "Arial Narrow", sans-serif;
+    --serif: "Spectral", Georgia, "Times New Roman", serif;
+    --hubx: 50vw;
+    --huby: 50vh;
+  }
+  html, body { height: 100%; margin: 0; background: var(--bp); color: var(--ink); overflow: hidden; }
+  body { font: 15px/1.4 var(--tech); -webkit-font-smoothing: antialiased; }
+  #stage { position: fixed; inset: 0; display: block; background: var(--bp); }
+  .scrim {
+    position: fixed; inset: auto 0 0 0; height: 44vh; pointer-events: none;
+    background: linear-gradient(to top, rgba(4, 14, 36, 0.86) 0%, rgba(4, 14, 36, 0.55) 38%, rgba(4, 14, 36, 0) 100%);
+  }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+  /* opening title card, centred on the hub of the wheel */
+  .intro {
+    position: fixed; left: var(--hubx); top: var(--huby); transform: translate(-50%, -50%);
+    width: min(92vw, 1100px); text-align: center; pointer-events: none;
+  }
+  .intro-kick {
+    margin: 0 0 0.9em; font: 600 clamp(11px, 1.35vw, 15px)/1.2 var(--tech);
+    letter-spacing: 0.24em; text-transform: uppercase; color: var(--ink-dim);
+  }
+  .intro-title {
+    margin: 0; font-family: var(--display); font-weight: 800; text-transform: uppercase;
+    font-size: clamp(46px, 8.2vw, 150px); line-height: 0.86; letter-spacing: 0.01em; color: var(--warm);
+    text-wrap: balance;
+  }
+  .intro-sub {
+    margin: 0.9em auto 0; max-width: 34ch; font: italic 300 clamp(15px, 1.7vw, 22px)/1.4 var(--serif); color: var(--parch);
+    text-wrap: balance;
+  }
+
+  /* lower third: odometer year + caption */
+  .lower {
+    position: fixed; left: max(16px, 4vw); right: max(16px, 4vw);
+    bottom: calc(58px + env(safe-area-inset-bottom, 0px));
+    display: flex; align-items: flex-end; gap: clamp(14px, 2vw, 30px); pointer-events: none;
+  }
+  .year {
+    display: flex; align-items: flex-start; flex: none; opacity: 0;
+    font-family: var(--display); font-weight: 800; font-size: clamp(48px, 10.5vh, 132px); line-height: 1;
+    font-variant-numeric: tabular-nums; color: var(--warm);
+  }
+  .circa { font: 600 0.22em/1 var(--tech); letter-spacing: 0.1em; color: var(--ink-dim); margin: 0.2em 0.25em 0 0; transition: opacity 0.4s; }
+  .digits { display: inline-flex; }
+  .dg { display: inline-block; height: 1em; width: 0.56em; overflow: hidden; transition: opacity 0.4s; }
+  .dg .col { display: block; will-change: transform; }
+  .dg .col span { display: block; height: 1em; line-height: 1em; text-align: center; }
+  .era { align-self: flex-end; margin: 0 0 0.16em 0.3em; font: 600 0.17em/1 var(--tech); letter-spacing: 0.16em; color: var(--ink-dim); }
+  .meta { flex: 1 1 auto; min-width: 0; max-width: 64ch; border-left: 1px solid var(--rule); padding-left: clamp(12px, 1.6vw, 22px); padding-bottom: 0.3em; }
+  .kicker {
+    margin: 0; min-height: 1.25em; font: 600 clamp(11px, 1.5vh, 14px)/1.25 var(--tech);
+    letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-dim); font-variant-numeric: tabular-nums;
+  }
+  .title {
+    margin: 0.08em 0 0.1em; min-height: 0.92em; font-family: var(--display); font-weight: 800; text-transform: uppercase;
+    font-size: clamp(34px, 6.6vh, 86px); line-height: 0.92; letter-spacing: 0.01em; color: var(--warm); text-wrap: balance;
+  }
+  .title .wd, .intro-title .wd { display: inline-block; white-space: nowrap; }
+  .title .ch, .intro-title .ch { display: inline-block; will-change: transform; }
+  .line { margin: 0; min-height: 1.35em; max-width: 50ch; font: italic 300 clamp(15px, 2.2vh, 23px)/1.35 var(--serif); color: var(--parch); }
+  .line .w { display: inline-block; opacity: 0; }
+
+  /* chapter bar */
+  .bar {
+    position: fixed; left: 0; right: 0; bottom: 0; height: 46px;
+    padding: 0 max(16px, 4vw) env(safe-area-inset-bottom, 0px);
+    display: flex; align-items: center; gap: 14px; transition: opacity 0.6s;
+  }
+  .bar.idle { opacity: 0.3; }
+  .btn {
+    flex: none; width: 34px; height: 34px; border-radius: 50%; padding: 0; display: grid; place-items: center;
+    border: 1px solid rgba(190, 220, 255, 0.5); background: rgba(8, 26, 62, 0.6); color: var(--ink); cursor: pointer;
+  }
+  .btn svg { width: 16px; height: 16px; fill: currentColor; }
+  .btn:hover { border-color: var(--spark); color: var(--spark); }
+  .btn:focus-visible, .tick:focus-visible { outline: 2px solid var(--spark); outline-offset: 3px; }
+  .track { position: relative; flex: 1 1 auto; height: 24px; cursor: pointer; }
+  .track::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: var(--rule); }
+  .fill { position: absolute; left: 0; right: 0; top: calc(50% - 1px); height: 2px; background: var(--spark); transform-origin: 0 50%; transform: scaleX(0); }
+  .tick {
+    position: absolute; top: 50%; width: 11px; height: 11px; margin: -5.5px 0 0 -5.5px; padding: 0; border-radius: 50%;
+    border: 1px solid rgba(190, 220, 255, 0.65); background: var(--bp-deep); cursor: pointer;
+  }
+  .tick::after { content: ""; position: absolute; inset: -9px; }
+  .tick.on { background: var(--spark); border-color: var(--spark); }
+  .tip {
+    position: absolute; bottom: 24px; transform: translateX(-50%); white-space: nowrap; pointer-events: none;
+    font: 600 12px/1 var(--tech); letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink);
+    background: rgba(6, 20, 48, 0.94); border: 1px solid var(--rule); padding: 6px 9px;
+  }
+  .clock { flex: none; min-width: 7.2em; text-align: right; font: 500 13px/1 var(--tech); letter-spacing: 0.06em; color: var(--ink-dim); font-variant-numeric: tabular-nums; }
+
+  @media (max-width: 720px), (max-aspect-ratio: 20/21) {
+    .lower { flex-direction: column; align-items: flex-start; gap: 6px; bottom: calc(52px + env(safe-area-inset-bottom, 0px)); }
+    .year { font-size: clamp(40px, 7vh, 76px); }
+    .meta { border-left: 0; padding-left: 0; }
+    .title { font-size: clamp(30px, 5vh, 56px); }
+    .line { font-size: clamp(14px, 2vh, 19px); }
+    .clock { display: none; }
+    .intro-title { font-size: clamp(40px, 11.5vw, 84px); }
+  }
+</style>
+</head>
+<body>
+<canvas id="stage" aria-hidden="true"></canvas>
+<div class="scrim" aria-hidden="true"></div>
+
+<header class="intro" id="intro">
+  <p class="intro-kick" id="introKick">A blueprint of human ingenuity</p>
+  <h1 class="intro-title" id="introTitle">The Wheel of Invention</h1>
+  <p class="intro-sub" id="introSub">Fifteen breakthroughs across 5,500 years, from the first wheel to thinking machines.</p>
+</header>
+
+<section class="lower" id="lower">
+  <div class="year" id="year" aria-hidden="true"><span class="circa" id="circa">c.</span><span class="digits" id="digits"></span><span class="era" id="era">BCE</span></div>
+  <div class="meta">
+    <p class="kicker" id="kicker"></p>
+    <h2 class="title" id="title"></h2>
+    <p class="line" id="line"></p>
+  </div>
+</section>
+
+<nav class="bar" id="bar" aria-label="Playback">
+  <button class="btn" id="play" type="button" aria-label="Pause"></button>
+  <div class="track" id="track">
+    <div class="fill" id="fill"></div>
+    <div class="tip" id="tip" hidden></div>
+  </div>
+  <span class="clock" id="clock">0:00</span>
+</nav>
+
+<ol class="sr-only">
+  <li>c. 3500 BCE, Mesopotamia: the wheel. First it spun clay, then it carried the world.</li>
+  <li>c. 250 BCE, Syracuse: Archimedes' screw, which lifts water uphill.</li>
+  <li>1088, Song dynasty China: the magnetic compass, called the south-pointing needle.</li>
+  <li>1440, Mainz: Gutenberg's printing press, 3,600 pages a day.</li>
+  <li>1608, Middelburg: the telescope. Galileo turned one on the Moon a year later.</li>
+  <li>1656, The Hague: Huygens' pendulum clock.</li>
+  <li>1769, Glasgow: James Watt's steam engine.</li>
+  <li>1844, Washington to Baltimore: Morse's telegraph sends "What hath God wrought".</li>
+  <li>1879, Menlo Park: Edison's light bulb.</li>
+  <li>1886, Mannheim: Benz's automobile.</li>
+  <li>1903, Kitty Hawk: the Wright brothers' airplane flies for 12 seconds.</li>
+  <li>1928, London: Fleming's penicillin.</li>
+  <li>1969, Florida: the Saturn V launches Apollo 11 to the Moon.</li>
+  <li>1977: the personal computer arrives in homes.</li>
+  <li>1989, CERN: Tim Berners-Lee proposes the World Wide Web.</li>
+  <li>Today: artificial intelligence, trained on everything we have written, drawn and built.</li>
+</ol>
+<noscript><p style="position:fixed;left:16px;right:16px;bottom:16px;margin:0;font:600 15px/1.4 sans-serif;color:#e6f1ff">This animation needs JavaScript to play.</p></noscript>
+
+<script src="js/core.js"></script>
+<script src="js/scenes1.js"></script>
+<script src="js/scenes2.js"></script>
+<script src="js/scenes3.js"></script>
+<script src="js/hub.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
