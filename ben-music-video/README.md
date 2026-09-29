@@ -65,6 +65,7 @@ src/
 tools/
   render.mjs     render the MP4        frames.mjs      contact sheet of chosen timestamps
   sheet.mjs      character sheet       storyboard.mjs  README images
+  youtube.mjs    YouTube thumbnail + lyric captions (youtube/)
   analysis/      song analysis (Python)
 ```
 
@@ -78,6 +79,11 @@ npm run render                                    # full 1080p video -> output/i
 npm run render -- --start 9 --end 11.3 --width 960 --height 540 --out output/clones.mp4
 node tools/frames.mjs output/check.png 0.3 4.4 7.9 # quick contact sheet of timestamps
 ```
+
+For YouTube, `npm run render:youtube` renders `output/im-ben-again-youtube.mp4` at YouTube's recommended
+upload settings (two-pass H.264 at 8 Mb/s, AAC 384 kb/s), and `node tools/youtube.mjs` makes the custom
+thumbnail and the lyric captions in `youtube/`. The title, description, tags and upload steps are in
+[`youtube/upload.md`](youtube/upload.md).
 
 Re-running the song analysis needs Python with `demucs`, `faster-whisper`, `librosa` and `soundfile`:
 

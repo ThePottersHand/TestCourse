@@ -3,7 +3,12 @@
 // encodes in parallel worker processes, then stitches the segments and muxes the song.
 //
 //   node tools/render.mjs [--out output/im-ben-again.mp4] [--fps 30] [--width 1920] [--height 1080]
-//                         [--workers 4] [--crf 20] [--start 0] [--end <duration>] [--audio audio/song.mp3]
+//                         [--workers 4] [--crf 20] [--start 0] [--end <duration>] [--audio audio/song.mp3] [--youtube]
+//
+// --youtube encodes to YouTube's recommended upload settings instead of a CRF target (as in the 80s
+// video's renderer): the frames go to a near-lossless intermediate, then a two-pass H.264 High encode at
+// 8 Mb/s (12 Mb/s above 30 fps), closed GOP of half the frame rate, 2 B-frames, AAC-LC stereo 384 kb/s
+// at 48 kHz, moov atom first. Default output: output/im-ben-again-youtube.mp4.
 import { fork, spawn } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -21,7 +26,8 @@ const FFMPEG = process.env.FFMPEG || 'ffmpeg';
 const fps = Number(args.fps || 30);
 const width = Number(args.width || 1920);
 const height = Number(args.height || 1080);
-const crf = String(args.crf || 20);
+const YOUTUBE = !!args.youtube;
+const crf = String(args.crf || (YOUTUBE ? 12 : 20));
 const preset = args.preset || 'medium';
 
 function run(cmd, argv, opts = {}) {
@@ -65,7 +71,7 @@ if (args.worker) {
 const RV = loadRV(['src/core.js', 'src/timing.js']);
 const duration = RV.DURATION;
 const start = Number(args.start || 0), end = Math.min(Number(args.end || duration), duration);
-const out = path.resolve(ROOT, args.out || 'output/im-ben-again.mp4');
+const out = path.resolve(ROOT, args.out || (YOUTUBE ? 'output/im-ben-again-youtube.mp4' : 'output/im-ben-again.mp4'));
 const audio = path.resolve(ROOT, args.audio || 'audio/im-ben-again.mp3');
 const workers = Number(args.workers || Math.max(1, os.cpus().length));
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'ben-render-'));
@@ -102,11 +108,20 @@ const list = path.join(tmp, 'list.txt');
 fs.writeFileSync(list, segs.map((s) => `file '${s}'`).join('\n'));
 const video = path.join(tmp, 'video.mp4');
 await run(FFMPEG, ['-hide_banner', '-loglevel', 'error', '-y', '-f', 'concat', '-safe', '0', '-i', list, '-c', 'copy', video]);
-await run(FFMPEG, ['-hide_banner', '-loglevel', 'error', '-y', '-i', video, '-ss', String(start), '-t', String(end - start), '-i', audio,
-  // re-zero the audio clock (MP3 encoder delay) so it lines up with the analysis timings
-  // (no -shortest: it trimmed the last frames of the fade-out when the audio came up a hair short)
-  '-map', '0:v', '-map', '1:a', '-af', 'asetpts=N/SR/TB', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart',
-  '-metadata', "title=I'm Ben (Again)", out]);
+// the song, re-zeroed (MP3 encoder delay) so it lines up with the analysis timings
+// (no -shortest: it trimmed the last frames of the fade-out when the audio came up a hair short)
+const song = ['-ss', String(start), '-t', String(end - start), '-i', audio, '-map', '0:v', '-map', '1:a', '-af', 'asetpts=N/SR/TB'];
+if (YOUTUBE) {
+  const mbps = fps > 30 ? 12 : 8, gop = String(Math.round(fps / 2)), log = path.join(tmp, 'x264');
+  const v = ['-c:v', 'libx264', '-preset', args.preset || 'slow', '-profile:v', 'high', '-pix_fmt', 'yuv420p', '-b:v', mbps + 'M',
+    '-maxrate', mbps * 1.5 + 'M', '-bufsize', mbps * 2 + 'M', '-g', gop, '-keyint_min', gop, '-bf', '2', '-flags', '+cgop', '-passlogfile', log];
+  await run(FFMPEG, ['-hide_banner', '-loglevel', 'error', '-y', '-i', video, ...v, '-pass', '1', '-an', '-f', 'mp4', os.devNull]);
+  await run(FFMPEG, ['-hide_banner', '-loglevel', 'error', '-y', '-i', video, ...song, ...v, '-pass', '2',
+    '-c:a', 'aac', '-b:a', '384k', '-ar', '48000', '-ac', '2', '-movflags', '+faststart', '-metadata', "title=I'm Ben Again", out]);
+} else {
+  await run(FFMPEG, ['-hide_banner', '-loglevel', 'error', '-y', '-i', video, ...song,
+    '-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart', '-metadata', "title=I'm Ben Again", out]);
+}
 fs.rmSync(tmp, { recursive: true, force: true });
 const mb = fs.statSync(out).size / 1e6;
 console.log(`Wrote ${path.relative(process.cwd(), out)} (${mb.toFixed(1)} MB) in ${((Date.now() - t0) / 1000).toFixed(0)}s`);

@@ -7,6 +7,7 @@
   "scripts": {
     "render": "node tools/render.mjs",
     "render:preview": "node tools/render.mjs --width 960 --height 540 --out output/preview-540p.mp4",
+    "render:youtube": "node tools/render.mjs --youtube",
     "frames": "node tools/frames.mjs",
     "sheet": "node tools/sheet.mjs output/character-sheet.png"
   },
