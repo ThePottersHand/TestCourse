@@ -1,0 +1,4 @@
+node_modules/
+output/*
+!output/im-ben-again.mp4
+!output/im-ben-again-720p.mp4
