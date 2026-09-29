@@ -121,7 +121,7 @@
       ctx.beginPath(); ctx.moveTo(900 + i * 20, 760); ctx.lineTo(900 + i * 20 + Math.sin(t * 20 + i) * 20, 1900);
       ctx.lineWidth = 22; ctx.strokeStyle = RV.hsl(i * 50 + t * 300, 95, 60); ctx.stroke();
     }
-    ben(ctx, t, { x: 960, y: 880, s: 1.1, armL: [2.95, 0.02], armR: [2.95, 0.02], footL: [16, 30], footR: [-16, 30], eyes: 'happy', blush: 1, noShadow: true, hairWind: 0.12 });
+    ben(ctx, t, { x: 960, y: 880, s: 1.1, armL: [2.35, 0.15], armR: [2.35, 0.15], footL: [16, 30], footR: [-16, 30], eyes: 'happy', blush: 1, noShadow: true, hairWind: 0.12 });
     ctx.restore();
     RV.impact(ctx, 960, 1180, lt, { r: 460, life: 0.35 });
   }, { type: 'flash', dur: 0.12, pre: 0.02 });
@@ -149,7 +149,7 @@
       ctx.beginPath(); ctx.moveTo(900 + i * 20, by + 330); ctx.lineTo(900 + i * 20, 820);
       ctx.lineWidth = 22; ctx.strokeStyle = RV.hsl(i * 50 + t * 300, 95, 60); ctx.stroke();
     }
-    ben(ctx, t, { x: 960, y: by + 320, s: 1.0, armL: [2.95, 0.02], armR: [2.95, 0.02], footL: [16, 30], footR: [-16, 30], eyes: 'happy', blush: 1, noShadow: true });
+    ben(ctx, t, { x: 960, y: by + 320, s: 1.0, armL: [2.35, 0.15], armR: [2.35, 0.15], footL: [16, 30], footR: [-16, 30], eyes: 'happy', blush: 1, noShadow: true });
     ctx.restore();
     const sx = W / 2 + (960 - 960) * z, sy = H / 2 + (by + 150 - 620) * z;
     pointer(ctx, sx + 10, sy, 'BEN', clamp((0.45 - z) / 0.2));
@@ -239,7 +239,7 @@
     ellipse(ctx, FIN.bx, 994, 200, 26); fs(ctx, '#3d2716');
     finaleCousins(ctx, t, true);
     const rise = ease.outBack(clamp((lt - 0.08) / 0.2), 1.8);
-    ben(ctx, t, { x: FIN.bx, y: 1000 + (1 - rise) * 60, s: 1.1, armL: [2.7, 0.1], armR: [2.7, 0.1], eyes: 'happy', rest: 'grin', blush: 0.9, noShadow: true, squash: 0.9 + 0.1 * rise });
+    ben(ctx, t, { x: FIN.bx, y: 1000 + (1 - rise) * 60, s: 1.1, armL: [2.3, 0.25], armR: [2.3, 0.25], eyes: 'happy', rest: 'grin', blush: 0.9, noShadow: true, squash: 0.9 + 0.1 * rise });
     ctx.save(); ctx.globalAlpha = 0.8; ctx.translate(FIN.bx, 990); ctx.scale(0.6, 0.6);
     RV.dust(ctx, 0, 0, lt * 0.8, { n: 14, life: 0.9, color: '#d9cbb3' });
     ctx.restore();

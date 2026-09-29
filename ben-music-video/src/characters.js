@@ -909,27 +909,46 @@
     ctx.restore();
 
     // ---- arms
+    // Chains first, then each arm is drawn behind or in front of the head: an arm whose raised part
+    // crosses the face or front hair goes in front (otherwise it would vanish behind the head).
+    // p.armsFront ('L', 'R', 'LR' or '') overrides the automatic choice.
     const arms = [
       { side: -1, a: p.armL || [0.3, 0.15], target: p.handL },
       { side: 1, a: p.armR || [0.3, 0.15], target: p.handR },
     ];
     arms.forEach((A) => {
       const sp = rot(A.side * (sw - 6), shoulderY + 10);
-      let ch;
       if (A.target) {
-        ch = ik(sp[0], sp[1], A.target[0], A.target[1], K.ua, K.fa, A.side > 0 ? -1 : 1);
+        A.chain = ik(sp[0], sp[1], A.target[0], A.target[1], K.ua, K.fa, A.side > 0 ? -1 : 1);
       } else {
         const a1 = A.a[0], a2 = A.a[1] || 0;
         const ang1 = lean + A.side * a1;
         const ang2 = ang1 + A.side * a2;
-        const e = [sp[0] - Math.sin(-ang1) * K.ua, sp[1] + Math.cos(ang1) * K.ua];
-        const e2 = [sp[0] + Math.sin(ang1) * K.ua, sp[1] + Math.cos(ang1) * K.ua];
-        void e;
-        const h = [e2[0] + Math.sin(ang2) * K.fa, e2[1] + Math.cos(ang2) * K.fa];
-        ch = [sp, e2, h];
+        const e = [sp[0] + Math.sin(ang1) * K.ua, sp[1] + Math.cos(ang1) * K.ua];
+        const h = [e[0] + Math.sin(ang2) * K.fa, e[1] + Math.cos(ang2) * K.fa];
+        A.chain = [sp, e, h];
       }
-      A.chain = ch;
-      const [sP, eP, hP] = ch;
+    });
+    const hTh = headTilt + lean, hD = K.neck * 0.7 + r * 0.92;
+    const hc = [neckP[0] + Math.sin(hTh) * hD, neckP[1] - Math.cos(hTh) * hD];
+    const hrx = r * (K.hair === 'curly' ? 1.28 : K.hair === 'afro' ? 1.5 : 1.16), hry = r * 1.2;
+    const overHead = (A) => {
+      const [sP, eP, hP] = A.chain;
+      const m = K.limbW * 0.4;
+      for (let i = 2; i <= 10; i++) {
+        const u = i / 10;
+        const q = u < 0.5 ? [lerp(sP[0], eP[0], u * 2), lerp(sP[1], eP[1], u * 2)] : [lerp(eP[0], hP[0], u * 2 - 1), lerp(eP[1], hP[1], u * 2 - 1)];
+        if (q[1] > sP[1] - 8) continue; // only the part of the arm raised above the shoulder
+        const dx = (q[0] - hc[0]) / (hrx + m), dy = (q[1] - hc[1]) / (hry + m);
+        if (dx * dx + dy * dy < 1) return true;
+      }
+      return false;
+    };
+    arms.forEach((A) => {
+      A.front = p.armsFront != null ? p.armsFront.includes(A.side < 0 ? 'L' : 'R') : overHead(A);
+    });
+    function drawArm(A) {
+      const [sP, eP, hP] = A.chain;
       if (K.sleeves === 'short') {
         limb(ctx, [sP, eP, hP], K.limbW * 0.72, SKIN, lw);
         const mx = lerp(sP[0], eP[0], 0.55), my = lerp(sP[1], eP[1], 0.55);
@@ -965,9 +984,8 @@
       circle(ctx, hP[0], hP[1], K.limbW * 0.52);
       fs(ctx, SKIN, lw);
       if (hs === 'open') handFingers(ctx, eP, hP, K.limbW, SKIN, lw);
-      if (p.holdL && A.side < 0) p.holdL(ctx, hP);
-      if (p.holdR && A.side > 0) p.holdR(ctx, hP);
-    });
+    }
+    arms.forEach((A) => { if (!A.front) drawArm(A); });
 
     // ---- head
     headSpace2(() => {
@@ -975,16 +993,9 @@
       frontHair(ctx, r, K, t, p);
       if (p.hat) p.hat(ctx, r);
     });
-    // ---- a forearm + hand in front of the face (facepalm): p.handFront 'L' or 'R'
-    if (p.handFront) {
-      const A = arms[p.handFront === 'L' ? 0 : 1];
-      const [, eP, hP] = A.chain;
-      const col = K.sleeves === 'short' ? SKIN : K.sleeves === 'varsity' ? K.sleeveC : K.sleeves === 'shirt' ? K.shirt : K.coat;
-      limb(ctx, [[lerp(eP[0], hP[0], 0.45), lerp(eP[1], hP[1], 0.45)], hP], K.limbW, col, lw);
-      handFingers(ctx, eP, hP, K.limbW, SKIN, lw);
-      circle(ctx, hP[0], hP[1], K.limbW * 0.62); fs(ctx, SKIN, lw);
-      handFingers(ctx, eP, hP, K.limbW, SKIN, 0);
-    }
+    arms.forEach((A) => { if (A.front) drawArm(A); });
+    // held props go on top of everything (a cone held up by the face must not slip behind the hair)
+    arms.forEach((A) => { const hold = A.side < 0 ? p.holdL : p.holdR; if (hold) hold(ctx, A.chain[2]); });
     ctx.restore();
     return { arms, legs };
   };

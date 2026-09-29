@@ -85,7 +85,7 @@
     // pop 1: behind the right-hand bush
     if (k === 0) {
       const up = ease.outBack(clamp(lt / 0.1), 2);
-      ben(ctx, t, { x: 1350, y: 900 + (1 - up) * 330, s: 0.95, armL: [2.7, 0.1], armR: [2.7, 0.1], eyes: 'happy', noShadow: true });
+      ben(ctx, t, { x: 1350, y: 900 + (1 - up) * 330, s: 0.95, armL: [2.3, 0.25], armR: [2.3, 0.25], eyes: 'happy', noShadow: true });
       bush(ctx, 1350, 880, 1.25);
     } else bush(ctx, 1350, 880, 1.25);
     // pop 2: out of the kitchen window (clipped to the window)
@@ -128,7 +128,7 @@
     if (k === 3) {
       const drop = ease.outBack(clamp(lt / 0.12), 1.8);
       ctx.save(); ctx.translate(650, 150 + drop * 20); ctx.rotate(Math.PI + Math.sin(t * 14) * 0.04);
-      ben(ctx, t, { x: 0, y: -40 + (1 - drop) * 380, s: 0.95, armL: [2.9, 0.05], armR: [2.9, 0.05], footL: [10, 0], footR: [-10, 0], eyes: 'open', noShadow: true });
+      ben(ctx, t, { x: 0, y: -40 + (1 - drop) * 380, s: 0.95, armL: [2.35, 0.2], armR: [2.35, 0.2], footL: [10, 0], footR: [-10, 0], eyes: 'open', noShadow: true });
       ctx.restore();
     }
     // slams in world space so the crash zoom carries them
@@ -245,7 +245,7 @@
       RV.dust(ctx, bx - 120, by, (t * 7) % 0.6, { n: 6, color: '#e9e3d0' });
     } else {
       const sk = t - 2.82;
-      ben(ctx, t, { x: bx, y: by, s: 1.0, lean: -0.18 * decay(t, 2.82, 10), armL: [1.4, 0.3], armR: [2.5, 0.2], handR_shape: 'open', eyes: 'happy' });
+      ben(ctx, t, { x: bx, y: by, s: 1.0, lean: -0.18 * decay(t, 2.82, 10), armL: [1.4, 0.3], armR: [2.25, 0.3], handR_shape: 'open', eyes: 'happy' });
       RV.dust(ctx, bx - 60, by, sk, { n: 10, color: '#e9e3d0' });
     }
     // lyric words dropped along his path
@@ -302,14 +302,14 @@
     else if (t < 4.58) {
       const hy = -RV.kidHeight('ben') * 0.5;
       pose = { handL: [-26, hy], handR: [26, hy], handL_shape: 'point', handR_shape: 'point', eyes: 'open', brow: 0.6 };
-    } else pose = { armL: [2.7, 0.1], armR: [2.7, 0.1], eyes: 'happy', jump: 40 * Math.sin(clamp((t - 4.58) / 0.2) * Math.PI) };
+    } else pose = { armL: [2.3, 0.25], armR: [2.3, 0.25], eyes: 'happy', jump: 40 * Math.sin(clamp((t - 4.58) / 0.2) * Math.PI) };
+    if (t >= 4.58) RV.confetti(ctx, t, { t0: 4.58, x: 960, y: 640, n: 90, spread: 2.8 });
     ben(ctx, t, Object.assign({ x: 960, y: 1085 - (1 - land) * 60, s: 1.5 }, pose));
     if (t >= 3.58 && t < 3.8) RV.dust(ctx, 960, 1085, t - 3.58, { n: 14, color: '#fff3d6' });
     ctx.restore();
     if (t >= 4.0 && t < 4.26) benSlam(ctx, t, 4.0, 960, 150, 0, { text: "I'M BEN!", size: 124 });
     if (t >= 4.26 && t < 4.58) RV.wordPop(ctx, 'YES!', 1480, 300, 130, t - 4.26, { gradient: GRADS[3], rot: 0.12 });
     if (t >= 4.58) {
-      RV.confetti(ctx, t, { t0: 4.58, x: W / 2, y: 700, n: 90, spread: 2.8 });
       benSlam(ctx, t, 4.58, W / 2, 160, 2, { text: 'YES I\'M BEN!', size: 118, dur: 0.5 });
     }
     // cousins peeking up from the bottom corners, screen space (unaffected by the zooms)

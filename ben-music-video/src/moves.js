@@ -34,8 +34,8 @@
         break;
       case 'cheer':
         P.jump = 46 * Math.abs(Math.sin(Math.PI * h)) * amt;
-        P.armL = [2.65 + 0.2 * S(h), 0.15];
-        P.armR = [2.65 - 0.2 * S(h), 0.15];
+        P.armL = [2.3 + 0.12 * S(h), 0.25];
+        P.armR = [2.3 - 0.12 * S(h), 0.25];
         P.footL = [0, 14 * Math.abs(Math.sin(Math.PI * h))];
         P.footR = [0, 14 * Math.abs(Math.sin(Math.PI * h))];
         P.eyes = 'happy'; P.mouth = 'grin';
@@ -43,8 +43,8 @@
       case 'wave':
         P.bob = 8 * down * amt;
         P.lean = 0.1 * Math.sin(Math.PI * h);
-        P.armL = [2.45 + 0.35 * Math.sin(Math.PI * h), 0.35];
-        P.armR = [2.45 - 0.35 * Math.sin(Math.PI * h), 0.35];
+        P.armL = [2.2 + 0.25 * Math.sin(Math.PI * h), 0.35];
+        P.armR = [2.2 - 0.25 * Math.sin(Math.PI * h), 0.35];
         P.headTilt = 0.1 * Math.sin(Math.PI * h);
         break;
       case 'twist':
@@ -62,7 +62,7 @@
         const e = RV.ease.outBack(clamp(ph * 3), 2);
         P.bob = 10 * down * amt;
         P.lean = (up ? 0.12 : -0.08) * e;
-        P.armR = up ? [2.6 * e + 0.3 * (1 - e), 0] : [0.9, -0.2];
+        P.armR = up ? [2.2 * e + 0.3 * (1 - e), 0.25 * e] : [0.9, -0.2];
         P.armL = up ? [0.9, -1.6] : [0.2 + 0.5 * e, 0.6];
         P.headTilt = up ? -0.12 : 0.1;
         P.footR = [up ? 14 : 0, up ? 0 : 10];
@@ -101,8 +101,8 @@
         break;
       case 'swim':
         P.bob = 10 * down;
-        P.armL = [1.6 + 1.1 * Math.sin(Math.PI * b), 0.4];
-        P.armR = [1.6 - 1.1 * Math.sin(Math.PI * b), 0.4];
+        P.armL = [1.45 + 0.8 * Math.sin(Math.PI * b), 0.4];
+        P.armR = [1.45 - 0.8 * Math.sin(Math.PI * b), 0.4];
         P.lean = 0.06 * Math.sin(Math.PI * b);
         break;
       case 'spin':

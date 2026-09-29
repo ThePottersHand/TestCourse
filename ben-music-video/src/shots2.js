@@ -129,7 +129,7 @@
     const bx = 1140, by = 930, s = 1.05;
     const hy = headY('ben', by, s);
     const turned = t >= 6.22; // swings round to look straight down the lens
-    ben(ctx, t, { x: bx, y: by, s, face: 1, turn: turned ? 0 : 0.8, lean: turned ? 0 : 0.07, handL: [turned ? -34 : -10, RV.kidHead('ben') + 34], handR: [turned ? 34 : 60, RV.kidHead('ben') + 38], eyes: 'open' });
+    ben(ctx, t, { x: bx, y: by, s, face: 1, turn: turned ? 0 : 0.8, lean: turned ? 0 : 0.07, handL: [turned ? -34 : -10, RV.kidHead('ben') + 34], handR: [turned ? 34 : 60, RV.kidHead('ben') + 38], armsFront: 'LR', eyes: 'open' });
     binoculars(ctx, bx + (turned ? 0 : 26 * s), hy + 10 * s, s, turned ? 0 : 0.12);
     if (turned) {
       // huge eyes in the lenses
@@ -225,7 +225,7 @@
     const fp = facepalm ? ease.outCubic(clamp((t - facepalm) / 0.18)) : 0;
     const hb = RV.kidHead('big');
     cousin(ctx, 'big', t, { x: YD.big, y: YD.y, eyes: fp > 0.6 ? 'closed' : 'dots', mouth: 'flat', armL: [0.2, 0.2],
-      handR: fp > 0 ? [lerp(60, 4, fp), lerp(-150, hb + 2, fp)] : null, armR: [0.2, 0.2], handFront: fp > 0.55 ? 'R' : null, look: [-0.4, 0] });
+      handR: fp > 0 ? [lerp(60, 4, fp), lerp(-150, hb + 2, fp)] : null, armR: [0.2, 0.2], armsFront: fp > 0 ? 'R' : null, handR_shape: fp > 0.55 ? 'open' : null, look: [-0.4, 0] });
     cousin(ctx, 'boy', t, { x: YD.boy, y: YD.y, eyes: 'dots', mouth: 'flat', armL: [0.25, 0.2], armR: [0.25, 0.2], blink: RV.blink(t * 3, 4) });
     const drop = facepalm ? t - facepalm : -1;
     cousin(ctx, 'little', t, { x: YD.little, y: YD.y, eyes: drop > 0.15 ? 'wide' : 'dots', mouth: drop > 0.15 ? 'o' : 'flat', open: 0.4, gloom: drop > 0.15 ? 0.8 : 0,
@@ -248,9 +248,9 @@
       { t: 8.12, z: 1.02, x: 1000, y: 580, r: -0.02, d: 0.16, back: 1.3, shake: 16 },
     ]);
     yard(ctx, t);
+    RV.confetti(ctx, t, { t0: 8.23, x: 830, y: 620, n: 70, spread: 3 });
     ben(ctx, t, { x: 830, y: 985, s: 1.08, armL: [1.75, 0.2], armR: [1.75, 0.2], handL_shape: 'open', handR_shape: 'open', eyes: 'happy', jump: 16 * RV.bounce(t, 1) });
     deadpanCousins(ctx, t, 0);
-    RV.confetti(ctx, t, { t0: 8.23, x: 830, y: 560, n: 70, spread: 3 });
     ctx.restore();
     if (t >= 8.23) benSlam(ctx, t, 8.23, W / 2, 150, 1, { text: "I'M BEN!", size: 130, dur: 0.5 });
   }, { type: 'flash', dur: 0.1, pre: 0 });
@@ -395,10 +395,9 @@
       ctx.save(); ctx.translate(cx + Math.cos(a) * R, cy + Math.sin(a) * R); ctx.rotate(a + Math.PI / 2);
       if (id === 'rusty') rusty(ctx, t, { x: 0, y: 0, s: 0.5, headTilt: Math.sin(th) * 0.5, noShadow: true, earFlip: 'R', eyes: dizzy ? 'closed' : 'open', bob: over * 30 });
       else {
-        const hy2 = RV.kidHead(id);
         cousin(ctx, id, t, { x: 0, y: 0, s, noShadow: true, bob: over * 60, eyes: dizzy ? 'spiral' : 'wide', mouth: dizzy ? 'wavy' : 'o', open: 0.4,
           look: [Math.cos(th), Math.sin(th)], turn: clamp(Math.cos(th), -1, 1) * 0.5,
-          handL: over > 0.2 ? [-30, hy2 - 40] : null, handR: over > 0.2 ? [30, hy2 - 40] : null, armL: [0.3, 0.2], armR: [0.3, 0.2] });
+          armL: over > 0.2 ? [1.35, 1.25] : [0.3, 0.2], armR: over > 0.2 ? [1.35, 1.25] : [0.3, 0.2], handL_shape: over > 0.2 ? 'open' : null, handR_shape: over > 0.2 ? 'open' : null });
         if (dizzy) RV.dizzy(ctx, 0, (RV.kidHead(id) - 80) * s, 60, t + i);
       }
       ctx.restore();
@@ -409,7 +408,7 @@
       const hop = stopped ? 0 : Math.max(0, 1 - (d / 0.62) * (d / 0.62)) * 250 * s * 1.6;
       ctx.save(); ctx.globalAlpha *= alpha;
       ctx.translate(cx + Math.cos(ang) * (R + hop), cy + Math.sin(ang) * (R + hop)); ctx.rotate(ang + Math.PI / 2);
-      if (stopped) ben(ctx, t, { x: 0, y: 0, s: s * 1.08, lean: -0.25 * decay(t, T_STOP, 6), armL: [1.3, 0.3], armR: [2.6, 0.2], handR_shape: 'open', eyes: 'happy', noShadow: true });
+      if (stopped) ben(ctx, t, { x: 0, y: 0, s: s * 1.08, lean: -0.25 * decay(t, T_STOP, 6), armL: [1.3, 0.3], armR: [2.3, 0.3], handR_shape: 'open', eyes: 'happy', noShadow: true });
       else ben(ctx, t, Object.assign(runPose(t, 0, 0, s * 1.08), { noShadow: true, lean: 0.35 }));
       ctx.restore();
     };
