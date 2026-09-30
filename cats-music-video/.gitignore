@@ -1,0 +1,4 @@
+node_modules
+output/*
+!output/food-is-yummy.mp4
+!output/food-is-yummy-720p.mp4
