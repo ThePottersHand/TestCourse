@@ -671,7 +671,7 @@
    * pose: x, y (feet), s (scale), face (1/-1), lean, bob (hip drop px), jump (px up),
    *   armL/armR: [shoulderAngle, elbowAngle] (0 = down, +ve = outward/up), handL/handR: [x,y] IK targets (local),
    *   footL/footR: [dx, lift], headTilt, turn (-1..1), eyes, mouth, open, brow, browAng, look, blink, t, sway
-   *   back(ctx, frame) / waist(ctx, frame): costume layers behind the body / over the body under the arms
+   *   back(ctx, frame): a costume layer behind the body (fairy wings)
    * Left/right are screen sides.
    */
   RV.drawKid = function (ctx, id, p) {
@@ -909,8 +909,6 @@
     }
     // neck
     RV.rrect(ctx, -9, top - K.neck - 4, 18, K.neck + 10, 6); fs(ctx, SKIN_SH);
-    // p.waist(ctx, frame): over the body, under the arms and head, in the hip frame (a tutu)
-    if (p.waist) p.waist(ctx, { top, sw, hw, t });
     ctx.restore();
 
     // ---- arms

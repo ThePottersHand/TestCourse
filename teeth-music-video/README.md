@@ -25,7 +25,7 @@ tooth suit, tooth-fairy Ben, and a choir of singing teeth in bow ties.
 | 0:17 | admiring his collection of human teeth! | His glass cabinet of teeth on velvet cushions (MOLAR, WOBBLY, No. 47, GOLD...) and a magnifying glass. One tooth winks back |
 | 0:19 | Everyone be like what what!? | Everyone (the cousins, Rusty and the cats) in a row against a turning spiral: deadpan, then a double take on every "what" |
 | 0:21 | Everyone be like what what?! | The second time the whole world rolls upside down |
-| 0:22 | And then Ben admitted that he was a tooth fairy! | A shy confession in a spotlight. On "fairy!" a poof of glitter: wings, a tutu, a star and a wand. The cousins' jaws drop |
+| 0:22 | And then Ben admitted that he was a tooth fairy! | A shy confession in a spotlight. On "fairy!" a poof of glitter: wings, a star and a wand. The cousins' jaws drop |
 | 0:25 | He snuck into the children's houses at night that right! | He flies across the night sky past a tooth-shaped moon, lands in the street, and tells us: shh! |
 | 0:28 | He took away all their teeth and gave them money!? | A cousin asleep. Ben leans over the bed, swaps the tooth under the pillow for a coin, and the sleeper dreams of money |
 | 0:31 | (Maybe he is obsessed after all) | The slowest shot: Ben's secret room. A giant mosaic mouth made of teeth that slowly breathes and chomps once, candles, and Ben on a throne of teeth, stroking a tooth in his lap. On "all" he turns to us and grins |
@@ -46,9 +46,9 @@ tooth suit, tooth-fairy Ben, and a choir of singing teeth in bow ties.
    "THE END!!!" at 0:37, then an encore.
 2. **Drawing.** Every frame is a pure function of time (`renderFrame(ctx, t)`), on the engine from the
    earlier videos. New in `src/teeth.js`: teeth with little faces, the tooth suit (Ben's face through a
-   hole, his arms and legs out of the sides and roots), wings and a tutu (two new costume layers on the
-   kids' rig: one behind the body, one between the body and the arms), the wand and sack, the cabinet,
-   the living room, the night street, the bedroom, the shrine and the throne.
+   hole, his arms and legs out of the sides and roots), fairy wings (a new costume layer on the kids'
+   rig, drawn behind the body), the wand and sack, the cabinet, the living room, the night street, the
+   bedroom, the shrine and the throne.
 3. **Who sings.** The cousins tell the story, Ben says his own lines, the teeth sing the backing vocals,
    and everyone does "what what" (`RV.SINGERS` in `src/captions.js`).
 4. **Checking.** Every shot was checked frame by frame for hands, props, text and scenery crossing faces.

@@ -196,23 +196,6 @@
       RV.sparkle(ctx, (hash(i) - 0.5) * 300, by - 60 + ph * 140, 10 * Math.sin(ph * Math.PI), '#fff6c8', Math.sin(ph * Math.PI));
     }
   };
-  // a frilly pink tutu for drawKid's p.waist hook
-  RV.tutu = function (ctx, f) {
-    const w0 = f.hw + 8, w1 = f.hw + 52;
-    for (let layer = 0; layer < 2; layer++) {
-      const y0 = -16 + layer * 10, y1 = 34 + layer * 12, ww = w1 - layer * 12;
-      ctx.beginPath(); ctx.moveTo(-w0, y0);
-      ctx.lineTo(w0, y0);
-      ctx.lineTo(ww, y1 - 8);
-      for (let i = 0; i <= 8; i++) {
-        const x = ww - (i / 8) * ww * 2;
-        ctx.quadraticCurveTo(x + ww / 8, y1 + 10, x, y1 - (i % 2 ? 0 : 6));
-      }
-      ctx.closePath();
-      fs(ctx, layer ? 'rgba(255,170,210,0.95)' : 'rgba(255,200,228,0.95)', 4);
-    }
-    rrect(ctx, -w0 - 2, -20, (w0 + 2) * 2, 14, 7); fs(ctx, '#ff7eb6', 3.5);
-  };
   // the wand: a stick with a little tooth star on top (for holdR); ang 0 = straight up
   RV.wand = function (ctx, h, ang = 0.2, t = 0) {
     ctx.save(); ctx.translate(h[0], h[1]); ctx.rotate(ang);

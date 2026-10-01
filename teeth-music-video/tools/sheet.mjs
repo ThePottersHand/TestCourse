@@ -20,7 +20,7 @@ RV.toothSuit(ctx, { x: 520, y: 1040, s, t, eyes: 'happy', mouth: 'grin', armL: [
 RV.toothSuit(ctx, { x: 820, y: 1040, s, t, eyes: 'open', lid: 0.3, mouth: 'smile', look: [0.6, -0.2], turn: 0.3,
   handR: [150, -250], holdR: (cx, h) => RV.tooth(cx, h[0] + 6, h[1] - 40, 0.35), armL: [2.3, 0.4] });
 RV.drawKid(ctx, 'ben', { x: 1110, y: 1040, s, t, eyes: 'happy', mouth: 'grin', armR: [2.2, 0.3], armL: [0.5, 0.4],
-  back: (cx, f) => RV.fairyWings(cx, f), waist: (cx, f) => RV.tutu(cx, f),
+  back: (cx, f) => RV.fairyWings(cx, f),
   holdR: (cx, h) => RV.wand(cx, h, 0.25, t), holdL: (cx, h) => RV.toothSack(cx, h, 1, t),
   hat: (cx, r) => { RV.star(cx, 0, -r * 1.25, r * 0.32, r * 0.15, 5); RV.fs(cx, '#ffd23f', 4); } });
 RV.toothCabinet(ctx, 1430, 1040, 0.62, t);

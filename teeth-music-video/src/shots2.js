@@ -172,7 +172,7 @@
   }, { type: 'flash', dur: 0.12, pre: 0.04 }, { chapter: 'What what?!' });
 
   // ============================================================ 22.66  AND THEN BEN ADMITTED THAT HE WAS A TOOTH FAIRY!
-  // A spotlight. Ben shuffles, looks down, then up: "...a tooth fairy!" Poof: wings, tutu, a star and a wand.
+  // A spotlight. Ben shuffles, looks down, then up: "...a tooth fairy!" Poof: wings, a star and a wand.
   const POOF = 24.4;
   shot(22.66, 'confession', (ctx, S) => {
     const { t } = S;
@@ -305,7 +305,7 @@
         armR: [0.6, 0.5], holdR: (cc, h) => RV.toothSack(cc, h, took ? 1 : 0.7, t),
       }),
     });
-    if (lift) RV.sparkle(ctx, 452, 626, 30 * Math.sin(clamp((t - TAKE) / 0.4) * Math.PI), '#ffffff');
+    if (lift) RV.sparkle(ctx, 494, 628, 30 * Math.sin(clamp((t - TAKE) / 0.4) * Math.PI), '#ffffff');
     if (t > MONEY) {
       RV.sparkle(ctx, PILLOW[0] + 26, PILLOW[1] - 30, 34 * Math.sin(clamp((t - MONEY) / 0.5) * Math.PI), '#ffffff');
       // the sleeper dreams of money

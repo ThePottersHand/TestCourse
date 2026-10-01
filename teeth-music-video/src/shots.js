@@ -32,15 +32,15 @@
     if (p.shadow !== false) shadow(ctx, pose.x || 0, pose.y || 0, 150 * (pose.s || 1));
     return RV.toothSuit(ctx, pose);
   }
-  // tooth-fairy Ben: wings, tutu, a star on his head, the wand and (optionally) the sack
+  // tooth-fairy Ben: wings, a star on his head, the wand and (optionally) the sack, over his usual tee and shorts
   const starHat = (ctx, r) => { RV.star(ctx, 0, -r * 1.22, r * 0.3, r * 0.14, 5); fs(ctx, '#ffd23f', 4); };
   function fairyBen(ctx, t, p = {}) {
     const extra = {
-      back: (c, f) => RV.fairyWings(c, f), waist: (c, f) => RV.tutu(c, f), hat: starHat,
+      back: (c, f) => RV.fairyWings(c, f), hat: starHat,
       holdR: p.wand === false ? null : (c, h) => RV.wand(c, h, p.wandAng == null ? 0.25 : p.wandAng, t),
       holdL: p.sack ? (c, h) => RV.toothSack(c, h, p.sack, t) : p.holdL,
     };
-    return ben(ctx, t, Object.assign(extra, p, { back: extra.back, waist: extra.waist }));
+    return ben(ctx, t, Object.assign(extra, p, { back: extra.back }));
   }
   // a cousin; tells the story (lip-syncs the 'kids' lines)
   function cousin(ctx, id, t, p = {}) {
