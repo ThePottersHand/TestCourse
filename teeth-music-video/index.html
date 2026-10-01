@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>He Likes Teeth</title>
+<meta name="description" content="A weird, slow cartoon music video about Ben, his tooth suit and his tooth collection, drawn live with code in time with the music.">
+<style>
+  /* local copies of the two faces the video draws with (used when offline) */
+  @font-face { font-family: 'Luckiest Guy'; src: url('fonts/LuckiestGuy-Regular.ttf') format('truetype'); font-display: block; }
+  @font-face { font-family: 'Fredoka'; src: url('fonts/Fredoka-SemiBold.ttf') format('truetype'); font-weight: 600; font-display: block; }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600&family=Luckiest+Guy&display=block">
+<style>
+  /* One dark look, taken from Ben's secret tooth room: a centred cinema column. plum-black ground,
+     tooth ivory, the throne's velvet red, a lilac spotlight. */
+  :root {
+    color-scheme: dark;
+    --ink: #160b24;
+    --panel: #24123a;
+    --panel-2: #33204e;
+    --text: #fbf6ff;
+    --muted: #c3b2dd;
+    --bolt: #fff3d6;
+    --cheek: #ff5c8a;
+    --tee: #7a5ea8;
+    --display: 'Luckiest Guy', 'Arial Black', Impact, sans-serif;
+    --body: 'Fredoka', 'Trebuchet MS', system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; }
+  body {
+    background: radial-gradient(1100px 520px at 50% -8%, #4a2a6e 0%, var(--ink) 62%) fixed, var(--ink);
+    color: var(--text);
+    font-family: var(--body);
+    font-weight: 600;
+    padding-inline: 16px;
+    padding-block: 14px 28px;
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+  }
+  .col { width: min(100%, 1280px, calc((100vh - 190px) * 16 / 9)); min-width: 0; }
+  header { display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; }
+  h1 {
+    font-family: var(--display); font-weight: normal; margin: 0;
+    font-size: clamp(30px, 5.2vw, 52px); letter-spacing: 1px; line-height: 1;
+    color: var(--bolt); text-shadow: 0 4px 0 #7b1e3a, 0 0 24px rgba(255, 243, 214, 0.25);
+    text-wrap: balance;
+  }
+  .stamp {
+    font-family: var(--display); font-size: clamp(18px, 2.6vw, 26px); color: var(--cheek);
+    border: 4px solid var(--cheek); border-radius: 10px; padding: 4px 12px 1px; transform: rotate(-8deg);
+    letter-spacing: 1px;
+  }
+  .stage {
+    position: relative; aspect-ratio: 16 / 9; max-width: 100%;
+    background: #000; border-radius: 14px; overflow: hidden;
+    box-shadow: 0 22px 60px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.07);
+  }
+  canvas { width: 100%; height: 100%; display: block; cursor: pointer; }
+  .big-play {
+    position: absolute; left: 4%; bottom: 6%; width: clamp(64px, 10vw, 118px); aspect-ratio: 1; border-radius: 50%;
+    border: 0; background: var(--bolt); color: var(--ink); cursor: pointer;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), 0 0 0 8px rgba(255, 243, 214, 0.3);
+    display: grid; place-items: center; transition: transform 0.15s ease;
+  }
+  .big-play:hover { transform: scale(1.06); }
+  .big-play svg { width: 44%; height: 44%; margin-left: 8%; }
+  .loading { position: absolute; bottom: 12px; left: 0; right: 0; text-align: center; color: #fff; font-size: 14px; text-shadow: 0 1px 3px #000; }
+  .controls {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    background: var(--panel); padding: 10px 12px; border-radius: 12px;
+  }
+  .btn {
+    border: 0; background: var(--panel-2); color: var(--text); border-radius: 9px; height: 38px; min-width: 38px; padding: 0 12px;
+    font: inherit; font-size: 15px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .btn:hover { background: #45305f; }
+  .btn[aria-pressed="true"] { background: var(--bolt); color: var(--ink); }
+  .btn svg { width: 18px; height: 18px; flex: none; }
+  .btn:focus-visible, .chapters button:focus-visible, input[type=range]:focus-visible, .big-play:focus-visible, canvas:focus-visible {
+    outline: 3px solid var(--cheek); outline-offset: 2px;
+  }
+  .time { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 14px; min-width: 88px; text-align: center; }
+  .scrub { flex: 1 1 200px; min-width: 0; display: flex; align-items: center; height: 38px; }
+  input[type=range] { width: 100%; accent-color: var(--cheek); cursor: pointer; }
+  .chapters { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+  .chapters button {
+    border: 0; border-radius: 999px; padding: 6px 12px; background: var(--panel); color: var(--muted);
+    font: inherit; font-size: 13px; cursor: pointer; display: inline-flex; gap: 6px; align-items: baseline;
+  }
+  .chapters button .ts { font-variant-numeric: tabular-nums; opacity: 0.7; font-size: 12px; }
+  .chapters button.on { background: var(--tee); color: #fff; }
+  .foot { color: var(--muted); font-size: 13px; text-align: center; line-height: 1.5; max-width: 68ch; margin: 4px auto 0; }
+  kbd { font: inherit; background: var(--panel-2); border-radius: 5px; padding: 0 5px; color: var(--text); }
+  @media (max-width: 560px) {
+    .time { min-width: 0; margin-right: auto; }
+    .btn .lbl { display: none; }
+    .scrub { order: 5; flex-basis: 100%; }
+  }
+</style>
+</head>
+<body>
+  <header class="col">
+    <h1>He Likes Teeth</h1>
+    <span class="stamp" aria-hidden="true">Ooooh</span>
+  </header>
+  <div class="stage col" id="stage">
+    <canvas id="c" width="1280" height="720" tabindex="0" aria-label="Animated music video. Click to play or pause."></canvas>
+    <button class="big-play" id="bigPlay" aria-label="Play">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 4l15 8-15 8z"/></svg>
+    </button>
+    <div class="loading" id="loading">Loading song…</div>
+  </div>
+  <div class="controls col">
+    <button class="btn" id="play" aria-label="Play">
+      <svg id="icoPlay" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 4l15 8-15 8z"/></svg>
+      <svg id="icoPause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" hidden><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg>
+    </button>
+    <div class="time" id="time">0:00 / 0:54</div>
+    <div class="scrub"><input type="range" id="seek" min="0" max="54" step="0.01" value="0" aria-label="Seek"></div>
+    <button class="btn" id="loop" aria-pressed="true" title="Play it again when it ends">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a3 3 0 0 1 3-3h15"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/></svg>
+      <span class="lbl">Again</span>
+    </button>
+    <button class="btn" id="cc" aria-pressed="false" aria-label="Lyrics captions"><span class="lbl">Lyrics</span> CC</button>
+    <button class="btn" id="fs" aria-label="Fullscreen">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+    </button>
+  </div>
+  <nav class="chapters col" id="chapters" aria-label="Song sections"></nav>
+  <p class="foot col">A song by Ben's cousins about Ben, who is not obsessed and just really likes teeth. With the cousins,
+    Rusty and the cats as everyone, and some singing teeth. Every frame is drawn live with code in time with the music. <kbd>Space</kbd> plays and pauses, <kbd>←</kbd> <kbd>→</kbd> skip 2 seconds.</p>
+
+  <audio id="song" src="audio/he-likes-teeth.mp3" preload="auto"></audio>
+
+  <script src="src/core.js"></script>
+  <script src="src/timing.js"></script>
+  <script src="src/characters.js"></script>
+  <script src="src/cats.js"></script>
+  <script src="src/moves.js"></script>
+  <script src="src/world.js"></script>
+  <script src="src/teeth.js"></script>
+  <script src="src/fx.js"></script>
+  <script src="src/captions.js"></script>
+  <script src="src/shots.js"></script>
+  <script src="src/shots2.js"></script>
+  <script src="src/shots3.js"></script>
+  <script src="src/video.js"></script>
+  <script>
+  (function () {
+    'use strict';
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+    const audio = document.getElementById('song');
+    const seek = document.getElementById('seek');
+    const timeEl = document.getElementById('time');
+    const bigPlay = document.getElementById('bigPlay');
+    const loading = document.getElementById('loading');
+    const playBtn = document.getElementById('play');
+    const cc = document.getElementById('cc');
+    const loopBtn = document.getElementById('loop');
+    const icoPlay = document.getElementById('icoPlay'), icoPause = document.getElementById('icoPause');
+
+    const store = {
+      get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } },
+      set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* storage unavailable */ } },
+    };
+    let captions = store.get('teeth-cc', 'off') === 'on';
+    let loop = store.get('teeth-loop', 'on') === 'on';
+    cc.setAttribute('aria-pressed', String(captions));
+    loopBtn.setAttribute('aria-pressed', String(loop));
+    audio.loop = loop;
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)');
+    const setCalm = () => { RV.calm = !!(reduce && reduce.matches); };
+    setCalm();
+    if (reduce && reduce.addEventListener) reduce.addEventListener('change', () => { setCalm(); draw(currentTime()); });
+
+    const DUR = RV.DURATION;
+    seek.max = DUR.toFixed(2);
+    const fmt = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+    timeEl.textContent = `0:00 / ${fmt(DUR)}`;
+
+    const CH = [["I'm not obsessed", 0], ['He likes teeth', 6.1], ['Rap time', 13.19], ['Lazy Sunday', 14.5], ['What what?!', 19.6],
+      ['Tooth fairy', 22.66], ['At night', 25.1], ['Maybe he is obsessed', 31.1], ['The end', 37.55], ['Encore', 40.1]];
+    const chapWrap = document.getElementById('chapters');
+    const chapBtns = CH.map(([name, t]) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.innerHTML = `<span class="ts">${t.toFixed(1)}s</span>`;
+      b.appendChild(document.createTextNode(name));
+      b.addEventListener('click', () => { setTime(t); if (audio.paused) play(); });
+      chapWrap.appendChild(b);
+      return b;
+    });
+
+    // smooth clock: audio.currentTime updates coarsely, so interpolate between updates
+    let lastAudioT = 0, lastWall = performance.now();
+    function currentTime() {
+      if (audio.paused) return audio.currentTime;
+      const at = audio.currentTime, now = performance.now();
+      if (at !== lastAudioT) { lastAudioT = at; lastWall = now; return at; }
+      return Math.min(at + (now - lastWall) / 1000, DUR);
+    }
+    const POSTER = 39.75; // END!!!, with Ben's head through the curtains
+    let started = false;
+    function draw(t) {
+      RV.renderFrame(ctx, started ? t : POSTER, { captions: started && captions });
+      timeEl.textContent = `${fmt(t)} / ${fmt(DUR)}`;
+      if (document.activeElement !== seek) seek.value = t.toFixed(2);
+      const idx = CH.reduce((k, c, i) => (t >= c[1] ? i : k), 0);
+      chapBtns.forEach((b, i) => b.classList.toggle('on', started && i === idx));
+    }
+    function setTime(t) { started = true; audio.currentTime = Math.max(0, Math.min(DUR - 0.05, t)); lastAudioT = -1; draw(t); }
+    function resize() {
+      const r = canvas.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const w = Math.max(320, Math.min(1920, Math.round(r.width * dpr)));
+      const h = Math.round(w * 9 / 16);
+      if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; draw(currentTime()); }
+    }
+    window.addEventListener('resize', resize);
+    function loop_() { if (!audio.paused) draw(currentTime()); requestAnimationFrame(loop_); }
+
+    function play() {
+      started = true;
+      bigPlay.hidden = true;
+      audio.play().catch(() => { bigPlay.hidden = false; });
+    }
+    function toggle() { if (audio.paused) play(); else audio.pause(); }
+    audio.addEventListener('play', () => { icoPlay.hidden = true; icoPause.hidden = false; playBtn.setAttribute('aria-label', 'Pause'); });
+    audio.addEventListener('pause', () => { icoPlay.hidden = false; icoPause.hidden = true; playBtn.setAttribute('aria-label', 'Play'); draw(audio.currentTime); });
+    audio.addEventListener('ended', () => { bigPlay.hidden = false; draw(DUR); });
+    audio.addEventListener('canplaythrough', () => { loading.hidden = true; });
+    audio.addEventListener('error', () => { loading.textContent = 'Could not load the song (audio/he-likes-teeth.mp3).'; });
+
+    bigPlay.addEventListener('click', play);
+    playBtn.addEventListener('click', toggle);
+    canvas.addEventListener('click', toggle);
+    seek.addEventListener('input', () => { bigPlay.hidden = true; setTime(Number(seek.value)); });
+    cc.addEventListener('click', () => {
+      captions = !captions;
+      cc.setAttribute('aria-pressed', String(captions));
+      store.set('teeth-cc', captions ? 'on' : 'off');
+      draw(currentTime());
+    });
+    loopBtn.addEventListener('click', () => {
+      loop = !loop;
+      audio.loop = loop;
+      loopBtn.setAttribute('aria-pressed', String(loop));
+      store.set('teeth-loop', loop ? 'on' : 'off');
+    });
+    document.getElementById('fs').addEventListener('click', () => {
+      const s = document.getElementById('stage');
+      try {
+        if (document.fullscreenElement) document.exitFullscreen();
+        else if (s.requestFullscreen) s.requestFullscreen().catch(() => {});
+      } catch (e) { /* fullscreen not available here */ }
+    });
+    document.addEventListener('fullscreenchange', () => setTimeout(resize, 50));
+    document.addEventListener('keydown', (e) => {
+      if (e.target.tagName === 'INPUT' && e.target.type !== 'range') return;
+      if (e.code === 'Space' && e.target.tagName !== 'BUTTON') { e.preventDefault(); toggle(); }
+      if (e.code === 'ArrowRight') setTime(currentTime() + 2);
+      if (e.code === 'ArrowLeft') setTime(currentTime() - 2);
+    });
+
+    const fontsReady = document.fonts && document.fonts.load
+      ? Promise.all(['40px "Luckiest Guy"', '600 40px "Fredoka"'].map((f) => document.fonts.load(f))).catch(() => {})
+      : Promise.resolve();
+    fontsReady.then(() => { resize(); draw(0); requestAnimationFrame(loop_); });
+  })();
+  </script>
+</body>
+</html>

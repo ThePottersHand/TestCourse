@@ -1,0 +1,4 @@
+node_modules
+output/*
+!output/he-likes-teeth.mp4
+!output/he-likes-teeth-720p.mp4

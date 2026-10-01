@@ -1,0 +1,17 @@
+{
+  "name": "teeth-music-video",
+  "version": "1.0.0",
+  "private": true,
+  "description": "He Likes Teeth - a weird, slow cartoon music video about Ben and his teeth, drawn entirely with code.",
+  "type": "module",
+  "scripts": {
+    "render": "node tools/render.mjs",
+    "render:preview": "node tools/render.mjs --width 960 --height 540 --out output/preview-540p.mp4",
+    "render:youtube": "node tools/render.mjs --youtube",
+    "frames": "node tools/frames.mjs",
+    "sheet": "node tools/sheet.mjs output/character-sheet.png"
+  },
+  "devDependencies": {
+    "@napi-rs/canvas": "^1.0.9"
+  }
+}
