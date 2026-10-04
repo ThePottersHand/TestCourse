@@ -85,18 +85,18 @@ h1, h2, h3 { text-wrap: balance; margin: 0; }
 
 /* HUD */
 #hud {
-  display: flex; align-items: center; gap: 10px; padding: 10px 16px;
+  display: flex; align-items: center; gap: 8px; padding: 10px 16px;
   background: var(--surface); border-bottom: 1px solid var(--line);
 }
-.hud-score { display: flex; flex-direction: column; line-height: 1; min-width: 4.5rem; position: relative; }
+.hud-score { display: flex; flex-direction: column; line-height: 1; min-width: 4rem; position: relative; }
 .hud-score small { font-size: .7rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
 .hud-score b { font-family: var(--font-hud); font-size: 1.5rem; font-variant-numeric: tabular-nums; }
 .pop { position: absolute; left: 100%; top: 0; font-family: var(--font-hud); font-weight: 700; color: var(--good);
   animation: pop 1.4s ease-out forwards; white-space: nowrap; pointer-events: none; }
 @keyframes pop { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-24px); } }
-.tray { display: flex; gap: 5px; margin-inline: auto; }
+.tray { display: flex; gap: 4px; margin-inline: auto; }
 .tray span {
-  width: 30px; height: 34px; display: grid; place-items: center; font-family: var(--font-display); font-size: .95rem;
+  width: clamp(22px, 6.6vw, 30px); aspect-ratio: 30 / 34; display: grid; place-items: center; font-family: var(--font-display); font-size: .9rem;
   clip-path: polygon(50% 0, 100% 28%, 100% 72%, 50% 100%, 0 72%, 0 28%);
   background: var(--line); color: transparent;
 }
@@ -106,6 +106,7 @@ h1, h2, h3 { text-wrap: balance; margin: 0; }
   display: inline-grid; place-items: center; padding: 0 10px; cursor: pointer; font-weight: 700; font-size: .85rem;
 }
 .icon-btn svg { width: 22px; height: 22px; }
+#hudSound[aria-pressed="false"] { color: var(--muted); }
 
 /* Main panel */
 #main { overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
@@ -330,6 +331,7 @@ details summary { cursor: pointer; font-weight: 700; color: var(--muted); paddin
   <header id="hud" hidden>
     <div class="hud-score" aria-live="polite"><small>Score</small><b id="hudScore">0</b></div>
     <div class="tray" id="hudTray" aria-label="Star shards collected"></div>
+    <button class="icon-btn" id="hudSound" type="button" aria-label="Sound"></button>
     <button class="icon-btn" id="hudMenu" type="button" aria-label="Commander menu">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
     </button>
@@ -353,6 +355,7 @@ details summary { cursor: pointer; font-weight: 700; color: var(--muted); paddin
 
 <input type="file" id="photoInput" accept="image/*" capture="environment" hidden>
 
+<script src="sound.js"></script>
 <script src="story.js"></script>
 <script src="app.js"></script>
 </body>

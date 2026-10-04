@@ -153,32 +153,41 @@
   }
 
   /* ---------- sound, speech, vibration ---------- */
-  let actx = null;
-  function unlockAudio() {
-    try {
-      if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
-      if (actx.state === 'suspended') actx.resume();
-    } catch (e) { actx = null; }
-  }
-  function tone(f, d, type, when, vol) {
-    if (!prefs.sound || !actx) return;
-    try {
-      const t = actx.currentTime + (when || 0), o = actx.createOscillator(), g = actx.createGain();
-      o.type = type || 'sine'; o.frequency.setValueAtTime(f, t);
-      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol || 0.15, t + 0.012);
-      g.gain.exponentialRampToValueAtTime(0.0001, t + d);
-      o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + d + 0.05);
-    } catch (e) { /* ignore */ }
-  }
+  // The sounds themselves live in sound.js.
+  const SFX = window.SFX || { unlock() {}, play() {}, setEnabled() {}, startHum() {}, stopHum() {} };
+  SFX.setEnabled(prefs.sound);
+  function unlockAudio() { if (prefs.sound) SFX.unlock(); }
   function buzz(p) { try { if (navigator.vibrate) navigator.vibrate(p); } catch (e) { /* ignore */ } }
   const sfx = {
-    good() { [523, 659, 784, 1046].forEach((f, i) => tone(f, 0.2, 'triangle', i * 0.09, 0.14)); buzz(60); },
-    bad() { tone(220, 0.22, 'sawtooth', 0, 0.06); tone(160, 0.3, 'sawtooth', 0.12, 0.06); buzz([80, 60, 80]); },
-    arrive() { [392, 523, 659, 784, 1046].forEach((f, i) => tone(f, 0.35, 'sine', i * 0.12, 0.2)); buzz([150, 80, 150, 80, 400]); },
-    caught() { [880, 1175, 1568, 2093].forEach((f, i) => tone(f, 0.25, 'triangle', i * 0.06, 0.16)); buzz([40, 30, 120]); },
-    ping(strength) { tone(700 + strength * 900, 0.05, 'sine', 0, 0.05 + strength * 0.06); },
-    tick() { tone(1000, 0.04, 'square', 0, 0.03); }
+    good() { SFX.play('good'); buzz(60); },
+    bad() { SFX.play('bad'); buzz([80, 60, 80]); },
+    arrive() { SFX.play('arrive'); buzz([150, 80, 150, 80, 400]); },
+    caught(kind) { SFX.play(kind === 'gloop' ? 'caughtGloop' : kind === 'ship' ? 'ship' : 'shard'); buzz([40, 30, 120]); },
+    ping(strength) { SFX.play('ping', strength); },
+    tick(urgent) { SFX.play('tick', urgent); }
   };
+  // Characters "talk" in chirps (Zib) and bubbles (Gloop) when read-aloud is off.
+  function chatter(lines, startAt) {
+    let at = startAt || 0.15;
+    lines.slice(0, 3).forEach(l => {
+      const len = fill(l[1]).length;
+      if (l[0] === 'z') { SFX.play('zib', len, at); at += Math.max(4, Math.min(12, Math.round(len / 7))) * 0.07 + 0.15; }
+      else if (l[0] === 'g') { SFX.play('gloop', len, at); at += Math.max(3, Math.min(7, Math.round(len / 12))) * 0.12 + 0.15; }
+      else if (l[0] === 'sys') { SFX.play('transmission', at); at += 0.6; }
+    });
+  }
+  function syncSoundBtn() {
+    const b = $('#hudSound'); if (!b) return;
+    b.setAttribute('aria-pressed', String(prefs.sound));
+    b.setAttribute('aria-label', prefs.sound ? 'Sound on. Tap to mute' : 'Sound off. Tap to turn on');
+    b.innerHTML = prefs.sound
+      ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>'
+      : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M17 9.5l5 5M22 9.5l-5 5"/></svg>';
+  }
+  function setSound(on) {
+    prefs.sound = !!on; savePrefs(); SFX.setEnabled(prefs.sound); syncSoundBtn();
+    if (prefs.sound) { SFX.unlock(); SFX.play('coin'); }
+  }
 
   let voices = [];
   function loadVoices() { try { voices = speechSynthesis.getVoices() || []; } catch (e) { voices = []; } }
@@ -335,6 +344,7 @@
     const fn = ACT[el.dataset.act];
     if (!fn) return;
     unlockAudio();
+    SFX.play('tap');
     if (el.dataset.confirm) {
       if (!el.dataset.armed) {
         el.dataset.armed = '1'; el.dataset.label = el.innerHTML; el.classList.add('confirming'); el.textContent = el.dataset.confirm;
@@ -376,7 +386,9 @@
   function speakOnce(key, lines) {
     if (UI.spokenKey === key) return;
     UI.spokenKey = key;
-    if (prefs.voice) speakLines(lines); else stopSpeech();
+    if (prefs.voice) speakLines(lines);
+    else { stopSpeech(); chatter(lines, UI.chatterAt); }
+    UI.chatterAt = 0;
   }
   const readBtn = () => '<button class="btn ghost small" type="button" data-act="readAloud">Read this aloud</button>';
 
@@ -418,6 +430,7 @@
     saveState();
     if (gpsMode()) startGeo();
     wake(true);
+    SFX.play('go');
     render();
   }
   function arrive() {
@@ -428,6 +441,7 @@
   function finishMission() {
     S.phase = 'done'; S.endedAt = Date.now(); S.ss = {};
     saveState(); wake(false); render();
+    SFX.play('tally', 1.4);
   }
 
   /* ---------- HUD ---------- */
@@ -441,6 +455,7 @@
     if (popPts > 0) {
       const p = document.createElement('span'); p.className = 'pop'; p.textContent = '+' + popPts;
       $('.hud-score').appendChild(p); setTimeout(() => p.remove(), 1500);
+      SFX.play('coin', 0.45);
     }
   }
 
@@ -568,6 +583,7 @@
         <li>At each checkpoint: a safety check, the AR scanner (turn around to find the shard through the camera), a puzzle for the Ranger whose turn it is, and a bonus mission for the whole team.</li>
         <li>Puzzles come in Easy, Medium and Hard. Each Ranger gets their own level, so a 7-year-old and a 12-year-old both get a fair go.</li>
         <li>Two forks let the Rangers choose the path. Every choice leads to a happy ending.</li>
+        <li>Keep the sound on. A sonar beacon beeps faster as you get closer, and chirps say warmer or colder, so the Rangers can listen instead of staring at the screen. The speaker button at the top mutes everything.</li>
       </ul></div>
       <div class="card flat"><b>Scoring</b><ul class="bullets">
         <li>Shard found: 50. Puzzle: 100 on the first try, 60 on the second, 30 on the third. A hint costs 20.</li>
@@ -658,6 +674,7 @@
       case 'outro': return renderOutro();
       case 'code': return renderCode();
       case 'ending':
+        if (!S.ss.launched) { S.ss.launched = true; saveState(); SFX.play('launch'); UI.chatterAt = 4.6; }
         return storyStep('Mission complete', resolveLines(node.ending), primary('See your score', 'finish'));
     }
   }
@@ -711,7 +728,7 @@
     const ok = el.dataset.ok === '1';
     S.safety.total++; if (ok) S.safety.ok++;
     award('Safe walking to ' + NODES[S.node].place, ok ? 25 : 0, 25);
-    if (ok) sfx.good();
+    if (ok) { SFX.play('safe'); buzz(60); }
     next();
   };
 
@@ -804,7 +821,7 @@
     const ok = c.type === 'number' ? parseFloat(v.replace(/[^0-9.\-]/g, '')) === +c.answer : matches(v, c.accept);
     resolveChallenge(ok);
   };
-  ACT.hint = () => { S.ss.hint = true; saveState(); renderChallenge(); };
+  ACT.hint = () => { S.ss.hint = true; saveState(); SFX.play('hint'); renderChallenge(); };
   ACT.swapLead = () => { S.turn++; S.ss = {}; saveState(); UI.spokenKey = ''; renderChallenge(); };
 
   /* bonus field missions */
@@ -888,6 +905,7 @@
       const f = fieldFor(S.node);
       storePhoto(url, f.title + ', ' + NODES[S.node].place);
       S.ss.photo = S.photos[S.photos.length - 1].key;
+      SFX.play('shutter');
       fieldAward('Great photo! Added to the mission log.');
     }).catch(() => fieldAward('Found it!'));
   });
@@ -920,7 +938,7 @@
   ACT.tick = el => {
     const i = +el.dataset.i, t = S.ss.ticks || [];
     S.ss.ticks = t.includes(i) ? t.filter(x => x !== i) : t.concat(i);
-    if (!t.includes(i)) sfx.tick();
+    if (!t.includes(i)) SFX.play('plink', S.ss.ticks.length - 1);
     saveState(); renderField();
   };
   ACT.ticksDone = () => {
@@ -935,8 +953,8 @@
       const n = $('#tNum'), r = $('#tRing');
       if (n) n.textContent = Math.max(0, S.ss.left);
       if (r) r.setAttribute('stroke-dashoffset', C * (1 - Math.max(0, S.ss.left) / f.seconds));
-      if (S.ss.left > 0) sfx.tick();
-      if (S.ss.left <= 0) { clearInterval(iv); S.ss.timer = 'ask'; sfx.good(); renderField(); }
+      if (S.ss.left > 0) sfx.tick(S.ss.left <= 5);
+      if (S.ss.left <= 0) { clearInterval(iv); S.ss.timer = 'ask'; SFX.play('gong'); buzz(200); renderField(); }
     }, 1000);
     cleanup.push(() => clearInterval(iv));
   }
@@ -986,7 +1004,7 @@
     const node = NODES[S.node];
     S.ss.picked = el.dataset.key;
     S.choices[node.choice.fork] = el.dataset.key;
-    saveState(); sfx.good(); renderOutro();
+    saveState(); SFX.play('pick', el.dataset.key); renderOutro();
   };
 
   /* launch code */
@@ -1012,19 +1030,19 @@
   }
   ACT.tile = el => {
     const ss = S.ss, code = ST.launchCode, letters = S.letters.length === code.length ? S.letters : code.split('').reverse();
-    ss.pick.push(+el.dataset.i); sfx.tick();
+    ss.pick.push(+el.dataset.i); SFX.play('tile', ss.pick.length - 1);
     if (ss.pick.length === code.length) {
       const word = ss.pick.map(i => letters[i]).join('');
       if (word === code) {
         ss.pts = Math.max(30, [150, 100, 70][Math.min(ss.tries, 2)] - (ss.hint ? 20 : 0));
-        ss.done = true; award('Launch code', ss.pts, 150); sfx.caught(); celebrate();
+        ss.done = true; award('Launch code', ss.pts, 150); sfx.caught('shard'); celebrate();
       } else { ss.tries++; ss.pick = []; sfx.bad(); }
     }
     saveState(); renderCode();
     if (!ss.done && ss.pick.length === 0 && ss.tries) { const c = $('#ccard'); if (c) c.classList.add('shake'); }
   };
   ACT.codeClear = () => { S.ss.pick = []; saveState(); renderCode(); };
-  ACT.codeHint = () => { S.ss.hint = true; saveState(); renderCode(); };
+  ACT.codeHint = () => { S.ss.hint = true; saveState(); SFX.play('hint'); renderCode(); };
 
   /* ---------- travel ---------- */
   const TR = { ref: null, streak: 0, near: false, map: null, me: null, line: null, raf: 0 };
@@ -1063,6 +1081,14 @@
       updateTravel();
       const loop = () => { rotateArrow(); TR.raf = requestAnimationFrame(loop); };
       TR.raf = requestAnimationFrame(loop);
+      TR.lastBeacon = Date.now();
+      const beacon = setInterval(() => {
+        const d = TR.lastD;
+        if (d == null || $('#sheet').hidden === false) return;
+        const gap = d > 300 ? 9000 : d > 150 ? 6000 : d > 60 ? 3500 : 1800;
+        if (Date.now() - TR.lastBeacon >= gap) { TR.lastBeacon = Date.now(); SFX.play('beacon', 1 - Math.min(d, 500) / 500); }
+      }, 500);
+      cleanup.push(() => clearInterval(beacon));
       cleanup.push(() => { cancelAnimationFrame(TR.raf); if (TR.map) { TR.map.remove(); TR.map = null; } });
     }
   }
@@ -1101,15 +1127,21 @@
     const lvl = d < 40 ? 5 : d < 100 ? 4 : d < 200 ? 3 : d < 350 ? 2 : 1;
     $$('#tBars i').forEach((el, i) => el.classList.toggle('on', i < lvl));
     if (TR.ref == null) TR.ref = d;
-    if (d < 40) { trend.textContent = 'The signal is huge!'; trend.className = 'trend warm'; if (!TR.near) { TR.near = true; buzz([60, 60, 60]); } }
-    else if (d < TR.ref - 15) { trend.textContent = 'Getting warmer!'; trend.className = 'trend warm'; TR.ref = d; }
-    else if (d > TR.ref + 20) { trend.textContent = 'Getting colder...'; trend.className = 'trend cold'; TR.ref = d; }
-    TR.bearing = b;
+    if (d < 40) { trend.textContent = 'The signal is huge!'; trend.className = 'trend warm'; if (!TR.near) { TR.near = true; buzz([60, 60, 60]); SFX.play('near'); } }
+    else if (d < TR.ref - 15) { trend.textContent = 'Getting warmer!'; trend.className = 'trend warm'; TR.ref = d; trendSound('warmer', 20000); }
+    else if (d > TR.ref + 20) { trend.textContent = 'Getting colder...'; trend.className = 'trend cold'; TR.ref = d; trendSound('colder', 10000); }
+    TR.bearing = b; TR.lastD = d;
     dir.hidden = false; dir.textContent = 'Head ' + compass8(b);
     if (TR.map && TR.me) {
       TR.me.setLatLng([fix.lat, fix.lng]);
       TR.line.setLatLngs([[fix.lat, fix.lng], [pin.lat, pin.lng]]);
     }
+  }
+  // Warmer/colder chirps, spaced out so a long leg doesn't turn into constant beeping.
+  function trendSound(name, gap) {
+    const now = Date.now();
+    if (TR.lastTrend && TR.lastTrend.name === name && now - TR.lastTrend.at < gap) return;
+    TR.lastTrend = { name, at: now }; SFX.play(name);
   }
   function rotateArrow() {
     const a = $('#tArrow'), rose = $('#tRose');
@@ -1147,16 +1179,18 @@
     enableMotion(); // must be first: iOS needs this inside the tap
     stopSpeech();
     Object.assign(AR, { on: true, opts, caught: false, caughtAt: 0, t0: performance.now(), target: null, virtual: false, vHead: 0,
-      parts: [], lastPing: 0, hit: null, down: null, stream: null, cam: false, skipShown: false, visibleOnce: false });
+      parts: [], lastPing: 0, hit: null, down: null, stream: null, cam: false, skipShown: false, visibleOnce: false, wasVisible: false });
     scanEl.hidden = false; scanVid.hidden = true;
     $('#scanBottom').innerHTML = '';
     setScanMsg('Scanner on', 'Turn slowly all the way round.');
+    SFX.play('scanOpen'); SFX.startHum();
     sizeScanner();
     startScanCamera();
     AR.raf = requestAnimationFrame(scanFrame);
   }
   function closeScanner() {
     AR.on = false;
+    SFX.stopHum();
     cancelAnimationFrame(AR.raf);
     if (AR.stream) AR.stream.getTracks().forEach(t => t.stop());
     AR.stream = null; scanVid.srcObject = null;
@@ -1218,11 +1252,13 @@
         if (now - AR.caughtAt > 1150) { const o = AR.opts; closeScanner(); onScanDone(o, false); return; }
       } else if (visible) {
         AR.visibleOnce = true;
+        if (!AR.wasVisible) { AR.wasVisible = true; SFX.play('locked'); }
         drawTarget(ctx, AR.opts.kind, x, y, size, t, 1);
         AR.hit = { x, y, r: size * 1.05 };
         setScanMsg('Signal locked', 'There it is! Tap ' + noun + '!');
       } else {
         AR.hit = null;
+        if (Math.abs(delta) > half + 18) AR.wasVisible = false; // a little slack so edge jitter doesn't re-beep
         drawEdgeArrow(ctx, W, H, delta > 0 ? 1 : -1, t);
         setScanMsg('Signal ' + Math.round(strength * 100) + '%', AR.virtual ? 'Drag the screen to look around.' : 'Turn ' + (delta > 0 ? 'right' : 'left') + ' slowly...');
       }
@@ -1260,14 +1296,14 @@
     const d = AR.down; AR.down = null;
     if (!d || d.moved || AR.caught || !AR.hit || !$('#scanStop').hidden) return;
     if (Math.hypot(e.clientX - AR.hit.x, e.clientY - AR.hit.y) <= AR.hit.r) {
-      AR.caught = true; AR.caughtAt = performance.now(); sfx.caught();
+      AR.caught = true; AR.caughtAt = performance.now(); SFX.stopHum(); sfx.caught(AR.opts.kind);
       for (let i = 0; i < 70; i++) {
         const a = Math.random() * Math.PI * 2, v = 2 + Math.random() * 6;
         AR.parts.push({ x: AR.hit.x, y: AR.hit.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 2, r: 2 + Math.random() * 3, life: 1 + Math.random() * 0.6, c: ['#39d3e6', '#e9fdff', '#ffc93a', '#ff7a3d'][i % 4] });
       }
       setScanMsg('Got it!', AR.opts.kind === 'gloop' ? 'You caught Gloop!' : AR.opts.kind === 'ship' ? 'You found the Pebble!' : 'Shard collected!');
     } else {
-      setScanMsg('Missed', 'So close! Tap right on it.');
+      setScanMsg('Missed', 'So close! Tap right on it.'); SFX.play('miss');
     }
   });
   $('#scanClose').addEventListener('click', () => closeScanner());
@@ -1464,6 +1500,13 @@
     </div>`;
     paint(html, '<button class="btn secondary" type="button" data-act="toTitle">Home</button><button class="btn primary" type="button" data-act="newMission">Play again</button>');
     UI.readLines = null;
+    const big = $('.rank .big');
+    if (big && !reducedMotion() && !S.ss.counted) {
+      S.ss.counted = true; saveState();
+      const t0 = performance.now(), end = S.score;
+      const step = now => { const k = Math.min(1, (now - t0) / 1400); if (!big.isConnected) return; big.textContent = Math.round(end * (1 - Math.pow(1 - k, 3))).toLocaleString('en-GB'); if (k < 1) requestAnimationFrame(step); };
+      big.textContent = '0'; requestAnimationFrame(step);
+    }
     makeCertificate(rank, badges).then(url => {
       const img = $('#certImg'), a = $('#certSave'), n = $('#certNote');
       if (!img) return;
@@ -1527,10 +1570,13 @@
     $('#sheet').hidden = false;
   }
   function closeSheet() { $('#sheet').hidden = true; }
-  $('#hudMenu').addEventListener('click', openSheet);
+  $('#hudMenu').addEventListener('click', () => { SFX.play('tap'); openSheet(); });
+  $('#hudSound').addEventListener('click', () => setSound(!prefs.sound));
+  syncSoundBtn();
   $('#sheet').addEventListener('click', e => { if (e.target.id === 'sheet') closeSheet(); });
   ACT.sheetClose = closeSheet;
   CHG.pref = el => {
+    if (el.dataset.k === 'sound') return setSound(el.checked);
     prefs[el.dataset.k] = el.checked; savePrefs();
     if (el.dataset.k === 'voice' && !el.checked) stopSpeech();
     if (el.dataset.k === 'voice' && el.checked && UI.readLines) speakLines(UI.readLines);
@@ -1787,7 +1833,7 @@
       if (data) UI.pendingImport = data;
       try { history.replaceState(null, '', location.pathname + location.search); } catch (e) { /* ignore */ }
     }
-    try { document.fonts && document.fonts.load('40px Bungee'); } catch (e) { /* ignore */ }
+    try { if (document.fonts) document.fonts.load('40px Bungee').catch(() => {}); } catch (e) { /* ignore */ }
     render();
   })();
 

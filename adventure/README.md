@@ -7,6 +7,7 @@ A walking choose-your-own-adventure for kids, played on a phone. Zib the alien h
 - **Branching paths**: two forks (Glowing Trail or Slime Trail, then Comet Path or Moon Path), giving four routes and two endings.
 - **Puzzles by age**: every challenge has Easy, Medium and Hard versions. Rangers take turns, and each gets their own level.
 - **Bonus missions**: photo hunts, spotting even house numbers, street signs, a colour checklist, a 20-second freeze, and a kindness mission.
+- **Sound effects**: Zib chirps and Gloop gloops when they talk. You'll hear a scanner hum and sonar pings, a sparkle when a shard is caught, a fanfare on arrival and a rocket launch at the end. While walking, a beacon beeps faster as the Rangers get closer, so they can listen instead of watching the screen. Everything is generated in the browser, so there are no audio files. The speaker button mutes it all.
 - **Score**: points for shards, puzzles, bonus missions and safe walking (judged by the grown-up). There are no points for speed. You get a rank, badges, a photo log and a certificate at the end.
 
 ## Playing
